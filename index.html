@@ -450,41 +450,183 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
 </div>
 
 <script>
-// 弹窗控制
+// ========== 账号系统初始化 ==========
+// 强制初始化 System 管理员账号，确保一定存在
+function initAccountSystem(){
+  let users = [];
+  try {
+    users = JSON.parse(localStorage.getItem('fd_users') || '[]');
+  } catch(e){
+    users = [];
+  }
+
+  // 检查 System 账号是否存在
+  const hasSystem = users.some(u => u.username === 'System');
+  if(!hasSystem){
+    users.unshift({
+      username: 'System',
+      password: 'm859203#',
+      isAdmin: true
+    });
+    localStorage.setItem('fd_users', JSON.stringify(users));
+  }
+
+  // 初始化注册密钥库
+  if(!localStorage.getItem('fd_registerKeys')){
+    localStorage.setItem('fd_registerKeys', JSON.stringify([]));
+  }
+}
+initAccountSystem();
+
+// ========== 工具函数 ==========
+function getCurrentUser(){
+  const username = localStorage.getItem('fd_currentUser');
+  if(!username) return null;
+  const users = JSON.parse(localStorage.getItem('fd_users') || '[]');
+  return users.find(u => u.username === username) || null;
+}
+
+// ========== 弹窗控制 ==========
 document.querySelectorAll('[data-close]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
+  btn.addEventListener('click', ()=>{
     document.getElementById(btn.dataset.close).classList.remove('show');
   });
 });
 
-document.getElementById('btn-login').addEventListener('click',()=>{
-  document.getElementById('modal-login').classList.add('show');
-  document.getElementById('login-tip').textContent='';
-});
-
-document.getElementById('btn-register').addEventListener('click',()=>{
-  document.getElementById('modal-register').classList.add('show');
-  document.getElementById('reg-tip').textContent='';
-});
-
-// 已登录状态更新
-(function(){
-  const token = localStorage.getItem('fd_token');
-  const username = localStorage.getItem('fd_currentUser');
-  if(token && username){
-    const loginBtn = document.getElementById('btn-login');
-    const regBtn = document.getElementById('btn-register');
-    loginBtn.textContent = username;
-    regBtn.style.display = 'none';
-    loginBtn.onclick = ()=>{
-      if(confirm('确定退出登录吗？')){
-        localStorage.removeItem('fd_token');
-        localStorage.removeItem('fd_currentUser');
-        location.reload();
-      }
-    };
+// 打开登录弹窗
+document.getElementById('btn-login').addEventListener('click', ()=>{
+  const user = getCurrentUser();
+  if(user){
+    // 已登录：点击退出
+    if(confirm('确定退出登录吗？')){
+      localStorage.removeItem('fd_currentUser');
+      location.reload();
+    }
+    return;
   }
-})();
+  document.getElementById('modal-login').classList.add('show');
+  document.getElementById('login-tip').textContent = '';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+});
+
+// 打开注册弹窗
+document.getElementById('btn-register').addEventListener('click', ()=>{
+  document.getElementById('modal-register').classList.add('show');
+  document.getElementById('reg-tip').textContent = '';
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-password2').value = '';
+  document.getElementById('reg-key').value = '';
+});
+
+// ========== 登录逻辑 ==========
+document.getElementById('btn-login-confirm').addEventListener('click', ()=>{
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const tip = document.getElementById('login-tip');
+
+  if(!username || !password){
+    tip.textContent = '请输入用户名和密码';
+    return;
+  }
+
+  const users = JSON.parse(localStorage.getItem('fd_users') || '[]');
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if(!user){
+    tip.textContent = '用户名或密码错误';
+    return;
+  }
+
+  // 登录成功
+  localStorage.setItem('fd_currentUser', username);
+  document.getElementById('modal-login').classList.remove('show');
+  updateNavState();
+});
+
+// ========== 注册逻辑 ==========
+document.getElementById('btn-register-confirm').addEventListener('click', ()=>{
+  const username = document.getElementById('reg-username').value.trim();
+  const pwd1 = document.getElementById('reg-password').value;
+  const pwd2 = document.getElementById('reg-password2').value;
+  const key = document.getElementById('reg-key').value.trim();
+  const tip = document.getElementById('reg-tip');
+
+  if(!username || !pwd1 || !pwd2 || !key){
+    tip.textContent = '请填写全部内容';
+    return;
+  }
+  if(pwd1 !== pwd2){
+    tip.textContent = '两次密码输入不一致';
+    return;
+  }
+  if(username.length < 2){
+    tip.textContent = '用户名至少2位';
+    return;
+  }
+
+  const users = JSON.parse(localStorage.getItem('fd_users') || '[]');
+  if(users.find(u => u.username === username)){
+    tip.textContent = '用户名已存在';
+    return;
+  }
+
+  // 校验注册密钥
+  let keys = [];
+  try {
+    keys = JSON.parse(localStorage.getItem('fd_registerKeys') || '[]');
+  } catch(e){
+    keys = [];
+  }
+  
+  const keyIndex = keys.findIndex(k => k.key === key && !k.used);
+  if(keyIndex === -1){
+    tip.textContent = '注册密钥无效或已使用';
+    return;
+  }
+
+  // 标记密钥已使用
+  keys[keyIndex].used = true;
+  localStorage.setItem('fd_registerKeys', JSON.stringify(keys));
+
+  // 创建新用户
+  users.push({
+    username: username,
+    password: pwd1,
+    isAdmin: false
+  });
+  localStorage.setItem('fd_users', JSON.stringify(users));
+
+  tip.style.color = '#238636';
+  tip.textContent = '注册成功！即将自动登录';
+
+  setTimeout(()=>{
+    localStorage.setItem('fd_currentUser', username);
+    document.getElementById('modal-register').classList.remove('show');
+    updateNavState();
+  }, 800);
+});
+
+// ========== 更新导航栏登录状态 ==========
+function updateNavState(){
+  const user = getCurrentUser();
+  const loginBtn = document.getElementById('btn-login');
+  const regBtn = document.getElementById('btn-register');
+
+  if(user){
+    // 已登录：显示用户名，隐藏注册按钮
+    loginBtn.textContent = user.username + (user.isAdmin ? ' (管理员)' : '');
+    regBtn.style.display = 'none';
+  } else {
+    // 未登录：显示登录注册
+    loginBtn.textContent = '登录';
+    regBtn.style.display = 'inline-block';
+  }
+}
+
+// 页面加载时立即更新状态
+updateNavState();
 </script>
 </body>
 </html>

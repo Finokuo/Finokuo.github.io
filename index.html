@@ -1,956 +1,425 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<style>
-/* 登录注册弹窗 - 高优先级样式 */
-.modal {
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(0, 0, 0, 0.75) !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 9999 !important;
-}
-.modal.show { display: flex !important; }
-
-.modal-box {
-    width: 380px !important;
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
-}
-
-.modal-head {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 16px 20px !important;
-    border-bottom: 1px solid #30363d !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: #e6edf3 !important;
-}
-
-.modal-close {
-    background: none !important;
-    border: none !important;
-    color: #8b949e !important;
-    font-size: 22px !important;
-    cursor: pointer !important;
-    line-height: 1 !important;
-    padding: 0 !important;
-}
-.modal-close:hover { color: #fff !important; }
-
-.modal-body {
-    padding: 20px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-}
-
-.modal-body input {
-    width: 100% !important;
-    padding: 10px 14px !important;
-    background: #0d1117 !important;
-    border: 1px solid #30363d !important;
-    border-radius: 6px !important;
-    color: #e6edf3 !important;
-    font-size: 14px !important;
-    outline: none !important;
-    box-sizing: border-box !important;
-}
-.modal-body input:focus { border-color: #58a6ff !important; }
-
-.login-tip {
-    font-size: 12px !important;
-    color: #f85149 !important;
-    min-height: 18px !important;
-    margin: 2px 0 !important;
-}
-
-.modal-actions {
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: 10px !important;
-    padding: 0 20px 20px !important;
-}
-
-.btn-secondary, .btn-primary {
-    padding: 8px 18px !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    cursor: pointer !important;
-    border: 1px solid #30363d !important;
-    font-weight: 500 !important;
-    transition: background 0.15s !important;
-}
-.btn-secondary {
-    background: #21262d !important;
-    color: #e6edf3 !important;
-}
-.btn-secondary:hover { background: #30363d !important; }
-
-.btn-primary {
-    background: #238636 !important;
-    color: #fff !important;
-    border-color: transparent !important;
-    font-weight: 600 !important;
-}
-.btn-primary:hover { background: #2ea043 !important; }
-</style>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuo Drive — 简单、安全的私人网盘</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230969da'/%3E%3Ctext x='32' y='45' font-size='36' font-weight='bold' text-anchor='middle' fill='white' font-family='sans-serif'%3EF%3C/text%3E%3C/svg%3E">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --color-bg: #ffffff;
-            --color-bg-subtle: #f6f8fa;
-            --color-text: #1f2328;
-            --color-text-secondary: #59636e;
-            --color-text-muted: #6e7781;
-            --color-accent: #0969da;
-            --color-accent-hover: #0860ca;
-            --color-border: #d1d9e0;
-            --color-dark: #0d1117;
-            --color-dark-text: #f0f6fc;
-            --color-dark-secondary: #9198a1;
-            --radius-sm: 6px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-            color: var(--color-text);
-            background: var(--color-bg);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ===== 导航栏 ===== */
-        .navbar {
-            background: var(--color-dark);
-            padding: 0 24px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            font-weight: 600;
-            font-size: 18px;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #0969da, #218bff);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--color-dark-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.15s;
-        }
-
-        .nav-links a:hover {
-            color: white;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.15s;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border-color: var(--color-border);
-            color: white;
-        }
-
-        .btn-outline:hover {
-            background: rgba(255,255,255,0.08);
-        }
-
-        .btn-primary {
-            background: var(--color-accent);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--color-accent-hover);
-        }
-
-        /* ===== Hero 区域 ===== */
-        .hero {
-            background: var(--color-dark);
-            color: var(--color-dark-text);
-            padding: 80px 24px 120px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(9, 105, 218, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(33, 139, 255, 0.1) 0%, transparent 40%);
-            pointer-events: none;
-        }
-
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(9, 105, 218, 0.15);
-            border: 1px solid rgba(9, 105, 218, 0.3);
-            color: #79b8ff;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 24px;
-        }
-
-        .hero h1 {
-            font-size: 56px;
-            font-weight: 700;
-            line-height: 1.15;
-            margin-bottom: 20px;
-            letter-spacing: -0.5px;
-        }
-
-        .hero h1 span {
-            background: linear-gradient(135deg, #79b8ff, #218bff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            font-size: 20px;
-            color: var(--color-dark-secondary);
-            max-width: 600px;
-            margin: 0 auto 36px;
-            line-height: 1.6;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-lg {
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: var(--radius-md);
-        }
-
-        .btn-light {
-            background: white;
-            color: var(--color-dark);
-        }
-
-        .btn-light:hover {
-            background: #f0f0f0;
-        }
-
-        .btn-ghost {
-            background: transparent;
-            border-color: var(--color-dark-secondary);
-            color: white;
-        }
-
-        .btn-ghost:hover {
-            background: rgba(255,255,255,0.08);
-        }
-
-        /* ===== 产品展示区 ===== */
-        .showcase {
-            padding: 80px 24px;
-            background: var(--color-bg);
-        }
-
-        .showcase-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .browser-mockup {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-
-        .browser-header {
-            background: var(--color-bg-subtle);
-            border-bottom: 1px solid var(--color-border);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .browser-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .browser-dot.red { background: #ff5f57; }
-        .browser-dot.yellow { background: #febc2e; }
-        .browser-dot.green { background: #28c840; }
-
-        .browser-url {
-            flex: 1;
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 13px;
-            color: var(--color-text-muted);
-            margin-left: 16px;
-            text-align: center;
-        }
-
-        .browser-body {
-            display: flex;
-            min-height: 400px;
-        }
-
-        .sidebar {
-            width: 220px;
-            background: var(--color-bg-subtle);
-            border-right: 1px solid var(--color-border);
-            padding: 16px;
-        }
-
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            margin-bottom: 2px;
-        }
-
-        .sidebar-item.active {
-            background: rgba(9, 105, 218, 0.1);
-            color: var(--color-accent);
-            font-weight: 500;
-        }
-
-        .sidebar-icon {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 24px;
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .content-header h3 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .upload-btn {
-            background: var(--color-accent);
-            color: white;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-        }
-
-        .file-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 16px;
-        }
-
-        .file-card {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            text-align: center;
-            transition: all 0.15s;
-        }
-
-        .file-card:hover {
-            border-color: var(--color-accent);
-            box-shadow: 0 4px 12px rgba(9, 105, 218, 0.1);
-        }
-
-        .file-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 12px;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .file-icon.blue { background: #0969da; }
-        .file-icon.green { background: #1a7f37; }
-        .file-icon.orange { background: #9a6700; }
-        .file-icon.purple { background: #8250df; }
-        .file-icon.red { background: #cf222e; }
-
-        .file-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text);
-            margin-bottom: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .file-size {
-            font-size: 11px;
-            color: var(--color-text-muted);
-        }
-
-        /* ===== 特性区域 ===== */
-        .features {
-            padding: 80px 24px;
-            background: var(--color-bg-subtle);
-        }
-
-        .features-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 56px;
-        }
-
-        .section-header h2 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.3px;
-        }
-
-        .section-header p {
-            font-size: 18px;
-            color: var(--color-text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        .feature-card {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            transition: all 0.2s;
-        }
-
-        .feature-card:hover {
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            transform: translateY(-2px);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-md);
-            background: rgba(9, 105, 218, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .feature-icon svg {
-            width: 24px;
-            height: 24px;
-            color: var(--color-accent);
-        }
-
-        .feature-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            line-height: 1.6;
-        }
-
-        /* ===== CTA 区域 ===== */
-        .cta {
-            padding: 80px 24px;
-            background: var(--color-dark);
-            color: var(--color-dark-text);
-            text-align: center;
-        }
-
-        .cta h2 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .cta p {
-            font-size: 18px;
-            color: var(--color-dark-secondary);
-            margin-bottom: 32px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* ===== 页脚 ===== */
-        .footer {
-            background: var(--color-bg-subtle);
-            border-top: 1px solid var(--color-border);
-            padding: 40px 24px;
-        }
-
-        .footer-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--color-text);
-            font-weight: 600;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-            list-style: none;
-        }
-
-        .footer-links a {
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .footer-links a:hover {
-            color: var(--color-accent);
-        }
-
-        .footer-copy {
-            font-size: 13px;
-            color: var(--color-text-muted);
-        }
-
-        /* ===== 响应式 ===== */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero h1 {
-                font-size: 36px;
-            }
-
-            .hero p {
-                font-size: 17px;
-            }
-
-            .browser-body {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid var(--color-border);
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-header h2 {
-                font-size: 28px;
-            }
-
-            .cta h2 {
-                font-size: 28px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuo Studio — 在线工具与作品集合</title>
+<style>
+/* ===== 全局变量 ===== */
+:root{
+  --bg-0:#0d1117;
+  --bg-1:#161b22;
+  --bg-2:#21262d;
+  --bg-3:#30363d;
+  --border:#30363d;
+  --border-soft:#21262d;
+  --text:#e6edf3;
+  --text-dim:#8b949e;
+  --text-faint:#6e7681;
+  --accent:#58a6ff;
+  --accent-strong:#1f6feb;
+  --success:#238636;
+  --success-hover:#2ea043;
+  --danger:#da3633;
+  --shadow-lg:0 8px 32px rgba(0,0,0,.4);
+  --shadow-card:0 4px 16px rgba(0,0,0,.25);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg-0);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;background:none;border:none;color:inherit;cursor:pointer}
+
+/* ===== 导航栏 ===== */
+.navbar{
+  position:fixed;top:0;left:0;right:0;height:64px;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+  background:rgba(13,17,23,.8);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-left{display:flex;align-items:center;gap:24px}
+.logo{font-size:20px;font-weight:700;letter-spacing:.5px}
+.logo span{color:var(--accent)}
+.nav-links{display:flex;gap:6px}
+.nav-link{
+  padding:8px 14px;border-radius:6px;color:var(--text-dim);font-size:14px;
+  transition:all .15s;
+}
+.nav-link:hover{color:var(--text);background:var(--bg-2)}
+
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-btn{
+  padding:8px 16px;border-radius:6px;font-size:14px;
+  border:1px solid var(--border);background:var(--bg-1);color:var(--text);
+  transition:all .15s;
+}
+.nav-btn:hover{border-color:var(--bg-3);background:var(--bg-2)}
+.nav-btn.primary{
+  background:var(--success);color:#fff;border-color:transparent;font-weight:500;
+}
+.nav-btn.primary:hover{background:var(--success-hover)}
+
+/* ===== Hero 区域 ===== */
+.hero{
+  padding:140px 24px 100px;
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(88,166,255,.15), transparent 70%),
+    linear-gradient(180deg, #0d1117 0%, #0d1117 100%);
+}
+.hero-grid{
+  position:absolute;inset:0;opacity:.03;
+  background-image: linear-gradient(var(--text) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--text) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+}
+.hero-inner{
+  max-width:960px;margin:0 auto;text-align:center;position:relative;
+}
+.hero-badge{
+  display:inline-block;padding:6px 14px;margin-bottom:24px;
+  border:1px solid var(--border);border-radius:999px;
+  font-size:13px;color:var(--text-dim);background:var(--bg-1);
+}
+.hero-badge span{color:var(--accent);font-weight:500}
+.hero-title{
+  font-size:56px;font-weight:800;line-height:1.15;letter-spacing:-.5px;
+  margin-bottom:20px;
+  background:linear-gradient(180deg, #fff 0%, #adbac7 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-title span{
+  background:linear-gradient(135deg, #58a6ff 0%, #79c0ff 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-desc{
+  font-size:18px;color:var(--text-dim);max-width:640px;
+  margin:0 auto 36px;line-height:1.7;
+}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-large{
+  padding:12px 28px;border-radius:8px;font-size:15px;font-weight:500;
+  border:1px solid var(--border);background:var(--bg-1);color:var(--text);
+  transition:all .2s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-large:hover{transform:translateY(-1px);box-shadow:var(--shadow-card);border-color:var(--bg-3)}
+.btn-large.primary{
+  background:var(--success);color:#fff;border-color:transparent;
+}
+.btn-large.primary:hover{background:var(--success-hover)}
+
+/* ===== 产品矩阵 ===== */
+.products{
+  padding:80px 24px;
+  max-width:1200px;margin:0 auto;
+}
+.section-head{text-align:center;margin-bottom:48px}
+.section-title{font-size:32px;font-weight:700;margin-bottom:12px}
+.section-desc{font-size:15px;color:var(--text-dim)}
+
+.product-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+.product-card{
+  background:var(--bg-1);border:1px solid var(--border);border-radius:12px;
+  padding:28px 24px;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.product-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity:0;transition:opacity .25s;
+}
+.product-card:hover{
+  transform:translateY(-4px);
+  box-shadow:var(--shadow-lg);
+  border-color:var(--accent);
+}
+.product-card:hover::before{opacity:1}
+
+.product-icon{
+  width:48px;height:48px;border-radius:10px;
+  background:linear-gradient(135deg, rgba(88,166,255,.2), rgba(88,166,255,.05));
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;color:var(--accent);
+}
+.product-icon svg{width:24px;height:24px}
+.product-card h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.product-card p{color:var(--text-dim);font-size:14px;margin-bottom:20px;line-height:1.6}
+.product-link{
+  color:var(--accent);font-size:14px;font-weight:500;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.product-link:hover{gap:8px}
+
+/* ===== 特性区域 ===== */
+.features{
+  padding:80px 24px;background:var(--bg-1);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.features-inner{max-width:1200px;margin:0 auto}
+.features-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+  margin-top:48px;
+}
+.feature-item{text-align:center}
+.feature-icon{
+  width:40px;height:40px;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);
+}
+.feature-icon svg{width:22px;height:22px}
+.feature-item h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.feature-item p{font-size:13px;color:var(--text-dim);line-height:1.6}
+
+/* ===== CTA 区域 ===== */
+.cta{
+  padding:100px 24px;text-align:center;
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 50%, rgba(35,134,54,.1), transparent 70%);
+}
+.cta h2{font-size:36px;font-weight:700;margin-bottom:12px}
+.cta p{color:var(--text-dim);font-size:16px;margin-bottom:28px}
+
+/* ===== 页脚 ===== */
+.footer{
+  padding:32px 24px;border-top:1px solid var(--border);
+  background:var(--bg-1);
+}
+.footer-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.footer-left{color:var(--text-dim);font-size:13px}
+.footer-right{display:flex;gap:16px}
+.footer-link{color:var(--text-dim);font-size:13px}
+.footer-link:hover{color:var(--text)}
+
+/* ===== 弹窗 ===== */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  display:none;align-items:center;justify-content:center;z-index:200;
+}
+.modal.show{display:flex}
+.modal-box{
+  width:380px;background:var(--bg-1);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;box-shadow:var(--shadow-lg);
+}
+.modal-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  font-size:16px;font-weight:600;
+}
+.modal-close{color:var(--text-dim);font-size:22px;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:12px}
+.modal-body input{
+  width:100%;padding:10px 14px;background:var(--bg-0);
+  border:1px solid var(--border);border-radius:6px;color:var(--text);
+  font-size:14px;outline:none;
+}
+.modal-body input:focus{border-color:var(--accent)}
+.modal-tip{font-size:12px;color:var(--danger);min-height:18px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 20px}
+.btn-secondary,.btn-primary{
+  padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;
+  border:1px solid var(--border);
+}
+.btn-secondary{background:var(--bg-2);color:var(--text)}
+.btn-secondary:hover{background:var(--bg-3)}
+.btn-primary{background:var(--success);color:#fff;border-color:transparent;font-weight:500}
+.btn-primary:hover{background:var(--success-hover)}
+
+/* ===== 响应式 ===== */
+@media (max-width:960px){
+  .product-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .hero-title{font-size:40px}
+  .nav-links{display:none}
+}
+@media (max-width:640px){
+  .navbar{padding:0 16px}
+  .hero{padding:100px 16px 60px}
+  .hero-title{font-size:32px}
+  .hero-desc{font-size:15px}
+  .section-title{font-size:24px}
+  .features-grid{grid-template-columns:1fr}
+  .footer-inner{flex-direction:column;gap:12px;text-align:center}
+}
+</style>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="nav-left">
-            <a href="/" class="logo">
-                <div class="logo-icon">F</div>
-                Fuo Drive
-            </a>
-            <ul class="nav-links">
-                <li><a href="#features">功能</a></li>
-                <li><a href="/ide">IDE</a></li>
-                <li><a href="#about">关于</a></li>
-            </ul>
+
+<!-- ===== 导航栏 ===== -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="logo">Fuo <span>Studio</span></div>
+    <div class="nav-links">
+      <a href="/ide" class="nav-link">在线 IDE</a>
+      <a href="/tools" class="nav-link">工具箱</a>
+      <a href="/send" class="nav-link">文件快递</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" id="btn-login">登录</button>
+    <button class="nav-btn primary" id="btn-register">注册</button>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span>✨</span> 个人作品与工具集合
+    </div>
+    <h1 class="hero-title">
+      一个属于你和朋友的<br>
+      <span>在线工作台</span>
+    </h1>
+    <p class="hero-desc">
+      集成在线代码编辑器、实用工具箱、临时文件快递。<br>
+      无需安装，打开即用，纯粹简洁的体验。
+    </p>
+    <div class="hero-actions">
+      <a href="/ide" class="btn-large primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+        开始使用
+      </a>
+      <a href="#products" class="btn-large">
+        了解全部功能
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 产品矩阵 ===== -->
+<section class="products" id="products">
+  <div class="section-head">
+    <h2 class="section-title">全部能力</h2>
+    <p class="section-desc">三个核心模块，覆盖开发、工具、传输</p>
+  </div>
+
+  <div class="product-grid">
+    <!-- 在线 IDE -->
+    <div class="product-card">
+      <div class="product-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15l2 2 4-4"></path></svg>
+      </div>
+      <h3>豆沙包 IDE</h3>
+      <p>浏览器端代码编辑器，支持多语言语法高亮、在线运行、CPH 算法调试，开箱即用。</p>
+      <a href="/ide" class="product-link">
+        立即打开 →
+      </a>
+    </div>
+
+    <!-- 工具箱 -->
+    <div class="product-card">
+      <div class="product-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.8-2.8 2.5-2.7z"></path><path d="M18 4l2 2"></path></svg>
+      </div>
+      <h3>在线工具箱</h3>
+      <p>JSON 格式化、Base64 编解码、正则测试、进制转换，常用开发工具一站搞定。</p>
+      <a href="/tools" class="product-link">
+        查看工具 →
+      </a>
+    </div>
+
+    <!-- 文件快递 -->
+    <div class="product-card">
+      <div class="product-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      </div>
+      <h3>临时文件快递</h3>
+      <p>上传文件生成提取码，24 小时自动过期，和朋友快速传文件，用完即走。</p>
+      <a href="/send" class="product-link">
+        去传文件 →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 特性 ===== -->
+<section class="features">
+  <div class="features-inner">
+    <div class="section-head">
+      <h2 class="section-title">为什么用它</h2>
+      <p class="section-desc">简单、干净、好用</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
         </div>
-        <div class="nav-right">
-            <button class="btn btn-outline" id="btn-login">登录</button>
-            <button class="btn btn-primary" id="btn-register">注册</button>
-            <a href="/drive" class="btn btn-primary">进入网盘</a>
+        <h4>极速响应</h4>
+        <p>纯静态页面，秒开无加载，打开就能用</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         </div>
-    </nav>
-
-    <!-- Hero 区域 -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span>✦</span> 全新版本上线
-            </div>
-            <h1>你的私人文件，<br><span>就在指尖</span></h1>
-            <p>Fuo Drive 是一个简单、安全的私人网盘，用来存放你和朋友的作业、笔记、图片和各种小文件。</p>
-            <div class="hero-buttons">
-                <a href="/drive" class="btn btn-light btn-lg">立即使用</a>
-                <a href="#learn-more" class="btn btn-ghost btn-lg">了解更多</a>
-            </div>
+        <h4>隐私安全</h4>
+        <p>所有操作本地完成，不上传不收集</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
         </div>
-    </section>
-
-    <!-- 产品展示 -->
-    <section class="showcase">
-        <div class="showcase-inner">
-            <div class="browser-mockup">
-                <div class="browser-header">
-                    <div class="browser-dot red"></div>
-                    <div class="browser-dot yellow"></div>
-                    <div class="browser-dot green"></div>
-                    <div class="browser-url">finokuo.github.io/drive</div>
-                </div>
-                <div class="browser-body">
-                    <div class="sidebar">
-                        <div class="sidebar-item active">
-                            <svg class="sidebar-icon" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M1.5 2.75A.75.75 0 0 1 2.25 2h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 1.5 2.75Zm0 5A.75.75 0 0 1 2.25 7h6.5a.75.75 0 0 1 0 1.5h-6.5A.75.75 0 0 1 1.5 7.75Zm0 5a.75.75 0 0 1 .75-.75h4a.75.75 0 0 1 0 1.5h-4a.75.75 0 0 1-.75-.75Z"></path>
-                            </svg>
-                            全部文件
-                        </div>
-                        <div class="sidebar-item">
-                            <svg class="sidebar-icon" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M1.75 2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25Zm0-1.5A1.75 1.75 0 0 0 0 2.75v10.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0 0 16 13.25V2.75A1.75 1.75 0 0 0 14.25 1Z"></path>
-                            </svg>
-                            最近上传
-                        </div>
-                        <div class="sidebar-item">
-                            <svg class="sidebar-icon" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M8 .25a.75.75 0 0 1 .75.75v1.06l2.28-.959a.75.75 0 0 1 .548 1.392l-2.828 1.19v3.517l2.828 1.19a.75.75 0 1 1-.548 1.392l-2.28-.959v1.06a.75.75 0 0 1-1.5 0V8.873l-2.28.959a.75.75 0 1 1-.548-1.392l2.828-1.19V3.733l-2.828-1.19A.75.75 0 0 1 4.97 1.15l2.28.959V1A.75.75 0 0 1 8 .25Z"></path>
-                            </svg>
-                            收藏
-                        </div>
-                        <div class="sidebar-item">
-                            <svg class="sidebar-icon" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M11 1.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1ZM1 5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1Zm9-1.5v3h3v-3ZM1 11a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1Z"></path>
-                            </svg>
-                            分类
-                        </div>
-                    </div>
-                    <div class="main-content">
-                        <div class="content-header">
-                            <h3>全部文件</h3>
-                            <button class="upload-btn">上传文件</button>
-                        </div>
-                        <div class="file-grid">
-                            <div class="file-card">
-                                <div class="file-icon blue">P</div>
-                                <div class="file-name">数学作业.pdf</div>
-                                <div class="file-size">2.4 MB</div>
-                            </div>
-                            <div class="file-card">
-                                <div class="file-icon green">I</div>
-                                <div class="file-name">旅行照片.png</div>
-                                <div class="file-size">5.8 MB</div>
-                            </div>
-                            <div class="file-card">
-                                <div class="file-icon orange">N</div>
-                                <div class="file-name">读书笔记.docx</div>
-                                <div class="file-size">128 KB</div>
-                            </div>
-                            <div class="file-card">
-                                <div class="file-icon purple">C</div>
-                                <div class="file-name">算法练习.cpp</div>
-                                <div class="file-size">4.2 KB</div>
-                            </div>
-                            <div class="file-card">
-                                <div class="file-icon red">V</div>
-                                <div class="file-name">活动视频.mp4</div>
-                                <div class="file-size">85.6 MB</div>
-                            </div>
-                            <div class="file-card">
-                                <div class="file-icon blue">Z</div>
-                                <div class="file-name">项目资料.zip</div>
-                                <div class="file-size">45.2 MB</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <h4>无需安装</h4>
+        <p>浏览器直接访问，不占内存不装软件</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
         </div>
-    </section>
+        <h4>持续更新</h4>
+        <p>新工具新功能陆续加入，不断进化</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- 特性区域 -->
-    <section class="features" id="features">
-        <div class="features-inner">
-            <div class="section-header">
-                <h2>简单好用，专为朋友设计</h2>
-                <p>Fuo Drive 把复杂的东西都藏起来了，只留下最简单好用的功能。</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                    </div>
-                    <h3>快速上传</h3>
-                    <p>拖一拖就能把文件传上来，支持各种格式，不用注册复杂的账号。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                    </div>
-                    <h3>私人空间</h3>
-                    <p>这是你和朋友的小地盘，只有知道地址的人才能访问，安静又安全。</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                    </div>
-                    <h3>文件管理</h3>
-                    <p>所有文件整齐排列，按类型、按时间分类，找东西一目了然。</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- ===== CTA ===== -->
+<section class="cta">
+  <h2>现在就开始使用</h2>
+  <p>完全免费，打开即用</p>
+  <a href="/ide" class="btn-large primary">进入 IDE 试试</a>
+</section>
 
-    <!-- CTA 区域 -->
-    <section class="cta">
-        <h2>现在就开始使用吧</h2>
-        <p>把你的文件都搬进来，和朋友一起分享这个小小的数字空间。</p>
-        <a href="/drive" class="btn btn-light btn-lg">进入 Fuo Drive</a>
-    </section>
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">© 2026 Fuo Studio · Made with ❤️</div>
+    <div class="footer-right">
+      <a href="/ide" class="footer-link">在线 IDE</a>
+      <a href="/tools" class="footer-link">工具箱</a>
+      <a href="/send" class="footer-link">文件快递</a>
+    </div>
+  </div>
+</footer>
 
-    <!-- 页脚 -->
-    <footer class="footer">
-        <div class="footer-inner">
-            <div class="footer-logo">
-                <div class="logo-icon" style="width:24px;height:24px;font-size:12px;">F</div>
-                Fuo Drive
-            </div>
-            <ul class="footer-links">
-                <li><a href="/ide">IDE</a></li>
-                <li><a href="/drive">网盘</a></li>
-                <li><a href="#about" onclick="showToast('关于页面正在建设中~'); return false;">关于我们</a></li>
-            </ul>
-            <div class="footer-copy">
-                © 2026 Finokuo & Friends. All rights reserved.
-            </div>
-        </div>
-    </footer>
-
-    <!-- Toast 提示 -->
-    <div id="toast" style="
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(80px);
-        background: #1f2328;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 14px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        opacity: 0;
-        transition: all 0.3s ease;
-        z-index: 1000;
-        pointer-events: none;
-    "></div>
-
-    <script>
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateX(-50%) translateY(0)';
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(-50%) translateY(80px)';
-            }, 2000);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // 上传文件按钮
-            const uploadBtn = document.querySelector('.upload-btn');
-            if (uploadBtn) {
-                uploadBtn.addEventListener('click', function() {
-                    showToast('上传功能即将上线~');
-                });
-            }
-
-            // 登录按钮
-            const loginBtn = document.querySelector('a[href="#login"]');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showToast('登录功能即将上线~');
-                });
-            }
-
-            // 了解更多按钮
-            const learnMoreBtn = document.querySelector('a[href="#learn-more"]');
-            if (learnMoreBtn) {
-                learnMoreBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
-                });
-            }
-
-            // 关于导航链接
-            const aboutNav = document.querySelector('a[href="#about"]');
-            if (aboutNav && aboutNav.closest('.nav-links')) {
-                aboutNav.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showToast('关于页面正在建设中~');
-                });
-            }
-        });
-    </script>
-    <!-- 登录弹窗 -->
+<!-- ===== 登录弹窗 ===== -->
 <div class="modal" id="modal-login">
   <div class="modal-box">
     <div class="modal-head">
-      <span>登录 Fuo Drive</span>
-      <button class="modal-close" data-close="modal-login">×</button>
+      <span>登录账号</span>
+      <span class="modal-close" data-close="modal-login">×</span>
     </div>
     <div class="modal-body">
       <input type="text" id="login-username" placeholder="用户名" autocomplete="off">
       <input type="password" id="login-password" placeholder="密码">
-      <div class="login-tip" id="login-tip"></div>
+      <div class="modal-tip" id="login-tip"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" data-close="modal-login">取消</button>
@@ -959,19 +428,19 @@
   </div>
 </div>
 
-<!-- 注册弹窗 -->
+<!-- ===== 注册弹窗 ===== -->
 <div class="modal" id="modal-register">
   <div class="modal-box">
     <div class="modal-head">
       <span>注册账号</span>
-      <button class="modal-close" data-close="modal-register">×</button>
+      <span class="modal-close" data-close="modal-register">×</span>
     </div>
     <div class="modal-body">
       <input type="text" id="reg-username" placeholder="用户名" autocomplete="off">
       <input type="password" id="reg-password" placeholder="密码">
       <input type="password" id="reg-password2" placeholder="确认密码">
       <input type="text" id="reg-key" placeholder="注册密钥">
-      <div class="login-tip" id="reg-tip"></div>
+      <div class="modal-tip" id="reg-tip"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" data-close="modal-register">取消</button>
@@ -980,140 +449,42 @@
   </div>
 </div>
 
-<style>
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
-.modal.show{display:flex}
-.modal-box{width:360px;background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.4)}
-.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #30363d;font-size:15px;font-weight:600;color:#e6edf3}
-.modal-close{background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;line-height:1}
-.modal-close:hover{color:#fff}
-.modal-body{padding:18px;display:flex;flex-direction:column;gap:10px}
-.modal-body input{width:100%;padding:9px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:14px;outline:none}
-.modal-body input:focus{border-color:#58a6ff}
-.login-tip{font-size:12px;color:#f85149;min-height:18px}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 18px 18px}
-.btn-secondary,.btn-primary{padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid #30363d}
-.btn-secondary{background:#21262d;color:#e6edf3}
-.btn-secondary:hover{background:#30363d}
-.btn-primary{background:#238636;color:#fff;border-color:transparent;font-weight:600}
-.btn-primary:hover{background:#2ea043}
-</style>
-
 <script>
-// 初始化：首次访问自动创建 System 管理员账号
-function initStorage(){
-  if(!localStorage.getItem('fd_users')){
-    const defaultUsers = [
-      {username:'System', password:'m859203#', isAdmin:true}
-    ];
-    localStorage.setItem('fd_users', JSON.stringify(defaultUsers));
-  }
-  if(!localStorage.getItem('fd_verifyPasswords')){
-    localStorage.setItem('fd_verifyPasswords', JSON.stringify([]));
-  }
-  if(!localStorage.getItem('fd_registerKeys')){
-    localStorage.setItem('fd_registerKeys', JSON.stringify([]));
-  }
-}
-initStorage();
-
-// 获取当前登录用户
-function getCurrentUser(){
-  const u = localStorage.getItem('fd_currentUser');
-  if(!u) return null;
-  const users = JSON.parse(localStorage.getItem('fd_users')||'[]');
-  return users.find(x=>x.username===u) || null;
-}
-
-// 弹窗关闭控制
+// 弹窗控制
 document.querySelectorAll('[data-close]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.getElementById(btn.dataset.close).classList.remove('show');
   });
 });
 
-// 打开登录弹窗
 document.getElementById('btn-login').addEventListener('click',()=>{
   document.getElementById('modal-login').classList.add('show');
   document.getElementById('login-tip').textContent='';
 });
 
-// 打开注册弹窗
 document.getElementById('btn-register').addEventListener('click',()=>{
   document.getElementById('modal-register').classList.add('show');
   document.getElementById('reg-tip').textContent='';
 });
 
-// 登录逻辑
-document.getElementById('btn-login-confirm').addEventListener('click',()=>{
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  const tip = document.getElementById('login-tip');
-  
-  if(!username || !password){ tip.textContent='请输入用户名和密码'; return; }
-  
-  const users = JSON.parse(localStorage.getItem('fd_users')||'[]');
-  const user = users.find(u=>u.username===username && u.password===password);
-  
-  if(!user){ tip.textContent='用户名或密码错误'; return; }
-  
-  localStorage.setItem('fd_currentUser', username);
-  document.getElementById('modal-login').classList.remove('show');
-  location.reload();
-});
-
-// 注册逻辑
-document.getElementById('btn-register-confirm').addEventListener('click',()=>{
-  const username = document.getElementById('reg-username').value.trim();
-  const pwd1 = document.getElementById('reg-password').value;
-  const pwd2 = document.getElementById('reg-password2').value;
-  const key = document.getElementById('reg-key').value.trim();
-  const tip = document.getElementById('reg-tip');
-  
-  if(!username || !pwd1 || !pwd2 || !key){ tip.textContent='请填写全部内容'; return; }
-  if(pwd1 !== pwd2){ tip.textContent='两次密码输入不一致'; return; }
-  if(username.length < 2){ tip.textContent='用户名至少2位'; return; }
-  
-  const users = JSON.parse(localStorage.getItem('fd_users')||'[]');
-  if(users.find(u=>u.username===username)){ tip.textContent='用户名已存在'; return; }
-  
-  let keys = JSON.parse(localStorage.getItem('fd_registerKeys')||'[]');
-  const keyIndex = keys.findIndex(k=>k.key===key && !k.used);
-  if(keyIndex === -1){ tip.textContent='注册密钥无效或已使用'; return; }
-  
-  // 注册成功，删除已使用的密钥
-  keys.splice(keyIndex, 1);
-  localStorage.setItem('fd_registerKeys', JSON.stringify(keys));
-  
-  // 创建新用户
-  users.push({username, password:pwd1, isAdmin:false});
-  localStorage.setItem('fd_users', JSON.stringify(users));
-  
-  tip.style.color='#3fb950';
-  tip.textContent='注册成功！即将自动登录';
-  setTimeout(()=>{
-    localStorage.setItem('fd_currentUser', username);
-    location.reload();
-  },800);
-});
-
-// 页面加载：更新导航栏状态
-window.addEventListener('load',()=>{
-  const user = getCurrentUser();
-  if(user){
-    // 已登录：替换为用户名，点击可退出
+// 已登录状态更新
+(function(){
+  const token = localStorage.getItem('fd_token');
+  const username = localStorage.getItem('fd_currentUser');
+  if(token && username){
     const loginBtn = document.getElementById('btn-login');
-    loginBtn.textContent = user.username + (user.isAdmin?' (管理员)':'');
-    document.getElementById('btn-register').style.display='none';
-    
+    const regBtn = document.getElementById('btn-register');
+    loginBtn.textContent = username;
+    regBtn.style.display = 'none';
     loginBtn.onclick = ()=>{
       if(confirm('确定退出登录吗？')){
+        localStorage.removeItem('fd_token');
         localStorage.removeItem('fd_currentUser');
         location.reload();
       }
     };
   }
-});
+})();
 </script>
 </body>
 </html>

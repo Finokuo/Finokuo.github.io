@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fuo Tools</title>
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <!--
     Fuo Tools · 根入口
     部署在 Finokuo.github.io 仓库根目录。
@@ -17,7 +19,13 @@
   <script>
     (function () {
       var REF = 'mxvlyuteecnyencjebyt'; // Supabase 项目 ref
-      var go = '/main/';
+      // 路径自适应：线上 = ''，本地/沙盒预览（挂在 /fuo/ 下）自动带前缀，
+      // 且预览环境需要显式 /index.html 才能被静态服务器解析
+      var path = window.location.pathname;
+      var inPreview = path.indexOf('/fuo/') !== -1;
+      var base = inPreview ? path.slice(0, path.indexOf('/fuo/')) + '/fuo' : '';
+      var suffix = inPreview ? '/index.html' : '/';
+      var go = base + '/main' + suffix;
       try {
         var raw = localStorage.getItem('sb-' + REF + '-auth-token');
         if (raw) {
@@ -27,21 +35,26 @@
             (t && t.currentSession) ||
             (t && t.user)
           );
-          if (hasSession) go = '/drive/';
+          if (hasSession) go = base + '/drive' + suffix;
         }
-      } catch (e) { go = '/main/'; }
+      } catch (e) { go = base + '/main' + suffix; }
       window.location.replace(go);
     })();
   </script>
   <style>
-    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-      display: grid; place-items: center; min-height: 100vh; color: #475569; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: grid; place-items: center; min-height: 100vh;
+      background: #08080a; color: #5f5f6b;
+    }
+    p { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.06em; }
+    a { color: #9d9da7; }
   </style>
   <!-- 无 JS / 脚本异常时的兜底跳转 -->
   <meta http-equiv="refresh" content="1;url=/main/" />
 </head>
 <body>
-  <p>正在进入 Fuo Tools…</p>
+  <p>正在进入 FUO TOOLS…</p>
   <noscript><p><a href="/main/">点击进入主页</a></p></noscript>
 </body>
 </html>

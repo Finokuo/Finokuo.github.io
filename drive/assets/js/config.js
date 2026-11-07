@@ -19,4 +19,13 @@ window.FUO_SUFFIX = window.FUO_BASE ? '/index.html' : '/';
 window.FUO_PATHS = {
   MAIN: window.FUO_BASE + '/main' + window.FUO_SUFFIX,
   DRIVE: window.FUO_BASE + '/drive' + window.FUO_SUFFIX,
+  // 工具集目录页：/drive/tool-cluster/（各工具在其下的独立子目录）
+  TOOL_CLUSTER: window.FUO_BASE + '/drive/tool-cluster' + window.FUO_SUFFIX,
+};
+
+/**
+ * 工具集内跳转：slug → /drive/tool-cluster/<slug>/
+ */
+window.FUO_TOOL_URL = function (slug) {
+  return window.FUO_BASE + '/drive/tool-cluster/' + encodeURIComponent(slug) + window.FUO_SUFFIX;
 };

@@ -1,0 +1,37 @@
+Fuo Tools v0.4.3 · 主题动画升级 element-plus 同款（方向性圆形换肤）
+====================================================================
+
+本次升级
+  主题切换动画对齐 element-plus 官网效果（掘金同款工艺）：
+  · 圆心 = 鼠标实际点击处（不再是按钮中心）
+  · 切到亮色：新主题从点击处圆形【扩散】开
+  · 切到暗色：旧主题向点击处圆形【收起】消失
+  · 无轮廓 · 500ms · 全站统一（主页/工作台/工具集/8个工具页）
+  老浏览器或系统"减少动态效果"时自动降级为直接切换。
+
+  相比 v0.4.2 改动的文件（5 个）：
+    main/assets/js/theme.js          （方向性动画 + 鼠标圆心）
+    drive/assets/js/theme.js         （同上）
+    main/assets/css/style.css        （末尾 +1 行置顶规则）
+    drive/assets/css/style.css       （末尾 +1 行置顶规则）
+    drive/tool-cluster/assets/css/tool.css（末尾 +1 行置顶规则）
+
+  v0.4.2 及之前已含：✕ 关闭按钮修复、supabase-setup.sql 42883 修正。
+
+上传步骤（GitHub 网页端）
+  第 0 步（必须先做）：Supabase 控制台 → SQL Editor（…/sql/new）→
+    粘贴 supabase-setup.sql 全部内容 → Run（脚本幂等，可整段重跑）。
+  第 1 步：把 main、drive、root 文件夹和 supabase-setup.sql
+    一起拖到仓库根目录上传（同名自动覆盖）。
+  第 2 步：等 Pages 构建绿勾后强刷（Ctrl+F5）验收。
+
+  ※ 若 v0.4.2 已上传过，本次只需覆盖上面列出的 5 个文件。
+
+验收要点
+  右上角 ☀/🌙：鼠标点在按钮的哪个位置，圆就从哪里开始——
+  切亮色是"圆形展开"，切暗色是"圆形收拢"，方向相反。
+
+注意事项
+  · profiles 表没建前，用户名注册/登录会提示"数据库尚未初始化"。
+  · 建议 Authentication → Providers → Email 里关掉 Confirm email。
+  · 记得轮换泄露过的 Supabase secret key。

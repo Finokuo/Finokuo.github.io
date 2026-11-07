@@ -629,6 +629,7 @@ img, svg { display: block; }
 .auth-sub { margin: 2px 0 18px; font-size: 13px; color: var(--muted); }
 
 .field { display: block; margin-bottom: 14px; }
+.field[hidden] { display: none; }
 .field-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .field-box {
   display: flex; align-items: center; gap: 10px;
@@ -698,3 +699,79 @@ img, svg { display: block; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   .fx [data-reveal] { opacity: 1; transform: none; }
 }
+
+/* =====================================================
+   彩色图标系统（Win11 设置页风）：与 drive 同一套 token
+   ===================================================== */
+.tone-teal     { --ic: #2dd4bf; --ic-soft: rgba(45, 212, 191, 0.13); --ic-line: rgba(45, 212, 191, 0.32); --ic-glow: rgba(45, 212, 191, 0.2); }
+.tone-emerald  { --ic: #34d399; --ic-soft: rgba(52, 211, 153, 0.12); --ic-line: rgba(52, 211, 153, 0.32); --ic-glow: rgba(52, 211, 153, 0.18); }
+.tone-amber    { --ic: #e8b34c; --ic-soft: rgba(232, 179, 76, 0.12); --ic-line: rgba(232, 179, 76, 0.32); --ic-glow: rgba(232, 179, 76, 0.18); }
+.tone-rose     { --ic: #fb7185; --ic-soft: rgba(251, 113, 133, 0.12); --ic-line: rgba(251, 113, 133, 0.32); --ic-glow: rgba(251, 113, 133, 0.18); }
+.tone-violet   { --ic: #a78bfa; --ic-soft: rgba(167, 139, 250, 0.13); --ic-line: rgba(167, 139, 250, 0.32); --ic-glow: rgba(167, 139, 250, 0.2); }
+.tone-orange   { --ic: #fb923c; --ic-soft: rgba(251, 146, 60, 0.12); --ic-line: rgba(251, 146, 60, 0.32); --ic-glow: rgba(251, 146, 60, 0.18); }
+.tone-cyan     { --ic: #22d3ee; --ic-soft: rgba(34, 211, 238, 0.12); --ic-line: rgba(34, 211, 238, 0.32); --ic-glow: rgba(34, 211, 238, 0.18); }
+.tone-fuchsia  { --ic: #e879f9; --ic-soft: rgba(232, 121, 249, 0.12); --ic-line: rgba(232, 121, 249, 0.32); --ic-glow: rgba(232, 121, 249, 0.18); }
+
+:root[data-theme="light"] .tone-teal     { --ic: #0d9488; --ic-soft: rgba(13, 148, 136, 0.09); --ic-line: rgba(13, 148, 136, 0.28); --ic-glow: rgba(13, 148, 136, 0.16); }
+:root[data-theme="light"] .tone-emerald  { --ic: #059669; --ic-soft: rgba(5, 150, 105, 0.09); --ic-line: rgba(5, 150, 105, 0.28); --ic-glow: rgba(5, 150, 105, 0.15); }
+:root[data-theme="light"] .tone-amber    { --ic: #b45309; --ic-soft: rgba(180, 83, 9, 0.09); --ic-line: rgba(180, 83, 9, 0.28); --ic-glow: rgba(180, 83, 9, 0.15); }
+:root[data-theme="light"] .tone-rose     { --ic: #e11d48; --ic-soft: rgba(225, 29, 72, 0.08); --ic-line: rgba(225, 29, 72, 0.28); --ic-glow: rgba(225, 29, 72, 0.15); }
+:root[data-theme="light"] .tone-violet   { --ic: #7c3aed; --ic-soft: rgba(124, 58, 237, 0.08); --ic-line: rgba(124, 58, 237, 0.28); --ic-glow: rgba(124, 58, 237, 0.15); }
+:root[data-theme="light"] .tone-orange   { --ic: #ea580c; --ic-soft: rgba(234, 88, 12, 0.09); --ic-line: rgba(234, 88, 12, 0.28); --ic-glow: rgba(234, 88, 12, 0.15); }
+:root[data-theme="light"] .tone-cyan     { --ic: #0891b2; --ic-soft: rgba(8, 145, 178, 0.09); --ic-line: rgba(8, 145, 178, 0.28); --ic-glow: rgba(8, 145, 178, 0.15); }
+:root[data-theme="light"] .tone-fuchsia  { --ic: #c026d3; --ic-soft: rgba(192, 38, 211, 0.08); --ic-line: rgba(192, 38, 211, 0.28); --ic-glow: rgba(192, 38, 211, 0.15); }
+
+/* 功能卡图标 chip：使用每卡专属色 */
+.feature-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--ic-soft, var(--card-2));
+  border: 1px solid var(--ic-line, var(--border));
+  color: var(--ic, var(--text-dim));
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.feature-ic svg { width: 19px; height: 19px; }
+.feature-card:hover .feature-ic {
+  background: var(--ic-soft, rgba(45, 212, 191, 0.14));
+  color: var(--ic, var(--accent-bright));
+  border-color: var(--ic-line, rgba(45, 212, 191, 0.5));
+  box-shadow: 0 0 18px var(--ic-glow, rgba(45, 212, 191, 0.2));
+  transform: scale(1.06) rotate(-3deg);
+}
+
+/* 工具 chip 彩色图标 */
+.tc-ic {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 24px; height: 24px; border-radius: 7px;
+  background: var(--ic-soft, var(--card-2));
+  border: 1px solid var(--ic-line, var(--border));
+  color: var(--ic, var(--faint));
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.tc-ic svg { width: 13px; height: 13px; }
+.tool-chip { cursor: default; }
+button.tool-chip { cursor: pointer; }
+.tool-chip.is-live:hover .tc-ic {
+  box-shadow: 0 0 12px var(--ic-glow, rgba(45, 212, 191, 0.18));
+  transform: scale(1.08);
+}
+/* 状态徽章：可用 / SOON */
+.tool-chip.is-live em {
+  color: #34d399; border-color: rgba(52, 211, 153, 0.35);
+  background: rgba(52, 211, 153, 0.06);
+}
+.tool-chip.is-live:hover em {
+  color: #34d399; border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.15);
+}
+:root[data-theme="light"] .tool-chip.is-live em {
+  color: #047857; border-color: rgba(5, 150, 105, 0.35); background: rgba(5, 150, 105, 0.06);
+}
+
+/* ---------- 主题切换 · 圆形扩散（View Transitions，全站统一工艺） ---------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+:root[data-theme="dark"]::view-transition-old(root) { z-index: 100; }

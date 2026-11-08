@@ -71,6 +71,15 @@
   box-shadow: var(--shadow-hover);
 }
 .tc-card:hover::after { opacity: 1; }
+
+/* System 专属入口卡（仅 System 登录后由 JS 渲染） */
+.tc-card-admin { border-color: rgba(244, 113, 116, 0.34); }
+.tc-card-admin::after {
+  background: radial-gradient(420px 150px at var(--mx, 50%) -20%, rgba(244, 113, 116, 0.12), transparent 70%);
+}
+.tc-card-admin:hover { border-color: rgba(244, 113, 116, 0.55); }
+:root[data-theme="light"] .tc-card-admin { border-color: rgba(225, 29, 72, 0.28); }
+:root[data-theme="light"] .tc-card-admin:hover { border-color: rgba(225, 29, 72, 0.5); }
 .tc-card-ic { width: 34px; height: 34px; border-radius: 10px; }
 .tc-card-ic svg { width: 18px; height: 18px; }
 .tc-card-txt { position: relative; z-index: 1; }

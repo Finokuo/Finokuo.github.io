@@ -43,10 +43,14 @@ Finokuo.github.io/        ← GitHub 仓库名必须是这个（用户主页站�
 ## 二、Supabase 配置（3 步）
 
 1. **执行数据库脚本**：Supabase 控制台 → SQL Editor → 粘贴 `supabase-setup.sql` 全部内容 → Run ✅
-2. **（推荐）关闭邮箱验证，注册即登录**：
+2. **（必须）关闭邮箱验证，注册即登录**：
    Authentication → Sign In / Providers → **取消勾选 Confirm email** → Save。
-   - 不关也可以：注册页会提示用户去邮箱点确认链接。
-   - 注意：免费档**每小时只能发少量验证邮件**，公测期建议直接关掉，避免用户被限流卡住。
+   - 注册流程已完全适配「无验证邮件」模式：注册前只查用户名/邮箱是否被占用，
+     查重通过直接建号进工作台，全程不发、不等任何验证邮件。
+   - 若保持开启：signUp 拿不到 session，注册页会提示你去关闭或手动确认用户。
+   - 提醒：曾用「已开启验证」注册过的邮箱会留下「Waiting for verification」僵尸账号
+     占住邮箱（且在 profiles 表无记录、预检查不到），需到 Authentication → Users
+     手动 Delete user 后才能重新注册。
 3. **API Key**：两个页面的 `assets/js/config.js` 已填好 Publishable Key（可公开的那把），无需改动。
    - ⚠️ **`sb_secret_` 开头的 Secret Key 永远不要放进前端！** 它能绕过所有安全策略。
      **强烈建议立刻去 Settings → API Keys → Rotate 轮换一次**（它曾在聊天中出现过，视为已泄露）。

@@ -1,6 +1,8 @@
 /* =====================================================
  * Fuo Tools · 主页逻辑（登录 / 注册 / 已登录跳转）
  * 注册：用户名 + 邮箱 + 密码（Supabase Auth + profiles 表）
+ *       邮箱仅作账号标识，不发送、不等待任何验证邮件：
+ *       用户名查重 → 邮箱查重 → signUp → 拿到 session 直接进工作台
  * 登录：用户名 或 邮箱 + 密码（用户名经 profiles 反查邮箱）
  * ===================================================== */
 (function () {
@@ -111,7 +113,7 @@
     if (/already registered/i.test(m)) return '该邮箱已注册，请直接登录。';
     if (/at least 6 characters/i.test(m)) return '密码至少需要 6 位。';
     if (/invalid login credentials/i.test(m)) return '账号或密码不正确。';
-    if (/email not confirmed/i.test(m)) return '请先查收验证邮件，完成邮箱验证后再登录。';
+    if (/email not confirmed/i.test(m)) return '该账号邮箱未验证：请在 Supabase 控制台 Authentication → Users 手动确认该用户后再登录。';
     if (/rate limit/i.test(m)) return '触发频控：注册人数较多或邮件额度用尽，请一小时后再试。';
     if (/failed to fetch|network/i.test(m)) return '网络连接失败，请检查网络后重试。';
     if (/valid email/i.test(m)) return '请输入正确的邮箱地址。';
@@ -134,6 +136,13 @@
       /schema cache/i.test(m);
   }
 
+  /* 抛出带 friendly 标记的错误：catch 里直接展示原文，不再包「出错了：」前缀 */
+  function friendlyErr(text) {
+    var e = new Error(text);
+    e.friendly = true;
+    return e;
+  }
+
   /* 登录输入可能是用户名 → 查 profiles 拿邮箱；是邮箱 → 原样返回 */
   function resolveIdentifier(identifier) {
     if (identifier.indexOf('@') !== -1) return Promise.resolve(identifier);
@@ -147,10 +156,10 @@
           if (isMissingTable(error)) {
             var e = new Error(SQL_HINT); e.isSql = true; throw e;
           }
-          var e2 = new Error('查询用户失败，请检查网络后重试。'); throw e2;
+          var e2 = friendlyErr('查询用户失败，请检查网络后重试。'); throw e2;
         }
         if (!data || !data.email) {
-          throw new Error('用户名不存在，请检查拼写，或改用邮箱登录。');
+          throw friendlyErr('用户名不存在，请检查拼写，或改用邮箱登录。');
         }
         return data.email;
       });
@@ -168,9 +177,28 @@
           if (isMissingTable(error)) {
             var e = new Error(SQL_HINT); e.isSql = true; throw e;
           }
-          var e2 = new Error('检查用户名时出错，请稍后再试。'); throw e2;
+          var e2 = friendlyErr('检查用户名时出错，请稍后再试。'); throw e2;
         }
-        if (data) throw new Error('该用户名已被占用，换一个试试。');
+        if (data) throw friendlyErr('该用户名已被占用，换一个试试。');
+        return true;
+      });
+  }
+
+  /* 注册前邮箱预检：profiles 里已存在该邮箱 → 直接拦下，不发注册请求 */
+  function checkEmailFree(email) {
+    return sb.from('profiles')
+      .select('email')
+      .eq('email', email.toLowerCase()) // Supabase 存储邮箱统一小写，避免大小写不一致漏检
+      .limit(1)
+      .then(function (_a) {
+        var data = _a.data, error = _a.error;
+        if (error) {
+          if (isMissingTable(error)) {
+            var e = new Error(SQL_HINT); e.isSql = true; throw e;
+          }
+          var e2 = friendlyErr('检查邮箱时出错，请稍后再试。'); throw e2;
+        }
+        if (data && data.length) throw friendlyErr('该邮箱已注册，请直接登录。');
         return true;
       });
   }
@@ -184,6 +212,10 @@
   function handleSignup(username, email, password) {
     checkUsernameFree(username)
       .then(function () {
+        // 用户名可用 → 再查邮箱是否已被注册（查重通过即发起注册，不发任何验证邮件）
+        return checkEmailFree(email);
+      })
+      .then(function () {
         return sb.auth.signUp({
           email: email,
           password: password,
@@ -195,14 +227,49 @@
         var data = _a.data, error = _a.error;
         if (error) { setBusy(false); showMsg('error', friendlyError(error)); return; }
         if (data.session) { gotoDrive(); return; }
-        // 项目开启了「邮箱验证」：需要用户先去邮箱点击确认
+
+        // 走到这里 = 没拿到 session。分两种情况：
+        var user = data && data.user;
+        var taken = user && Array.isArray(user.identities) && user.identities.length === 0;
         setBusy(false);
-        showMsg('success', '验证邮件已发送到你的邮箱，请查收并点击确认链接，之后回来登录即可。（若未收到，可能触发了每小时邮件限额，请稍后再试）');
+        if (taken) {
+          // Supabase 返回「假用户」（identities 为空）：该邮箱在 auth 里已有账号占位。
+          // 常见原因：之前注册过但卡在 Waiting for verification（这种账号在 profiles 表里
+          // 没有记录，上面的邮箱预检拦不住它，只能在这里接住）。
+          showMsg('error', '该邮箱已被 Supabase 里的旧账号占用（多半是之前没验证成功的注册）。两种解决：① 若旧账号是你的，直接用邮箱登录；② 收不到验证邮件的话，到 Supabase 控制台 Authentication → Users 找到该邮箱 → 右侧 ⋮ → Delete user 删除，回来重新注册即可。');
+          return;
+        }
+        if (user) {
+          // 真用户但无 session：项目又把「Confirm email」开回来了，注册被挂起等验证。
+          showMsg('success', '注册已提交，但该项目仍开着「Confirm email」。请在 Supabase 控制台 Authentication → Sign In / Providers 关闭 Confirm email，并在 Authentication → Users 删除这个未确认账号后重新注册（否则邮箱会被占用）。');
+          return;
+        }
+        showMsg('error', '注册未完成，请稍后再试。');
       })
       .catch(function (err) {
         setBusy(false);
-        showMsg('error', err.isSql ? err.message : friendlyError(err));
+        showMsg('error', (err.isSql || err.friendly) ? err.message : friendlyError(err));
       });
+  }
+
+  /* 登录后封禁检查：banned → 立即登出并拦截（status 列不存在/查询失败时放行，不影响登录）
+   * onDeny：被拦时的回调（弹窗内提示 / 首页 toast） */
+  function checkBannedThenEnter(user, onDeny) {
+    sb.from('profiles')
+      .select('status')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(function (_a) {
+        var data = _a.data;
+        if (data && data.status === 'banned') {
+          sb.auth.signOut().then(function () {
+            setBusy(false);
+            if (onDeny) onDeny();
+          });
+          return;
+        }
+        gotoDrive();
+      }, function () { gotoDrive(); });
   }
 
   function handleLogin(identifier, password) {
@@ -214,13 +281,19 @@
         if (!_a) return;
         var data = _a.data, error = _a.error;
         if (error) { setBusy(false); showMsg('error', friendlyError(error)); return; }
-        if (data.session) { gotoDrive(); return; }
+        if (data.session) {
+          // 登录成功 → 先查封禁状态，再放行进工作台
+          checkBannedThenEnter(data.session.user, function () {
+            showMsg('error', '该账号已被封禁，如有疑问请联系管理员。');
+          });
+          return;
+        }
         setBusy(false);
         showMsg('error', '登录未完成，请稍后再试。');
       })
       .catch(function (err) {
         setBusy(false);
-        showMsg('error', err.isSql ? err.message : friendlyError(err));
+        showMsg('error', (err.isSql || err.friendly) ? err.message : friendlyError(err));
       });
   }
 
@@ -284,11 +357,20 @@
   /* ---------- 启动 ---------- */
   sb = initSupabase();
 
-  // 已登录访客访问主页 → 直接进入工作台
+  // 从工作台/工具页被踢回时（?banned=1）给出提示
+  if (window.location.search.indexOf('banned=1') !== -1) {
+    showToast('该账号已被封禁，如有疑问请联系管理员。');
+  }
+
+  // 已登录访客访问主页 → 先查封禁，正常则直接进入工作台
   if (sb) {
     sb.auth.getSession().then(function (_a) {
       var data = _a.data;
-      if (data && data.session) gotoDrive();
+      if (data && data.session) {
+        checkBannedThenEnter(data.session.user, function () {
+          showToast('该账号已被封禁，如有疑问请联系管理员。');
+        });
+      }
     });
     // 在别的标签页登出时，本页也同步感知
     sb.auth.onAuthStateChange(function (event) {

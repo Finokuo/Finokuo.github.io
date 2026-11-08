@@ -161,4 +161,88 @@ create trigger notes_set_updated_at
   before update on public.notes
   for each row execute function public.set_updated_at_fn();
 
+-- ============================================
+-- 第三部分 · System 管理端（v3 增量，Terminal 用）
+-- ============================================
+
+-- 1) status 列：账号状态（active 正常 / banned 封禁）
+alter table public.profiles
+  add column if not exists status text not null default 'active';
+
+alter table public.profiles drop constraint if exists profiles_status_format;
+alter table public.profiles
+  add constraint profiles_status_format
+  check (status in ('active', 'banned'));
+
+update public.profiles set status = 'active' where status is null;
+
+-- 2) System 管理策略：System 可以更新「任何人」的 profile
+--    ⚠ 用户名区分大小写：必须是恰好 "System"
+drop policy if exists "profiles_update_system_admin" on public.profiles;
+create policy "profiles_update_system_admin" on public.profiles
+  for update using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.username = 'System'
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.username = 'System'
+    )
+  );
+
+-- 3) 防绕过触发器：普通用户不能自行解封；System 不能封禁/改名自己
+create or replace function public.guard_profile_changes()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  is_system boolean;
+begin
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.username = 'System'
+  ) into is_system;
+
+  if new.status is distinct from old.status and not is_system then
+    raise exception 'FUO_ADMIN_ONLY: 账号状态只能由 System 修改';
+  end if;
+
+  if old.username = 'System' and new.status = 'banned' then
+    raise exception 'FUO_SYSTEM_SELF_BAN: 不能封禁 System 账号';
+  end if;
+
+  if old.username = 'System' and new.username is distinct from old.username then
+    raise exception 'FUO_SYSTEM_RENAME: System 账号不可改名';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_guard_changes on public.profiles;
+create trigger profiles_guard_changes
+  before update on public.profiles
+  for each row execute function public.guard_profile_changes();
+
+-- 4) notes 管理策略：System 可读写所有人的快捷笔记
+drop policy if exists "notes_all_system_admin" on public.notes;
+create policy "notes_all_system_admin" on public.notes
+  for all using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.username = 'System'
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.username = 'System'
+    )
+  );
+
 -- 完成！现在支持：注册时填用户名 · 用户名+密码登录 · 工作台修改用户名
+--              · System 管理员（Terminal）封禁/解封/改名/管理笔记

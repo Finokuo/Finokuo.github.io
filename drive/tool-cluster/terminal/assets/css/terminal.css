@@ -1,0 +1,109 @@
+/* =====================================================
+ * Fuo Tools · Terminal（System 管理控制台）样式
+ * 挂在 tool.css 之后，只定义终端窗口自身的东西。
+ * 颜色全部走 style.css 的变量，自动跟随亮/暗主题。
+ * ===================================================== */
+
+/* ---------- 等待门（身份验证中） ---------- */
+.term-gate {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 34px 10px; color: var(--muted); font-size: 13px;
+}
+.term-spin {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--border-strong); border-top-color: var(--accent);
+  animation: term-spin 0.8s linear infinite;
+}
+@keyframes term-spin { to { transform: rotate(360deg); } }
+
+/* ---------- 拒绝面板 ---------- */
+.term-denied { text-align: center; padding: 30px 14px 26px; }
+.term-denied-ic {
+  width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--inset-bg); border: 1px solid var(--border);
+  color: var(--danger);
+}
+.term-denied-ic svg { width: 24px; height: 24px; }
+.term-denied h2 {
+  margin: 0 0 6px; font-size: 17px; font-weight: 800; letter-spacing: 0.02em;
+  color: var(--text);
+}
+.term-denied p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--muted); }
+.term-denied .mono { color: var(--faint); font-size: 12px; }
+.term-denied a { color: var(--accent); }
+
+/* ---------- 终端窗口 ---------- */
+.term {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--inset-bg);
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+.term-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.term-dot { width: 11px; height: 11px; border-radius: 50%; }
+.term-dot._r { background: #ff5f57; } .term-dot._y { background: #febc2e; } .term-dot._g { background: #28c840; }
+.term-title {
+  margin-left: 6px; font-size: 12px; color: var(--muted);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+}
+
+/* 输出区：限高滚动（长列表处理规范） */
+.term-body {
+  min-height: 320px; max-height: 420px;
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 13px 14px 10px;
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  font-size: 12.5px; line-height: 1.7;
+  cursor: text;
+}
+.term-body::-webkit-scrollbar { width: 8px; }
+.term-body::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+.term-body::-webkit-scrollbar-track { background: transparent; }
+
+/* 每行输出 */
+.tl { white-space: pre-wrap; word-break: break-all; color: var(--text-dim); }
+.tl._cmd { color: var(--text); }
+.tl._ok { color: var(--accent-bright, #5eead4); }
+.tl._err { color: var(--danger); }
+.tl._warn { color: var(--warn); }
+.tl._dim { color: var(--faint); }
+.tl._banned { color: var(--danger); font-weight: 700; }
+.tl b { color: var(--text); font-weight: 700; }
+
+/* 输入行 */
+.term-input-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+}
+.term-prompt { color: var(--accent-bright, #5eead4); font-size: 12.5px; white-space: nowrap; user-select: none; }
+.term-input {
+  flex: 1; min-width: 0;
+  background: transparent; border: none; outline: none;
+  color: var(--text); font: inherit; font-size: 12.5px;
+  caret-color: var(--accent);
+}
+.term-input::placeholder { color: var(--faint); }
+
+/* 预览模式徽标 */
+.term-badge {
+  display: inline-block; margin-left: 8px; padding: 1px 7px;
+  border-radius: 99px; font-size: 11px;
+  color: var(--warn); border: 1px solid var(--warn);
+  opacity: 0.85;
+}
+
+/* 窄屏适配 */
+@media (max-width: 560px) {
+  .term-body { min-height: 260px; max-height: 340px; font-size: 12px; }
+  .term-title { display: none; }
+}

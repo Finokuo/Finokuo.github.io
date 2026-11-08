@@ -136,12 +136,19 @@
   /* ---------- 用户名：加载 + 修改 ---------- */
   function loadProfile() {
     sb.from('profiles')
-      .select('username')
+      .select('username,status')
       .eq('id', user.id)
       .maybeSingle()
       .then(function (_a) {
         var data = _a.data, error = _a.error;
         if (!error) profile = data || null;
+        // 被封禁：立即登出送回主页（数据库触发器保证无法自行解封）
+        if (data && data.status === 'banned') {
+          sb.auth.signOut().then(function () {
+            window.location.replace(PATHS.MAIN + '?banned=1');
+          });
+          return;
+        }
         // 无论 profiles 是否就绪，都用当前最佳名字（profile → 元数据 → 邮箱前缀）统一渲染
         renderName();
       });

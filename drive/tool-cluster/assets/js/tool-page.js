@@ -598,7 +598,7 @@
   }
 
   /* =====================================================
-   * 登录守卫：未登录 → 送回主页
+   * 登录守卫：未登录 → 送回主页；被封禁 → 登出送回主页
    * ===================================================== */
   function guard() {
     if (PREVIEW) return;
@@ -609,7 +609,64 @@
         var session = _a.data && _a.data.session;
         if (!session && PATHS && PATHS.MAIN) {
           window.location.replace(PATHS.MAIN + '?next=tools');
+          return;
         }
+        if (!session) return;
+        // 封禁检查（status 列不存在时静默跳过，不影响工具使用）
+        client.from('profiles').select('status').eq('id', session.user.id).maybeSingle()
+          .then(function (_b) {
+            if (_b.data && _b.data.status === 'banned') {
+              client.auth.signOut().then(function () {
+                window.location.replace(PATHS.MAIN + '?banned=1');
+              });
+            }
+          });
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  /* =====================================================
+   * System 专属入口：目录页末尾追加 Terminal 卡片
+   * 仅当登录者恰好是 System 时渲染（预览模式展示外壳）
+   * ===================================================== */
+  function adminCard() {
+    var url = window.FUO_TOOL_URL ? window.FUO_TOOL_URL('terminal') : 'terminal/index.html';
+    var a = h('a', 'tc-card tc-card-admin');
+    a.href = url;
+    a.setAttribute('aria-label', '打开 Terminal（仅 System 账号可用）');
+    a.style.setProperty('--i', '8'); // 入场交错动画排在第 9 张
+
+    var ic = h('i', 't-ic tc-card-ic tone-rose');
+    ic.setAttribute('aria-hidden', 'true');
+    ic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">' +
+      '<path d="M4 17l6-5-6-5M12 19h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    var txt = h('div', 'tc-card-txt');
+    txt.appendChild(h('b', null, 'Terminal'));
+    txt.appendChild(h('p', null, 'SYSTEM ONLY · 账号管理控制台'));
+
+    a.appendChild(ic);
+    a.appendChild(txt);
+    a.appendChild(h('span', 'tc-go mono', '进入 →'));
+    return a;
+  }
+
+  function maybeAdminCard() {
+    var grid = document.getElementById('tc-grid');
+    if (!grid) return;
+    if (PREVIEW) { grid.appendChild(adminCard()); return; } // 预览：展示外壳
+    if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return;
+    try {
+      var c = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+      c.auth.getSession().then(function (_a) {
+        var s = _a.data && _a.data.session;
+        if (!s) return; // 未登录：目录页会被守卫送走，不渲染
+        c.from('profiles').select('username').eq('id', s.user.id).maybeSingle()
+          .then(function (_b) {
+            if (_b.data && _b.data.username === 'System') {
+              grid.appendChild(adminCard());
+            }
+          });
       });
     } catch (e) { /* ignore */ }
   }
@@ -689,6 +746,7 @@
     setLinks();
     if (document.body.getAttribute('data-page') === 'cluster') {
       renderCluster();
+      maybeAdminCard();
     } else {
       renderToolPage();
     }

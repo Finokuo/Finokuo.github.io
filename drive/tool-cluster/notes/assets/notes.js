@@ -609,7 +609,11 @@
     m.hidden = false;
   }
 
+  var lastCreate = 0;
   function createNote() {
+    var now = Date.now();
+    if (now - lastCreate < 800) return; // 连点/双击防抖：不重复建笔记
+    lastCreate = now;
     var c = client();
     var folderId = (state.folder !== 'all') ? state.folder : null;
     c.from('notes')

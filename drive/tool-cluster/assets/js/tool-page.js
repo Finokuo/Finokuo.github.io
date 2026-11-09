@@ -11,7 +11,7 @@
   var PATHS = window.FUO_PATHS;
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
 
-  /* 设置开关兑底读取（与 settings.js 同键，无依赖、顺序无关） */
+  /* 设置开关兜底读取（与 settings.js 同键，无依赖、顺序无关） */
   function settingOn(key, dflt) {
     try {
       var raw = localStorage.getItem('fuo-settings');

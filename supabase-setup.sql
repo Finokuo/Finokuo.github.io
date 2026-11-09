@@ -129,7 +129,9 @@ create trigger profiles_set_updated_at
 -- 第二部分 · 云笔记（多笔记 + 文件夹）+ 收藏表（v4）
 -- ============================================
 
--- 1) 文件夹表
+-- ============================================
+-- 1) 文件夹表 folders
+-- ============================================
 create table if not exists public.folders (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users (id) on delete cascade,
@@ -161,6 +163,7 @@ drop policy if exists "folders_delete_own" on public.folders;
 create policy "folders_delete_own" on public.folders
   for delete using (auth.uid() = user_id);
 
+-- System 全权（与 notes / profiles 管理策略同款）
 drop policy if exists "folders_all_system_admin" on public.folders;
 create policy "folders_all_system_admin" on public.folders
   for all using (
@@ -172,8 +175,10 @@ create policy "folders_all_system_admin" on public.folders
             where p.id = auth.uid() and p.username = 'System')
   );
 
+-- ============================================
 -- 2) notes 表重建：一人多笔记 + 文件夹 + 快捷笔记标记
---    （旧表每用户仅一行且无数据，直接重建）
+--    （旧表每用户仅一行且当前无数据，直接重建）
+-- ============================================
 drop table if exists public.notes cascade;
 
 create table public.notes (
@@ -182,13 +187,14 @@ create table public.notes (
   folder_id  uuid references public.folders (id) on delete set null,
   title      text not null default '未命名笔记',
   content    text not null default '',
-  is_quick   boolean not null default false,
+  is_quick   boolean not null default false,   -- 快捷笔记：置顶、不可删除
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists notes_user_idx   on public.notes (user_id);
 create index if not exists notes_folder_idx on public.notes (folder_id);
+-- 每人至多一条快捷笔记（部分唯一索引）
 create unique index if not exists notes_one_quick_per_user
   on public.notes (user_id) where is_quick;
 
@@ -207,9 +213,31 @@ create policy "notes_update_own" on public.notes
   for update using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- 普通用户只能删「非快捷笔记」；快捷笔记由下方触发器无条件保护
 drop policy if exists "notes_delete_own" on public.notes;
 create policy "notes_delete_own" on public.notes
   for delete using (auth.uid() = user_id and is_quick = false);
+
+drop policy if exists "notes_all_system_admin" on public.notes;
+create policy "notes_all_system_admin" on public.notes
+  for all using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  )
+  with check (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- updated_at 自动更新（函数 set_updated_at_fn 已在 setup.sql v1 定义；
+-- 若跳过 setup 直接执行本脚本，这里兜底补建）
+create or replace function public.set_updated_at_fn()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
 
 drop trigger if exists notes_set_updated_at on public.notes;
 create trigger notes_set_updated_at
@@ -232,7 +260,12 @@ create trigger notes_guard_quick
   before delete on public.notes
   for each row execute function public.guard_quick_note();
 
--- 3) 收藏表（工具 / 笔记）
+-- ============================================
+-- 3) 收藏表 favorites（工具 / 笔记）
+--    kind = 'tool' → ref = 工具 slug（json/color/…）
+--    kind = 'note' → ref = 笔记 uuid
+--    title 为冗余显示名（笔记改名时由前端同步更新）
+-- ============================================
 create table if not exists public.favorites (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users (id) on delete cascade,
@@ -242,6 +275,7 @@ create table if not exists public.favorites (
   created_at timestamptz not null default now()
 );
 
+-- 同一对象只收藏一次
 create unique index if not exists favorites_unique
   on public.favorites (user_id, kind, ref);
 create index if not exists favorites_user_idx
@@ -277,7 +311,9 @@ create policy "favorites_all_system_admin" on public.favorites
             where p.id = auth.uid() and p.username = 'System')
   );
 
--- 4) 存量用户补建快捷笔记
+-- ============================================
+-- 4) 存量用户补建快捷笔记（Finokuo / System / …）
+-- ============================================
 insert into public.notes (user_id, title, is_quick)
 select p.id, '快捷笔记', true
 from public.profiles p
@@ -286,7 +322,10 @@ where not exists (
   where n.user_id = p.id and n.is_quick = true
 );
 
--- 5) 新用户注册 → 自动创建快捷笔记（独立触发器，不动 handle_new_user）
+-- ============================================
+-- 5) 新用户注册 → 自动创建快捷笔记
+--    （独立触发器，不影响原 handle_new_user 的用户名逻辑）
+-- ============================================
 create or replace function public.handle_new_user_notes()
 returns trigger
 language plpgsql
@@ -303,6 +342,7 @@ drop trigger if exists on_auth_user_created_notes on auth.users;
 create trigger on_auth_user_created_notes
   after insert on auth.users
   for each row execute function public.handle_new_user_notes();
+
 
 -- ============================================
 -- 第三部分 · System 管理端（v3 增量，Terminal 用）

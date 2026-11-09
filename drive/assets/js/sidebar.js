@@ -1,15 +1,16 @@
 /* =====================================================
- * Fuo Tools · 共享侧栏 + 可点击面包屑（/drive 全部子页面复用）
+ * Fuo Tools · 共享侧栏 + 可点击面包屑 + 折叠（/drive 全部子页面复用）
  *
- * 用法（页面里只需两个空壳，由本脚本填充）：
- *   <aside class="sidebar" id="sidebar" data-active="tools" hidden></aside>
+ * 用法（页面里只需一个空壳，由本脚本填充）：
+ *   <aside class="sidebar" id="sidebar" data-active="tools" data-guard="1" hidden></aside>
  *   <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
  *   <script src="…/config.js"></script>
  *   <script src="…/sidebar.js"></script>
  *
  * data-active：home | tools | favorites | settings
- *
- * 顺带承担子页面登录守卫：未登录 → 送回主页；被封禁 → 登出踢回。
+ * data-guard="1"：承担子页面登录守卫（未登录 → 送回主页；被封禁 → 登出踢回）。
+ *                 工作台原生侧栏（drive/index.html）不设该属性：守卫由 app.js 负责。
+ * 折叠：侧栏底部「«」按钮 → 纯图标迷你列（68px），状态存 localStorage，全站同步。
  * ===================================================== */
 (function () {
   'use strict';
@@ -18,6 +19,7 @@
   var PATHS = window.FUO_PATHS || {};
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
   var sb = null;
+  var MINI_KEY = 'fuo-sidebar-mini';
 
   /* ---------- 面包屑 ---------- */
   function crumbLink(label, href) {
@@ -84,16 +86,22 @@
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M10 12h10M17 9l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
   };
 
+  function navItem(key, active, href, icon, label, badge) {
+    return '<a class="side-item' + (key === active ? ' is-active' : '') + '"' +
+      (key === active ? ' aria-current="page"' : '') +
+      ' href="' + href + '" title="' + label + '">' + icon + ' ' + label + (badge || '') + '</a>';
+  }
+
   function buildSidebar(active) {
     var aside = document.getElementById('sidebar');
-    if (!aside) return null;
+    if (!aside) return;
     var drive = PATHS.DRIVE || '../';
     var cluster = PATHS.TOOL_CLUSTER || '../tool-cluster/';
     var favorites = PATHS.FAVORITES || '../favorites/';
     var settings = PATHS.SETTINGS || '../settings/';
 
     aside.innerHTML =
-      '<a class="brand" href="' + drive + '" aria-label="返回工作台">' +
+      '<a class="brand" href="' + drive + '" title="返回工作台" aria-label="返回工作台">' +
         '<span class="brand-mark" aria-hidden="true">' +
           '<svg viewBox="0 0 32 32" width="17" height="17" fill="none"><path d="M11 23V9h10M11 16h8.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>' +
         '</span>' +
@@ -114,13 +122,36 @@
         '<button class="side-logout" id="sb-logout" type="button" title="退出登录" aria-label="退出登录">' + IC.out + '</button>' +
       '</div>';
     aside.hidden = false;
-    return aside;
   }
 
-  function navItem(key, active, href, icon, label, badge) {
-    return '<a class="side-item' + (key === active ? ' is-active' : '') + '"' +
-      (key === active ? ' aria-current="page"' : '') +
-      ' href="' + href + '">' + icon + ' ' + label + (badge || '') + '</a>';
+  /* ---------- 折叠（迷你列）：状态全站同步（localStorage） ---------- */
+  function initCollapse(aside) {
+    if (aside.querySelector('.side-collapse')) return;
+    var shell = aside.closest('.shell') || document.body;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'side-collapse';
+    btn.setAttribute('aria-label', '收起或展开侧栏');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">' +
+      '<path d="m14 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function apply(mini) {
+      shell.classList.toggle('is-mini', !!mini);
+      btn.classList.toggle('is-mini', !!mini);
+      btn.title = mini ? '展开侧栏' : '收起侧栏';
+      btn.setAttribute('aria-expanded', String(!mini));
+    }
+    var saved = false;
+    try { saved = localStorage.getItem(MINI_KEY) === '1'; } catch (e) { /* ignore */ }
+    apply(saved);
+
+    btn.addEventListener('click', function () {
+      var next = !shell.classList.contains('is-mini');
+      try { localStorage.setItem(MINI_KEY, next ? '1' : '0'); } catch (e) { /* ignore */ }
+      apply(next);
+    });
+    aside.appendChild(btn);
   }
 
   /* ---------- 会话：守卫 + 用户信息 ---------- */
@@ -174,6 +205,7 @@
       nameEl.textContent = (u.email || '').split('@')[0] || '已登录';
       nameEl.title = u.email || '';
     }
+    if (avatar) avatar.textContent = ((u.email || 'F')[0] || 'F').toUpperCase();
     // 用户名异步覆盖（profiles）
     sb.from('profiles').select('username,status').eq('id', u.id).maybeSingle()
       .then(function (_b) {
@@ -184,7 +216,6 @@
         if (nameEl) nameEl.textContent = name;
         if (avatar) avatar.textContent = (name[0] || 'F').toUpperCase();
       });
-    if (avatar) avatar.textContent = ((u.email || 'F')[0] || 'F').toUpperCase();
   }
 
   function banCheck(u) {
@@ -217,20 +248,12 @@
   /* ---------- 启动 ---------- */
   function boot() {
     var aside = document.getElementById('sidebar');
-    buildSidebar(aside ? aside.getAttribute('data-active') : 'tools');
+    if (!aside) return;
+    // 空壳才注入模板；工作台原生侧栏（已有子元素）只挂折叠按钮
+    if (!aside.firstChild) buildSidebar(aside.getAttribute('data-active') || 'tools');
+    initCollapse(aside);
     renderCrumb();
-
-    if (PREVIEW) { loadSession(); return; }
-    if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return;
-    try {
-      var c = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-      c.auth.getSession().then(function (_a) {
-        var session = _a.data && _a.data.session;
-        if (!session) return;
-        loadFavCount(session.user);
-      });
-    } catch (e) { /* ignore */ }
-
+    if (aside.getAttribute('data-guard') !== '1') return; // drive 原生侧栏：守卫由 app.js 负责
     loadSession();
   }
 

@@ -189,6 +189,7 @@
       localStorage.removeItem('fuo-recent-tools');
       localStorage.removeItem('fuo-tool-count');
       localStorage.removeItem('fu-theme');
+      localStorage.removeItem('fuo-sidebar-mini');
       showToast('本地数据已清除，正在刷新…');
       setTimeout(function () { window.location.reload(); }, 700);
     } catch (e) {

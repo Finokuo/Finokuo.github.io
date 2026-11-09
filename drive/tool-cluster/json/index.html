@@ -8,13 +8,13 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../../assets/js/theme.js?v=3"></script>
-  <link rel="stylesheet" href="../../assets/css/style.css" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=2" />
   <link rel="stylesheet" href="../assets/css/tool.css?v=2" />
 </head>
 <body data-tool="json">
   <div class="shell">
     <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
-    <aside class="sidebar" id="sidebar" data-active="tools" hidden></aside>
+    <aside class="sidebar" id="sidebar" data-active="tools" data-guard="1" hidden></aside>
 
     <!-- ===== 主区 ===== -->
     <div class="main-wrap">
@@ -54,7 +54,7 @@
   <script src="../../assets/vendor/supabase.min.js"></script>
   <script src="../../assets/js/config.js?v=2"></script>
   <script src="../../assets/js/fx.js?v=2"></script>
-  <script src="../../assets/js/sidebar.js?v=1"></script>
+  <script src="../../assets/js/sidebar.js?v=2"></script>
   <script src="../assets/js/tool-page.js?v=2"></script>
 </body>
 </html>

@@ -194,6 +194,10 @@
 .nb-empty b { font-size: 16px; }
 .nb-empty p { color: var(--muted); font-size: 13px; max-width: 320px; line-height: 1.8; }
 
+/* ★ 关键修复：.nb-empty 自带 display:flex，会覆盖 [hidden] 的 display:none，
+   导致选中笔记后空态面板仍然盖在编辑器上（表现为「无法修改内容/不显示」） */
+.nb-empty[hidden] { display: none; }
+
 /* 底部状态条 */
 .nb-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>云笔记 · Fuo Tools</title>
+  <meta name="description" content="Fuo Tools 云笔记：多笔记、文件夹、快捷笔记，实时云同步。" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../../assets/js/theme.js?v=3"></script>
+  <link rel="stylesheet" href="../../assets/css/style.css" />
+  <link rel="stylesheet" href="assets/notes.css?v=1" />
+</head>
+<body data-page="notes">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="tools" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- ===== 云笔记工作区 ===== -->
+      <main class="notes-main">
+        <!-- 左：笔记边栏 -->
+        <aside class="nb-side" aria-label="笔记列表">
+          <div class="nb-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="search" id="nb-q" placeholder="搜索笔记名…" aria-label="搜索笔记名" autocomplete="off" />
+          </div>
+
+          <div class="nb-actions">
+            <button class="tbtn is-primary nb-act" id="nb-new-note" type="button">＋ 新建笔记</button>
+            <button class="tbtn nb-act" id="nb-new-folder" type="button">＋ 文件夹</button>
+          </div>
+
+          <!-- 快捷笔记（固定，无法删除） -->
+          <div class="nb-sec">
+            <div class="nb-sec-label mono">固定</div>
+            <button class="nb-item nb-quick" id="nb-quick-item" type="button" title="快捷笔记 · 固定显示，无法删除">
+              <span class="nb-pin" aria-hidden="true">📌</span>
+              <span class="nb-item-title">快捷笔记</span>
+              <span class="nb-badge mono">PINNED</span>
+            </button>
+          </div>
+
+          <!-- 文件夹 -->
+          <div class="nb-sec">
+            <div class="nb-sec-label mono">文件夹</div>
+            <div id="nb-folder-list" class="nb-folder-list"></div>
+          </div>
+
+          <!-- 笔记列表 -->
+          <div class="nb-sec nb-sec-notes">
+            <div class="nb-sec-label mono">笔记 <span id="nb-note-count">0</span></div>
+            <div id="nb-list" class="nb-list" role="listbox" aria-label="笔记列表"></div>
+          </div>
+        </aside>
+
+        <!-- 右：编辑器 -->
+        <section class="nb-editor" aria-label="笔记编辑器">
+          <div class="nb-pathbar mono" id="nb-path" aria-label="笔记所在位置"></div>
+
+          <div class="nb-titlebar">
+            <div class="nb-title-wrap" id="nb-title-wrap">
+              <h1 class="nb-title" id="nb-title" title="点击修改笔记名">—</h1>
+              <input type="text" id="nb-title-input" class="nb-title-input" maxlength="60" aria-label="笔记名" hidden />
+            </div>
+            <div class="nb-tools">
+              <button class="nb-tool-btn" id="nb-star" type="button" title="收藏这篇笔记" aria-label="收藏这篇笔记" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              </button>
+              <label class="nb-move">
+                <span class="sr-only">移动到文件夹</span>
+                <select id="nb-move" aria-label="移动到文件夹">
+                  <option value="">未分类</option>
+                </select>
+              </label>
+              <button class="nb-tool-btn nb-del" id="nb-delete" type="button" title="删除这篇笔记" aria-label="删除这篇笔记">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5h15M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5M10 10.5v6M14 10.5v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="nb-body">
+            <textarea id="nb-content" placeholder="选择左侧任意笔记开始编辑，或点「＋ 新建笔记」。&#10;内容会实时云同步到你的账号。" spellcheck="false"></textarea>
+            <div class="nb-empty" id="nb-empty" hidden>
+              <p class="mono">// EMPTY</p>
+              <b>还没有选中笔记</b>
+              <p>从左侧选择一篇，或点上面的「＋ 新建笔记」开始书写。</p>
+            </div>
+          </div>
+
+          <footer class="nb-foot mono">
+            <span id="nb-count-info" title="点击立即保存（Ctrl+S）">0 字</span>
+            <span class="nb-foot-save" id="nb-save-state" role="status">—</span>
+            <span id="nb-updated">—</span>
+          </footer>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- ===== 通用输入弹窗（新建 / 重命名文件夹） ===== -->
+  <div class="modal" id="nb-modal" hidden>
+    <div class="modal-mask" data-nb-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="nb-modal-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="nb-modal-title">新建文件夹</h2>
+        <button class="modal-close" type="button" data-nb-close aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="tool-body">
+        <label class="tf">
+          <span class="tf-label mono" id="nb-modal-label">名称</span>
+          <input type="text" id="nb-modal-input" class="tf-input" maxlength="30" placeholder="例如：工作文档" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="tf-msg" id="nb-modal-msg" hidden></p>
+        <div class="tbtn-row">
+          <button class="tbtn is-primary" id="nb-modal-ok" type="button">确定</button>
+          <button class="tbtn" type="button" data-nb-close>取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 确认弹窗（删除笔记 / 文件夹） ===== -->
+  <div class="modal" id="nb-confirm" hidden>
+    <div class="modal-mask" data-nb-cancel></div>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="nb-confirm-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="nb-confirm-title">确认删除</h2>
+        <button class="modal-close" type="button" data-nb-cancel aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub" id="nb-confirm-text">确定要删除吗？此操作不可撤销。</p>
+      <div class="tbtn-row nb-confirm-row">
+        <button class="tbtn nb-confirm-danger" id="nb-confirm-ok" type="button">删除</button>
+        <button class="tbtn" type="button" data-nb-cancel>取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
+  <script src="../../assets/vendor/supabase.min.js"></script>
+  <script src="../../assets/js/config.js?v=2"></script>
+  <script src="../../assets/js/fx.js?v=2"></script>
+  <script src="../../assets/js/sidebar.js?v=1"></script>
+  <script src="assets/notes.js?v=1"></script>
+</body>
+</html>

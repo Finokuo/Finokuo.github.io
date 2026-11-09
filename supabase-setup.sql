@@ -126,16 +126,71 @@ create trigger profiles_set_updated_at
   for each row execute function public.set_updated_at_fn();
 
 -- ============================================
--- 第二部分 · 快捷笔记表（仪表盘「快捷笔记」widget）
+-- 第二部分 · 云笔记（多笔记 + 文件夹）+ 收藏表（v4）
 -- ============================================
 
-create table if not exists public.notes (
+-- 1) 文件夹表
+create table if not exists public.folders (
   id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null unique references auth.users (id) on delete cascade,
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  name       text not null,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists folders_user_name
+  on public.folders (user_id, name);
+create index if not exists folders_user_idx
+  on public.folders (user_id);
+
+alter table public.folders enable row level security;
+
+drop policy if exists "folders_select_own" on public.folders;
+create policy "folders_select_own" on public.folders
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "folders_insert_own" on public.folders;
+create policy "folders_insert_own" on public.folders
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "folders_update_own" on public.folders;
+create policy "folders_update_own" on public.folders
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "folders_delete_own" on public.folders;
+create policy "folders_delete_own" on public.folders
+  for delete using (auth.uid() = user_id);
+
+drop policy if exists "folders_all_system_admin" on public.folders;
+create policy "folders_all_system_admin" on public.folders
+  for all using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  )
+  with check (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- 2) notes 表重建：一人多笔记 + 文件夹 + 快捷笔记标记
+--    （旧表每用户仅一行且无数据，直接重建）
+drop table if exists public.notes cascade;
+
+create table public.notes (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  folder_id  uuid references public.folders (id) on delete set null,
+  title      text not null default '未命名笔记',
   content    text not null default '',
+  is_quick   boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create index if not exists notes_user_idx   on public.notes (user_id);
+create index if not exists notes_folder_idx on public.notes (folder_id);
+create unique index if not exists notes_one_quick_per_user
+  on public.notes (user_id) where is_quick;
 
 alter table public.notes enable row level security;
 
@@ -145,7 +200,7 @@ create policy "notes_select_own" on public.notes
 
 drop policy if exists "notes_insert_own" on public.notes;
 create policy "notes_insert_own" on public.notes
-  for insert with check (auth.uid() = user_id);
+  for insert with check (auth.uid() = user_id and is_quick is not null);
 
 drop policy if exists "notes_update_own" on public.notes;
 create policy "notes_update_own" on public.notes
@@ -154,12 +209,100 @@ create policy "notes_update_own" on public.notes
 
 drop policy if exists "notes_delete_own" on public.notes;
 create policy "notes_delete_own" on public.notes
-  for delete using (auth.uid() = user_id);
+  for delete using (auth.uid() = user_id and is_quick = false);
 
 drop trigger if exists notes_set_updated_at on public.notes;
 create trigger notes_set_updated_at
   before update on public.notes
   for each row execute function public.set_updated_at_fn();
+
+-- 快捷笔记防删触发器：对所有人（含 System）无条件拦截
+create or replace function public.guard_quick_note()
+returns trigger language plpgsql as $$
+begin
+  if old.is_quick then
+    raise exception 'FUO_QUICK_PINNED: 快捷笔记无法删除';
+  end if;
+  return old;
+end;
+$$;
+
+drop trigger if exists notes_guard_quick on public.notes;
+create trigger notes_guard_quick
+  before delete on public.notes
+  for each row execute function public.guard_quick_note();
+
+-- 3) 收藏表（工具 / 笔记）
+create table if not exists public.favorites (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  kind       text not null check (kind in ('tool', 'note')),
+  ref        text not null,
+  title      text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists favorites_unique
+  on public.favorites (user_id, kind, ref);
+create index if not exists favorites_user_idx
+  on public.favorites (user_id);
+
+alter table public.favorites enable row level security;
+
+drop policy if exists "favorites_select_own" on public.favorites;
+create policy "favorites_select_own" on public.favorites
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "favorites_insert_own" on public.favorites;
+create policy "favorites_insert_own" on public.favorites
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "favorites_update_own" on public.favorites;
+create policy "favorites_update_own" on public.favorites
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "favorites_delete_own" on public.favorites;
+create policy "favorites_delete_own" on public.favorites
+  for delete using (auth.uid() = user_id);
+
+drop policy if exists "favorites_all_system_admin" on public.favorites;
+create policy "favorites_all_system_admin" on public.favorites
+  for all using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  )
+  with check (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- 4) 存量用户补建快捷笔记
+insert into public.notes (user_id, title, is_quick)
+select p.id, '快捷笔记', true
+from public.profiles p
+where not exists (
+  select 1 from public.notes n
+  where n.user_id = p.id and n.is_quick = true
+);
+
+-- 5) 新用户注册 → 自动创建快捷笔记（独立触发器，不动 handle_new_user）
+create or replace function public.handle_new_user_notes()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.notes (user_id, title, is_quick)
+  values (new.id, '快捷笔记', true);
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_notes on auth.users;
+create trigger on_auth_user_created_notes
+  after insert on auth.users
+  for each row execute function public.handle_new_user_notes();
 
 -- ============================================
 -- 第三部分 · System 管理端（v3 增量，Terminal 用）

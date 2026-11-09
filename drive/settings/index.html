@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>设置 · Fuo Tools</title>
+  <meta name="description" content="Fuo Tools 设置：外观、动效、编辑器、账户，随你调。" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../assets/js/theme.js?v=3"></script>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link rel="stylesheet" href="assets/settings.css?v=1" />
+</head>
+<body data-page="settings">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="settings" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="st-hero" data-reveal>
+          <p class="st-eyebrow mono">// SETTINGS</p>
+          <h1>设置</h1>
+          <p>所有开关即时生效，保存在本机浏览器；换设备各调各的。</p>
+        </section>
+
+        <!-- 外观 -->
+        <section class="card st-card" data-reveal aria-labelledby="st-appearance">
+          <h2 class="st-sec-title" id="st-appearance">外观</h2>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>主题模式</b>
+              <p>暗色 / 亮色 / 跟随系统（系统切换深浅色时自动跟随）</p>
+            </div>
+            <div class="st-seg" role="radiogroup" aria-label="主题模式" id="st-theme-seg">
+              <button type="button" class="st-seg-btn" data-mode="dark" role="radio">暗色</button>
+              <button type="button" class="st-seg-btn" data-mode="light" role="radio">亮色</button>
+              <button type="button" class="st-seg-btn" data-mode="system" role="radio">跟随系统</button>
+            </div>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>切换主题圆形扩散动画</b>
+              <p>点 ☀/🌙 时的全屏圆形波纹；关掉则瞬切</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="themeRipple" /><i></i></label>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>卡片光斑跟随鼠标</b>
+              <p>鼠标掠过卡片时的微光跟随</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="fxSpot" /><i></i></label>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>内容入场动画</b>
+              <p>滚动到可视区域时卡片淡入上浮</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="fxReveal" /><i></i></label>
+          </div>
+        </section>
+
+        <!-- 云笔记 -->
+        <section class="card st-card" data-reveal aria-labelledby="st-notes">
+          <h2 class="st-sec-title" id="st-notes">云笔记</h2>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>自动保存</b>
+              <p>输入停顿后约 0.9 秒自动云同步；关闭后用 Ctrl+S 或点底部字数手动保存</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="noteAutosave" /><i></i></label>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>进入云笔记自动打开快捷笔记</b>
+              <p>关闭时默认打开最近编辑的一篇</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="noteOpenQuick" /><i></i></label>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>显示字数统计</b>
+              <p>编辑器底部实时字数（关闭后点击底部仍可手动保存）</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="showWordCount" /><i></i></label>
+          </div>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>删除前二次确认</b>
+              <p>删除笔记 / 文件夹时弹确认框；关掉则一键直删</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="confirmDelete" /><i></i></label>
+          </div>
+        </section>
+
+        <!-- 工具 -->
+        <section class="card st-card" data-reveal aria-labelledby="st-tools">
+          <h2 class="st-sec-title" id="st-tools">工具</h2>
+
+          <div class="st-row">
+            <div class="st-info">
+              <b>记录工具使用历史</b>
+              <p>工作台「最近使用」列表与使用次数统计的数据来源</p>
+            </div>
+            <label class="st-switch"><input type="checkbox" data-set="toolHistory" /><i></i></label>
+          </div>
+        </section>
+
+        <!-- 账户 -->
+        <section class="card st-card" data-reveal aria-labelledby="st-account">
+          <h2 class="st-sec-title" id="st-account">账户</h2>
+          <dl class="st-account mono">
+            <div><dt>用户名</dt><dd id="st-username">—</dd></div>
+            <div><dt>邮箱</dt><dd id="st-email">—</dd></div>
+            <div><dt>用户 ID</dt><dd id="st-uid">—</dd></div>
+            <div><dt>注册时间</dt><dd id="st-created">—</dd></div>
+          </dl>
+          <div class="st-account-actions">
+            <button class="tbtn" id="st-edit-username" type="button">修改用户名</button>
+            <button class="tbtn" id="st-logout" type="button">退出登录</button>
+          </div>
+        </section>
+
+        <!-- 危险区 -->
+        <section class="card st-card st-danger" data-reveal aria-labelledby="st-danger">
+          <h2 class="st-sec-title" id="st-danger">危险区</h2>
+          <div class="st-row">
+            <div class="st-info">
+              <b>清除本地数据</b>
+              <p>清空本机的设置、工具使用记录与主题选择（云端笔记、收藏、账号不受影响）</p>
+            </div>
+            <button class="tbtn st-danger-btn" id="st-clear" type="button">清除并刷新</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- ===== 修改用户名弹窗 ===== -->
+  <div class="modal" id="st-modal" hidden>
+    <div class="modal-mask" data-st-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="st-modal-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="st-modal-title">修改用户名</h2>
+        <button class="modal-close" type="button" data-st-close aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub mono">3-20 位 · 字母 / 数字 / 下划线 · 全站唯一</p>
+      <div class="tool-body">
+        <label class="tf">
+          <span class="tf-label mono">新用户名</span>
+          <input type="text" id="st-un-input" class="tf-input" maxlength="20" placeholder="例如 finokuo" autocomplete="username" spellcheck="false" />
+        </label>
+        <p class="tf-msg" id="st-un-msg" hidden></p>
+        <div class="tbtn-row">
+          <button class="tbtn is-primary" id="st-un-save" type="button">保存</button>
+          <button class="tbtn" type="button" data-st-close>取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
+  <script src="../assets/vendor/supabase.min.js"></script>
+  <script src="../assets/js/config.js?v=2"></script>
+  <script src="../assets/js/settings.js?v=1"></script>
+  <script src="../assets/js/fx.js?v=2"></script>
+  <script src="../assets/js/sidebar.js?v=1"></script>
+  <script src="assets/settings-page.js?v=1"></script>
+</body>
+</html>

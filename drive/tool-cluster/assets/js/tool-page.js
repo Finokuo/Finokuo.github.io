@@ -11,6 +11,17 @@
   var PATHS = window.FUO_PATHS;
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
 
+  /* 设置开关兑底读取（与 settings.js 同键，无依赖、顺序无关） */
+  function settingOn(key, dflt) {
+    try {
+      var raw = localStorage.getItem('fuo-settings');
+      if (!raw) return dflt;
+      var o = JSON.parse(raw);
+      if (o && o[key] !== undefined) return !!o[key];
+      return dflt;
+    } catch (e) { return dflt; }
+  }
+
   /* ---------- 小工具函数 ---------- */
   function h(tag, cls, text) {
     var el = document.createElement(tag);
@@ -583,6 +594,7 @@
    * 使用记录（与仪表盘「最近使用」共用 localStorage 键）
    * ===================================================== */
   function record(id) {
+    if (!settingOn('toolHistory', true)) return; // 设置里关闭了使用记录
     var t = TOOLS[id];
     var name = t ? t.name : id;
     try {
@@ -595,6 +607,94 @@
       var count = parseInt(localStorage.getItem('fuo-tool-count') || '0', 10) || 0;
       localStorage.setItem('fuo-tool-count', String(count + 1));
     } catch (e) { /* 隐私模式忽略 */ }
+  }
+
+  /* =====================================================
+   * 收藏（工具卡片星标）：favorites 表 kind='tool' ref=slug
+   * ===================================================== */
+  var favSb = null;
+  var favSet = {};   // slug → true
+
+  function favClient() {
+    if (!favSb && window.supabase && CFG && CFG.SUPABASE_URL) {
+      try { favSb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY); } catch (e) {}
+    }
+    return favSb;
+  }
+
+  function loadFavs() {
+    var c = favClient();
+    if (!c || PREVIEW) return;
+    c.auth.getSession().then(function (_a) {
+      var s = _a.data && _a.data.session;
+      if (!s) return;
+      c.from('favorites').select('ref').eq('user_id', s.user.id).eq('kind', 'tool')
+        .then(function (_b) {
+          if (_b.error) return; // 表未就绪时静默（星星只是不可用）
+          (_b.data || []).forEach(function (r) { favSet[r.ref] = true; });
+          paintStars();
+        });
+    });
+  }
+
+  function paintStars() {
+    var stars = document.querySelectorAll('.tc-star[data-slug]');
+    Array.prototype.forEach.call(stars, function (b) {
+      b.classList.toggle('is-on', !!favSet[b.getAttribute('data-slug')]);
+      b.setAttribute('aria-pressed', String(!!favSet[b.getAttribute('data-slug')]));
+    });
+  }
+
+  function toggleToolFav(slug, btn) {
+    var c = favClient();
+    if (!c) { miniToast('收藏功能需要登录后使用'); return; }
+    var name = TOOLS[slug] ? TOOLS[slug].name : slug;
+    c.auth.getSession().then(function (_a) {
+      var s = _a.data && _a.data.session;
+      if (!s) { miniToast('请先登录后再收藏'); return; }
+      if (favSet[slug]) {
+        c.from('favorites')
+          .delete()
+          .eq('user_id', s.user.id).eq('kind', 'tool').eq('ref', slug)
+          .then(function (_b) {
+            if (_b.error) { miniToast('取消收藏失败'); return; }
+            delete favSet[slug];
+            btn.classList.remove('is-on');
+            btn.setAttribute('aria-pressed', 'false');
+            miniToast('已取消收藏「' + name + '」');
+          });
+      } else {
+        c.from('favorites')
+          .insert({ user_id: s.user.id, kind: 'tool', ref: slug, title: name })
+          .then(function (_b) {
+            if (_b.error) {
+              if (_b.error.code === '23505') { miniToast('已在收藏中'); return; }
+              miniToast('收藏失败：' + (_b.error.message || '未知错误'));
+              return;
+            }
+            favSet[slug] = true;
+            btn.classList.add('is-on');
+            btn.setAttribute('aria-pressed', 'true');
+            miniToast('已收藏「' + name + '」，可在侧栏「收藏」查看');
+          });
+      }
+    });
+  }
+
+  function starBtn(slug) {
+    var b = h('button', 'tc-star' + (favSet[slug] ? ' is-on' : ''), '');
+    b.type = 'button';
+    b.setAttribute('data-slug', slug);
+    b.setAttribute('aria-pressed', String(!!favSet[slug]));
+    b.setAttribute('aria-label', '收藏或取消收藏：' + (TOOLS[slug] ? TOOLS[slug].name : slug));
+    b.title = '收藏 / 取消收藏';
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation(); // 卡片是 <a>：星标点击不应触发跳转
+      toggleToolFav(slug, b);
+    });
+    return b;
   }
 
   /* =====================================================
@@ -629,12 +729,33 @@
    * System 专属入口：目录页末尾追加 Terminal 卡片
    * 仅当登录者恰好是 System 时渲染（预览模式展示外壳）
    * ===================================================== */
+  /* 云笔记卡：工具集第 9 位（所有登录用户可见） */
+  function notesCard(idx) {
+    var a = h('a', 'tc-card tc-card-notes');
+    a.href = window.FUO_TOOL_URL ? window.FUO_TOOL_URL('notes') : 'notes/index.html';
+    a.setAttribute('aria-label', '打开云笔记（多笔记 · 文件夹 · 云同步）');
+    a.style.setProperty('--i', String(idx));
+
+    var ic = h('i', 't-ic tc-card-ic tone-teal');
+    ic.setAttribute('aria-hidden', 'true');
+    ic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M6 4h9l4 4v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5.5A1.5 1.5 0 0 1 6.5 4H6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+    var txt = h('div', 'tc-card-txt');
+    txt.appendChild(h('b', null, '云笔记'));
+    txt.appendChild(h('p', null, '多笔记 · 文件夹 · 快捷笔记 · 实时云同步'));
+
+    a.appendChild(ic);
+    a.appendChild(txt);
+    a.appendChild(h('span', 'tc-go mono', '打开 →'));
+    return a;
+  }
+
   function adminCard() {
     var url = window.FUO_TOOL_URL ? window.FUO_TOOL_URL('terminal') : 'terminal/index.html';
     var a = h('a', 'tc-card tc-card-admin');
     a.href = url;
     a.setAttribute('aria-label', '打开 Terminal（仅 System 账号可用）');
-    a.style.setProperty('--i', '8'); // 入场交错动画排在第 9 张
+    a.style.setProperty('--i', '9'); // 入场交错动画排在最后
 
     var ic = h('i', 't-ic tc-card-ic tone-rose');
     ic.setAttribute('aria-hidden', 'true');
@@ -701,8 +822,12 @@
       a.appendChild(ic);
       a.appendChild(txt);
       a.appendChild(h('span', 'tc-go mono', '打开 →'));
+      if (!PREVIEW) a.appendChild(starBtn(slug)); // 收藏星标（预览模式不显示）
       grid.appendChild(a);
     });
+
+    // 云笔记卡（第 9 张，所有登录用户可见）
+    grid.appendChild(notesCard(i++));
   }
 
   function renderToolPage() {
@@ -721,8 +846,7 @@
       iconEl.className = 't-ic tc-tool-ic ' + t.tone;
       iconEl.innerHTML = svgFor(slug, 20);
     }
-    var crumbEl = document.getElementById('tc-crumb');
-    if (crumbEl) crumbEl.textContent = '/ drive / tool-cluster / ' + slug;
+    // 面包屑由共享的 sidebar.js 按 body[data-page/data-tool] 生成（可点击）
 
     var bodyEl = document.getElementById('tool-body');
     if (bodyEl) {
@@ -747,6 +871,7 @@
     if (document.body.getAttribute('data-page') === 'cluster') {
       renderCluster();
       maybeAdminCard();
+      loadFavs();
     } else {
       renderToolPage();
     }

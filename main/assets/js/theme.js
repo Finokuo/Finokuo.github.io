@@ -1,7 +1,7 @@
 /* =====================================================
- * Fuo Tools · 主题（暗色 / 亮色）
+ * Fuo Tools · 主题（暗色 / 亮色 / 跟随系统）
  * 在 <head> 中同步加载：先于 CSS 设置 data-theme，避免闪白。
- * 选择持久化到 localStorage（key: fu-theme），默认暗色。
+ * 选择持久化到 localStorage（key: fu-theme，可选 dark/light/system，默认暗色）。
  *
  * 切换动效（element-plus 同款工艺，全站统一，新页面直接沿用）：
  *   路径 A · 支持 View Transitions 的浏览器（Chrome/Edge 111+、Safari 18+）：
@@ -20,9 +20,37 @@
   var root = document.documentElement;
   var DUR = 500;
 
+  /* 设置开关兜底读取（与 settings.js 同键，无依赖、顺序无关） */
+  function settingOn(key, dflt) {
+    try {
+      var raw = localStorage.getItem('fuo-settings');
+      if (!raw) return dflt;
+      var o = JSON.parse(raw);
+      if (o && o[key] !== undefined) return !!o[key];
+      return dflt;
+    } catch (e) { return dflt; }
+  }
+
+  /* 系统主题偏好解析（themeMode = system 时用） */
+  function systemPrefersLight() {
+    try {
+      return !!(window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: light)').matches);
+    } catch (e) { return false; }
+  }
+
   function get() {
-    try { return localStorage.getItem(KEY) === 'light' ? 'light' : 'dark'; }
-    catch (e) { return 'dark'; }
+    var v = 'dark';
+    try { v = localStorage.getItem(KEY) || 'dark'; } catch (e) { v = 'dark'; }
+    if (v === 'system') return systemPrefersLight() ? 'light' : 'dark';
+    return v === 'light' ? 'light' : 'dark';
+  }
+
+  function storedMode() {
+    try {
+      var v = localStorage.getItem(KEY);
+      return v === 'light' || v === 'dark' || v === 'system' ? v : 'dark';
+    } catch (e) { return 'dark'; }
   }
 
   function apply(theme) {
@@ -128,6 +156,7 @@
     if (!isFinite(x) || !isFinite(y)) { x = window.innerWidth / 2; y = 60; }
 
     if (reduced()) { apply(next); return; } // 尊重系统减少动效
+    if (!settingOn('themeRipple', true)) { apply(next); return; } // 设置里关闭了切换动画
 
     if (typeof document.startViewTransition === 'function') {
       vtRipple(x, y, next);   // 路径 A
@@ -157,8 +186,32 @@
   // 立即应用（本脚本位于 <head>，早于首帧渲染）
   apply(get());
 
-  // 暴露给其他脚本（备用）：toggleAt(x, y) 可自定义圆心
-  window.FUO_THEME = { get: get, toggle: toggleAt };
+  // 暴露给其他脚本（设置页等）：
+  //   get()        → 当前已解析主题（dark/light）
+  //   mode()       → 存储模式（dark/light/system）
+  //   toggle(x,y)  → 圆形扩散切换
+  //   set(mode)    → 直接设置模式（dark/light/system，无动画）
+  window.FUO_THEME = {
+    get: get,
+    mode: storedMode,
+    toggle: toggleAt,
+    set: function (mode) {
+      try { localStorage.setItem(KEY, mode); } catch (e) { /* ignore */ }
+      apply(get());
+    },
+  };
+
+  // 跟随系统模式：系统偏好变化时实时跟随
+  try {
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: light)');
+      var onChange = function () {
+        if (storedMode() === 'system') apply(get());
+      };
+      if (mq.addEventListener) mq.addEventListener('change', onChange);
+      else if (mq.addListener) mq.addListener(onChange);
+    }
+  } catch (e) { /* ignore */ }
 
   // 绑定所有切换按钮
   function bind() {

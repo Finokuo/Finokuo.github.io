@@ -143,3 +143,21 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
   mix-blend-mode: normal;
 }
 :root[data-theme="dark"]::view-transition-old(root) { z-index: 100; }
+
+/* ---------- 收藏星标（目录卡片右上角） ---------- */
+.tc-star {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--faint); display: grid; place-items: center;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.tc-star svg { width: 15px; height: 15px; fill: none; }
+.tc-star:hover { color: var(--warn); background: var(--hover-soft); border-color: var(--border); transform: scale(1.08); }
+.tc-star.is-on { color: var(--warn); }
+.tc-star.is-on svg { fill: currentColor; }
+:root[data-theme="light"] .tc-star:hover { color: #9c6d1a; }
+
+/* 云笔记卡（第 9 位）强调 */
+.tc-card-notes { border-color: rgba(45, 212, 191, 0.28); }
+:root[data-theme="light"] .tc-card-notes { border-color: rgba(13, 148, 136, 0.25); }

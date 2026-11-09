@@ -1,0 +1,144 @@
+/* =====================================================
+   Fuo Tools · 收藏页样式（favorites/index.html 专用）
+   前置：drive/assets/css/style.css
+   ===================================================== */
+
+.fv-eyebrow {
+  font-size: 11px; letter-spacing: 0.14em;
+  color: var(--accent-bright); margin-bottom: 10px;
+}
+.fv-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.fv-hero p {
+  margin-top: 10px; color: var(--text-dim);
+  font-size: 14px; max-width: 580px; line-height: 1.75;
+}
+
+.fv-sec { margin-top: 34px; }
+.fv-sec-title {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.fv-sec-title .mono { font-size: 11px; color: var(--faint); font-weight: 400; }
+
+/* ---------- 工具收藏卡片 ---------- */
+.fv-tool-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-top: 16px;
+}
+@keyframes fvIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fv-tool {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 18px 16px 14px;
+  border-radius: 16px; border: 1px solid var(--border);
+  background: var(--card);
+  position: relative; overflow: hidden;
+  text-decoration: none; color: var(--text);
+  animation: fvIn 0.45s ease both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.fv-tool:hover {
+  transform: translateY(-3px);
+  border-color: rgba(45, 212, 191, 0.4);
+  box-shadow: var(--shadow-hover);
+}
+.fv-tool .fv-ic {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: grid; place-items: center;
+}
+.fv-tool .fv-ic svg { width: 18px; height: 18px; }
+.fv-tool b { font-size: 14.5px; font-weight: 700; }
+.fv-tool p { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.65; }
+.fv-go {
+  margin-top: auto; font-size: 11px; color: var(--accent-bright); opacity: 0.75;
+  transition: opacity 0.18s, transform 0.18s;
+}
+.fv-tool:hover .fv-go { opacity: 1; transform: translateX(3px); }
+
+/* 取消收藏按钮（工具卡 / 笔记行共用） */
+.fv-unstar {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--warn); display: grid; place-items: center;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.fv-unstar svg { width: 15px; height: 15px; fill: currentColor; }
+.fv-unstar:hover { color: var(--muted); background: var(--hover-soft); border-color: var(--border); transform: scale(1.05); }
+.fv-unstar:hover svg { fill: none; }
+
+/* ---------- 笔记收藏列表 ---------- */
+.fv-note-list {
+  margin-top: 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.fv-note {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--border); border-radius: 13px;
+  background: var(--card); color: var(--text);
+  text-decoration: none;
+  position: relative; overflow: hidden;
+  animation: fvIn 0.45s ease both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.fv-note:hover {
+  border-color: rgba(45, 212, 191, 0.4);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+.fv-note .fv-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+.fv-note .fv-ic svg { width: 16px; height: 16px; }
+.fv-note-meta { flex: 1; min-width: 0; }
+.fv-note-meta b {
+  display: block; font-size: 13.5px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fv-note-meta small { font-size: 11px; color: var(--faint); }
+.fv-note .fv-go { margin: 0; }
+
+/* 色调（与工具卡一致） */
+.tone-teal { background: rgba(45, 212, 191, 0.14); color: #2dd4bf; }
+.tone-fuchsia { background: rgba(232, 121, 249, 0.14); color: #e879f9; }
+.tone-emerald { background: rgba(52, 211, 153, 0.14); color: #34d399; }
+.tone-amber { background: rgba(251, 191, 36, 0.16); color: #fbbf24; }
+.tone-cyan { background: rgba(34, 211, 238, 0.14); color: #22d3ee; }
+.tone-violet { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+.tone-orange { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+.tone-rose { background: rgba(244, 113, 116, 0.15); color: #f47174; }
+:root[data-theme="light"] .tone-teal { color: #0d9488; }
+:root[data-theme="light"] .tone-fuchsia { color: #a21caf; }
+:root[data-theme="light"] .tone-emerald { color: #059669; }
+:root[data-theme="light"] .tone-amber { color: #92400e; }
+:root[data-theme="light"] .tone-cyan { color: #0e7490; }
+:root[data-theme="light"] .tone-violet { color: #6d28d9; }
+:root[data-theme="light"] .tone-orange { color: #c2410c; }
+:root[data-theme="light"] .tone-rose { color: #be123c; }
+
+/* ---------- 空状态 ---------- */
+.fv-empty {
+  margin-top: 16px; padding: 34px 20px;
+  border: 1px dashed var(--border-2); border-radius: 16px;
+  text-align: center; color: var(--muted);
+  background: var(--card);
+}
+.fv-empty .mono { font-size: 11px; color: var(--faint); letter-spacing: 0.12em; margin-bottom: 8px; }
+.fv-empty b { display: block; font-size: 15px; color: var(--text-2); margin-bottom: 6px; }
+.fv-empty p { font-size: 12.5px; line-height: 1.8; max-width: 420px; margin: 0 auto; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 960px) {
+  .fv-tool-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .fv-hero h1 { font-size: 26px; }
+  .fv-tool-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fv-tool { padding: 14px 12px 12px; }
+  .fv-tool p { display: none; }
+}
+@media (max-width: 400px) {
+  .fv-tool-grid { grid-template-columns: 1fr; }
+}

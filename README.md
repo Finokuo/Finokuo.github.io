@@ -42,7 +42,9 @@ Finokuo.github.io/        ← GitHub 仓库名必须是这个（用户主页站�
 
 ## 二、Supabase 配置（3 步）
 
-1. **执行数据库脚本**：Supabase 控制台 → SQL Editor → 粘贴 `supabase-setup.sql` 全部内容 → Run ✅
+1. **执行数据库脚本**：Supabase 控制台 → SQL Editor：
+   - 执行过旧版：只需粘贴 **`supabase-notes.sql`**（增量 v4：云笔记多行化 + 文件夹 + 收藏表）→ Run ✅
+   - 全新项目：粘贴 `supabase-setup.sql`（已合并全部版本）→ Run ✅
 2. **（必须）关闭邮箱验证，注册即登录**：
    Authentication → Sign In / Providers → **取消勾选 Confirm email** → Save。
    - 注册流程已完全适配「无验证邮件」模式：注册前只查用户名/邮箱是否被占用，

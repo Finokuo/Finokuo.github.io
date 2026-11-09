@@ -279,13 +279,13 @@
     getProfileByUsername(username).then(function (r) {
       if (r.error) return print(dbHint(r.error), '_err');
       if (!r.data) return print('用户名不存在：' + username, '_err');
-      q(sb.from('notes').select('content,updated_at').eq('user_id', r.data.id).maybeSingle())
+      q(sb.from('notes').select('content,updated_at').eq('user_id', r.data.id).eq('is_quick', true).maybeSingle())
         .then(function (r2) {
           if (r2.error) return print(dbHint(r2.error), '_err');
           if (!r2.data || !r2.data.content) {
-            return print(username + ' 没有笔记内容。', '_warn');
+            return print(username + ' 的快捷笔记是空的。', '_warn');
           }
-          print('· ' + username + ' 的笔记（更新于 ' + fmtDate(r2.data.updated_at) + '）：', '_ok');
+          print('· ' + username + ' 的快捷笔记（更新于 ' + fmtDate(r2.data.updated_at) + '）：', '_ok');
           r2.data.content.split('\n').forEach(function (l) { print('  ' + l); });
         });
     });
@@ -300,10 +300,16 @@
     getProfileByUsername(username).then(function (r) {
       if (r.error) return print(dbHint(r.error), '_err');
       if (!r.data) return print('用户名不存在：' + username, '_err');
-      q(sb.from('notes').upsert({ user_id: r.data.id, content: text }))
+      q(sb.from('notes').select('id').eq('user_id', r.data.id).eq('is_quick', true).maybeSingle())
         .then(function (r2) {
           if (r2.error) return print(dbHint(r2.error), '_err');
-          print('✔ 已写入 ' + username + ' 的笔记（' + text.length + ' 字）。', '_ok');
+          var req = (r2.data && r2.data.id)
+            ? sb.from('notes').update({ content: text }).eq('id', r2.data.id)
+            : sb.from('notes').insert({ user_id: r.data.id, title: '快捷笔记', content: text, is_quick: true });
+          q(req).then(function (r3) {
+            if (r3.error) return print(dbHint(r3.error), '_err');
+            print('✔ 已写入 ' + username + ' 的快捷笔记（' + text.length + ' 字）。', '_ok');
+          });
         });
     });
   }

@@ -1,0 +1,114 @@
+/* =====================================================
+   Fuo Tools · 设置页样式（settings/index.html 专用）
+   前置：drive/assets/css/style.css
+   ===================================================== */
+
+.st-eyebrow {
+  font-size: 11px; letter-spacing: 0.14em;
+  color: var(--accent-bright); margin-bottom: 10px;
+}
+.st-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.st-hero p {
+  margin-top: 10px; color: var(--text-dim);
+  font-size: 14px; max-width: 580px; line-height: 1.75;
+}
+
+.st-card { margin-top: 18px; padding: 20px 22px 10px; }
+.st-sec-title {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+/* ---------- 行 ---------- */
+.st-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.st-row:last-child { border-bottom: none; }
+.st-info { flex: 1; min-width: 0; }
+.st-info b { display: block; font-size: 13.5px; font-weight: 600; }
+.st-info p { margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.65; }
+
+/* ---------- 分段选择（主题模式） ---------- */
+.st-seg {
+  display: inline-flex; padding: 3px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--field-bg); flex: none;
+}
+.st-seg-btn {
+  padding: 6px 13px; border: none; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  font-size: 12.5px; font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.st-seg-btn:hover { color: var(--text); }
+.st-seg-btn.is-on {
+  background: var(--card);
+  color: var(--accent-bright); font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- 开关 ---------- */
+.st-switch { position: relative; flex: none; display: inline-block; cursor: pointer; }
+.st-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.st-switch i {
+  display: block; width: 42px; height: 24px;
+  border-radius: 13px;
+  background: var(--card-2); border: 1px solid var(--border-2);
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+}
+.st-switch i::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.2s ease, background 0.2s;
+}
+.st-switch input:checked + i {
+  background: rgba(45, 212, 191, 0.3);
+  border-color: rgba(45, 212, 191, 0.5);
+}
+:root[data-theme="light"] .st-switch input:checked + i { background: rgba(13, 148, 136, 0.3); }
+.st-switch input:checked + i::after {
+  transform: translateX(18px);
+  background: var(--accent-bright);
+  box-shadow: 0 0 8px rgba(94, 234, 212, 0.5);
+}
+.st-switch input:focus-visible + i { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---------- 账户 ---------- */
+.st-account { display: flex; flex-direction: column; gap: 9px; margin: 8px 0 4px; }
+.st-account div {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card-2);
+}
+.st-account dt { flex: none; width: 72px; font-size: 11.5px; color: var(--faint); letter-spacing: 0.06em; }
+.st-account dd {
+  margin: 0; flex: 1; min-width: 0;
+  font-size: 12.5px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.st-account-actions { display: flex; gap: 10px; margin: 12px 0 10px; }
+
+/* ---------- 危险区 ---------- */
+.st-danger { border-color: rgba(244, 113, 116, 0.3); }
+.st-danger .st-sec-title { color: var(--danger); }
+.st-danger-btn {
+  background: rgba(244, 113, 116, 0.12);
+  border: 1px solid rgba(244, 113, 116, 0.4);
+  color: var(--danger);
+}
+.st-danger-btn:hover { background: rgba(244, 113, 116, 0.2); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 640px) {
+  .st-hero h1 { font-size: 26px; }
+  .st-card { padding: 16px 14px 8px; }
+  .st-row { flex-wrap: wrap; }
+  .st-seg { order: 2; }
+  .st-account-actions { flex-direction: column; }
+  .st-account-actions .tbtn { width: 100%; }
+}

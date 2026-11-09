@@ -235,7 +235,7 @@
       });
   }
 
-  /* ---------- 云同步笔记 ---------- */
+  /* ---------- 云同步笔记（读写 notes 表里 is_quick=true 那一行，与云笔记页打通） ---------- */
   function setNoteStatus(kind, text) {
     var chip = $('note-status');
     chip.className = 'chip' + (kind ? ' is-' + kind : '');
@@ -245,15 +245,20 @@
   function loadNote() {
     setNoteStatus('', '加载中…');
     sb.from('notes')
-      .select('content')
+      .select('id,content')
       .eq('user_id', user.id)
+      .eq('is_quick', true)
       .maybeSingle()
       .then(function (_a) {
         var data = _a.data, error = _a.error;
         if (error) {
           if (isMissingTable(error)) {
             setNoteStatus('error', '未就绪');
-            showBanner('warn', '数据库尚未初始化：请在 Supabase SQL Editor 执行 supabase-setup.sql 后刷新。');
+            showBanner('warn', '数据库尚未初始化：请在 Supabase SQL Editor 执行 supabase-notes.sql 后刷新。');
+          } else if (error.code === 'PGRST204' || /is_quick/i.test(error.message || '')) {
+            // notes 表还是旧结构（没有 is_quick 列）
+            setNoteStatus('error', '需升级');
+            showBanner('warn', 'notes 表需要升级到 v4：请在 Supabase SQL Editor 执行 supabase-notes.sql 后刷新（云笔记多行化 + 文件夹 + 收藏）。');
           } else {
             setNoteStatus('error', '加载失败');
           }
@@ -270,20 +275,26 @@
   function saveNote() {
     var content = $('note-input').value;
     setNoteStatus('saving', '保存中…');
-    sb.from('notes')
-      .upsert({ user_id: user.id, content: content }, { onConflict: 'user_id' })
-      .then(function (_a) {
-        var error = _a.error;
-        if (error) {
-          setNoteStatus('error', '保存失败');
-          if (isMissingTable(error)) {
-            showBanner('warn', '数据库尚未初始化：请在 Supabase SQL Editor 执行 supabase-setup.sql 后刷新。');
-          }
-          return;
+    var req;
+    if (noteRow && noteRow.id) {
+      req = sb.from('notes').update({ content: content }).eq('id', noteRow.id);
+    } else {
+      // 快捷笔记行缺失时补建（正常情况下 setup/notes.sql 已回填）
+      req = sb.from('notes').insert({ user_id: user.id, title: '快捷笔记', content: content, is_quick: true });
+    }
+    req.then(function (_a) {
+      var error = _a.error;
+      if (error) {
+        setNoteStatus('error', '保存失败');
+        if (isMissingTable(error)) {
+          showBanner('warn', '数据库尚未初始化：请在 Supabase SQL Editor 执行 supabase-notes.sql 后刷新。');
         }
-        setNoteStatus('synced', '已同步 ✓');
-        $('stat-notes').textContent = content.length;
-      });
+        return;
+      }
+      if (!noteRow && _a.data && _a.data[0]) noteRow = _a.data[0];
+      setNoteStatus('synced', '已同步 ✓');
+      $('stat-notes').textContent = content.length;
+    });
   }
 
   /* ---------- 最近使用（工具页/跳转时写入） ---------- */
@@ -364,9 +375,13 @@
       });
     });
 
-    // 侧栏「工具集」→ 目录页
+    // 侧栏「工具集」→ 目录页；「收藏」「设置」→ 各自页面
     var navTools = $('nav-tools');
     if (navTools && PATHS.TOOL_CLUSTER) navTools.href = PATHS.TOOL_CLUSTER;
+    var navFav = $('nav-favorites');
+    if (navFav && PATHS.FAVORITES) navFav.href = PATHS.FAVORITES;
+    var navSettings = $('nav-settings');
+    if (navSettings && PATHS.SETTINGS) navSettings.href = PATHS.SETTINGS;
 
     document.querySelectorAll('[data-soon]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -385,6 +400,17 @@
     $('btn-logout-2').addEventListener('click', doLogout);
   }
 
+  /* 侧栏「收藏」徽标：收藏总数 */
+  function loadFavBadge() {
+    var badge = $('nav-fav-count');
+    if (!badge || !sb || !user) return;
+    sb.from('favorites').select('id').eq('user_id', user.id)
+      .then(function (_a) {
+        var n = (_a.data && _a.data.length) || 0;
+        if (n > 0) { badge.textContent = String(n); badge.hidden = false; }
+      });
+  }
+
   /* ---------- 登录后初始化 ---------- */
   function enterApp(session) {
     user = session.user;
@@ -394,6 +420,7 @@
     renderRecent();
     renderToolCount();
     loadNote();
+    loadFavBadge();
 
     $('note-input').addEventListener('input', function () {
       var v = $('note-input').value;

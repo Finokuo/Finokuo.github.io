@@ -21,6 +21,11 @@ window.FUO_PATHS = {
   DRIVE: window.FUO_BASE + '/drive' + window.FUO_SUFFIX,
   // 工具集目录页：/drive/tool-cluster/（各工具在其下的独立子目录）
   TOOL_CLUSTER: window.FUO_BASE + '/drive/tool-cluster' + window.FUO_SUFFIX,
+  // 云笔记（工具集成员之一）：/drive/tool-cluster/notes/
+  NOTES: window.FUO_BASE + '/drive/tool-cluster/notes' + window.FUO_SUFFIX,
+  // 收藏 / 设置
+  FAVORITES: window.FUO_BASE + '/drive/favorites' + window.FUO_SUFFIX,
+  SETTINGS: window.FUO_BASE + '/drive/settings' + window.FUO_SUFFIX,
 };
 
 /**

@@ -656,3 +656,17 @@ svg { display: block; }
   mix-blend-mode: normal;
 }
 :root[data-theme="dark"]::view-transition-old(root) { z-index: 100; }
+
+/* ---------- 可点击面包屑（所有 /drive 子页面顶栏共用） ---------- */
+.crumbs {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: 0.04em; min-width: 0;
+  overflow: hidden; white-space: nowrap;
+}
+.crumbs .crumb-link {
+  color: var(--muted); transition: color 0.15s;
+  border-bottom: 1px dashed transparent;
+}
+.crumbs .crumb-link:hover { color: var(--accent-bright); border-bottom-color: rgba(45, 212, 191, 0.45); }
+.crumbs .crumb-sep { color: var(--faint); }
+.crumbs .crumb-cur { color: var(--text-2); }

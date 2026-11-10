@@ -14,6 +14,7 @@ create table if not exists public.profiles (
   id         uuid primary key references auth.users (id) on delete cascade,
   username   text not null unique,
   email      text,
+  bio        text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -429,3 +430,80 @@ create policy "notes_all_system_admin" on public.notes
 
 -- 完成！现在支持：注册时填用户名 · 用户名+密码登录 · 工作台修改用户名
 --              · System 管理员（Terminal）封禁/解封/改名/管理笔记
+
+
+-- ============================================
+-- 第四部分 · v0.7.0 增量：回收站 / 公告 / 操作日志
+-- （与 supabase-v5.sql 内容一致；老库可单独执行 v5 增量）
+-- ============================================
+
+-- 1) notes 软删除列（回收站）
+alter table public.notes
+  add column if not exists deleted_at timestamptz default null;
+
+create index if not exists notes_deleted_idx
+  on public.notes (user_id) where deleted_at is not null;
+
+-- 2) 公告表（System 在 Terminal 发布，全站登录用户可见）
+create table if not exists public.announcements (
+  id         uuid primary key default gen_random_uuid(),
+  author_id  uuid references auth.users (id) on delete set null,
+  content    text not null check (char_length(content) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+
+alter table public.announcements enable row level security;
+
+drop policy if exists "announcements_select_auth" on public.announcements;
+create policy "announcements_select_auth" on public.announcements
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "announcements_insert_system" on public.announcements;
+create policy "announcements_insert_system" on public.announcements
+  for insert with check (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+drop policy if exists "announcements_delete_system" on public.announcements;
+create policy "announcements_delete_system" on public.announcements
+  for delete using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- 3) Terminal 操作日志（仅 System 可写可读）
+create table if not exists public.audit_log (
+  id         uuid primary key default gen_random_uuid(),
+  actor_id   uuid references auth.users (id) on delete set null,
+  action     text not null,
+  target     text not null default '',
+  detail     text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists audit_created_idx
+  on public.audit_log (created_at desc);
+
+alter table public.audit_log enable row level security;
+
+drop policy if exists "audit_insert_system" on public.audit_log;
+create policy "audit_insert_system" on public.audit_log
+  for insert with check (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+drop policy if exists "audit_select_system" on public.audit_log;
+create policy "audit_select_system" on public.audit_log
+  for select using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- 4) 个人简介（公开主页 /u/?u=<用户名>）
+alter table public.profiles
+  add column if not exists bio text not null default '';
+
+-- 完成！现在支持：注册登录用户名 · 云笔记多行+文件夹+收藏 · System 管理端
+--              · 回收站（软删除）· 全站公告 · Terminal 操作日志 · 公开主页简介

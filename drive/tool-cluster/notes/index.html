@@ -7,9 +7,11 @@
   <meta name="description" content="Fuo Tools 云笔记：多笔记、文件夹、快捷笔记，实时云同步。" />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="../../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../../assets/js/theme.js?v=3"></script>
-  <link rel="stylesheet" href="../../assets/css/style.css?v=2" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=4" />
   <link rel="stylesheet" href="assets/notes.css?v=2" />
 </head>
 <body data-page="notes">
@@ -59,6 +61,16 @@
             <div id="nb-folder-list" class="nb-folder-list"></div>
           </div>
 
+          <!-- 回收站（软删除，30 天可恢复；需 v5 列） -->
+          <div class="nb-sec">
+            <div class="nb-sec-label mono">其他</div>
+            <button class="nb-item nb-bin" id="nb-bin-btn" type="button" title="已删除的笔记保留 30 天" hidden>
+              <span class="nb-bin-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5h15M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5M6.5 6.5 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-12.5M10 10.5v6M14 10.5v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="nb-item-title">回收站</span>
+              <span class="nb-badge mono" id="nb-bin-count" hidden></span>
+            </button>
+          </div>
+
           <!-- 笔记列表 -->
           <div class="nb-sec nb-sec-notes">
             <div class="nb-sec-label mono">笔记 <span id="nb-note-count">0</span></div>
@@ -76,6 +88,11 @@
               <input type="text" id="nb-title-input" class="nb-title-input" maxlength="60" aria-label="笔记名" hidden />
             </div>
             <div class="nb-tools">
+              <div class="nb-view mono" role="radiogroup" aria-label="编辑视图" id="nb-view">
+                <button type="button" data-view="edit">编辑</button>
+                <button type="button" data-view="split">分屏</button>
+                <button type="button" data-view="preview">预览</button>
+              </div>
               <button class="nb-tool-btn" id="nb-star" type="button" title="收藏这篇笔记" aria-label="收藏这篇笔记" aria-pressed="false">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
               </button>
@@ -92,7 +109,8 @@
           </div>
 
           <div class="nb-body">
-            <textarea id="nb-content" placeholder="选择左侧任意笔记开始编辑，或点「＋ 新建笔记」。&#10;内容会实时云同步到你的账号。" spellcheck="false"></textarea>
+            <textarea id="nb-content" placeholder="选择左侧任意笔记开始编辑，或点「＋ 新建笔记」。&#10;支持 Markdown：# 标题、**加粗**、- 列表、> 引用、\`\`\` 代码块、[链接](url)、表格…" spellcheck="false"></textarea>
+            <div class="nb-preview md" id="nb-preview" aria-label="Markdown 预览" aria-live="polite"></div>
             <div class="nb-empty" id="nb-empty" hidden>
               <p class="mono">// EMPTY</p>
               <b>还没有选中笔记</b>
@@ -154,11 +172,32 @@
     </div>
   </div>
 
+  <!-- ===== 回收站弹窗 ===== -->
+  <div class="modal" id="nb-bin" hidden>
+    <div class="modal-mask" data-nb-binclose></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="nb-bin-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="nb-bin-title">回收站</h2>
+        <button class="modal-close" type="button" data-nb-binclose aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub mono">删除的笔记保留 30 天，到期自动清理；恢复后回到原位。</p>
+      <div class="tool-body">
+        <div id="nb-bin-list" class="nb-bin-list"></div>
+        <div class="tbtn-row">
+          <button class="tbtn nb-confirm-danger" id="nb-bin-clear" type="button">清空回收站</button>
+          <button class="tbtn" type="button" data-nb-binclose>关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
   <script src="../../assets/vendor/supabase.min.js"></script>
   <script src="../../assets/js/config.js?v=2"></script>
   <script src="../../assets/js/fx.js?v=2"></script>
-  <script src="../../assets/js/sidebar.js?v=2"></script>
-  <script src="assets/notes.js?v=3"></script>
+  <script src="../../assets/js/sidebar.js?v=3"></script>
+  <script src="assets/notes.js?v=4"></script>
 </body>
 </html>

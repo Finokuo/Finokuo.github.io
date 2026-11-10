@@ -36,6 +36,16 @@
       svg: '<rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M13 10h4.5M13 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
     diff:      { name: '文本 Diff',     tone: 'tone-rose',     desc: '两段文本逐行对比，增删一目了然',
       svg: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v15M7 12h2.5M15 12h2.5M16.2 9.8v4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
+    regex:     { name: '正则测试器',    tone: 'tone-rose',    desc: '实时匹配高亮 · 捕获组 · 替换预览',
+      svg: '<path d="M8.5 4.5 4.5 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15 7.5v9M11.3 9.7l7.4 4.6M18.7 9.7l-7.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20.2" cy="19" r="1.3" fill="currentColor"/>' },
+    qrcode:    { name: '二维码生成',    tone: 'tone-cyan',    desc: '本地生成可下载 PNG · 支持中文与长文本',
+      svg: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M14 14h2.6M19.2 14h1.3M14 17.6v2.4M17.6 17.6h2.9M14 21h1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
+    hash:      { name: '哈希计算',      tone: 'tone-emerald', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件',
+      svg: '<path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
+    url:       { name: 'URL 编解码',    tone: 'tone-amber',   desc: '编码 / 解码 / 链接解析（参数表）',
+      svg: '<path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
+    imgcom:    { name: '图片压缩',      tone: 'tone-orange',  desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
+      svg: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
   };
 
   var NOTE_SVG = '<path d="M6 4h9l4 4v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5.5A1.5 1.5 0 0 1 6.5 4H6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>';

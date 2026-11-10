@@ -87,11 +87,17 @@ git push -u origin main
 3. 下次访问根域名 → 已登录，直接进 `/drive/`；未登录 → 进 `/main/`
 4. 工作台「快捷笔记」支持**自动云同步**（防抖 900ms 保存到 Supabase）
 
-## 七、路线图
+## 七、功能总览（v0.7.0）
 
-- `/codetools/<工具>` 开发者工具系列（JSON、颜色、密码…从现有资产迁移）
-- 收藏系统 / 最近使用云同步 / 一键分享短链
-- GitHub OAuth 登录
+- **13 款本地工具**：JSON / 颜色 / 密码 / 文本统计 / 时间戳 / Base64 / UUID / Diff / **正则测试器 / 二维码生成 / 哈希计算 / URL 编解码 / 图片压缩**（全部本地运行，输入不出本机）
+- **云笔记**：多笔记 · 文件夹 · 快捷笔记 · 星标收藏 · **Markdown 分屏/预览（零依赖渲染器）** · **回收站（软删除 30 天可恢复）**
+- **Ctrl+K 全局命令面板**：搜工具 / 页面 / 笔记 / 操作，键盘直达（全站可用）
+- **公告系统**：System 在 Terminal `announce <内容>` 发布 → 全站顶部横幅，可关闭、记忆已读
+- **公开用户主页**：`/u/?u=用户名`（用户名 / 简介 / 加入时间；简介在设置页编辑）
+- **修改密码 / 修改简介**：设置页账户卡
+- **Terminal（System 专属）**：users 分页 / ncount 笔记数 / announce 公告 / audit 操作日志
+- **PWA 可安装**：Chrome/Edge 访问 `/drive/` → 地址栏「安装」，桌面/手机独立窗口运行；离线时已缓存页面可打开
+- 收藏系统 · 最近使用 · 亮暗主题（圆形扩散动画）· 侧栏折叠 · System 账号封禁体系
 
 ## 附：文件说明
 
@@ -103,4 +109,9 @@ git push -u origin main
 | `assets/js/config.js` | Supabase 地址 + Publishable Key + 路径配置（预览环境自动适配） |
 | `assets/js/theme.js` | 亮/暗主题切换与记忆（localStorage · key `fu-theme`） |
 | `assets/vendor/supabase.min.js` | Supabase JS SDK（UMD 本地打包，约 220KB，无 CDN 依赖） |
-| `supabase-setup.sql` | 建表 + RLS 策略 + updated_at 触发器（幂等可重复执行） |
+| `supabase-setup.sql` | 建表 + RLS 策略 + 触发器（全量，幂等可重复执行） |
+| `supabase-notes.sql` | 云笔记增表（notes/folders/notes collections） |
+| `supabase-admin.sql` | System 管理员增量（profiles.status + 触发器） |
+| `supabase-v5.sql` | **v0.7 增量**：回收站软删除 / 公告表 / 操作日志 / 用户简介（幂等） |
+| `drive/manifest.json` + `drive/sw.js` | PWA：安装清单 + 离线缓存壳（仅 https 生效） |
+| `drive/u/index.html` | 公开用户主页（`/u/?u=用户名`，未登录可看） |

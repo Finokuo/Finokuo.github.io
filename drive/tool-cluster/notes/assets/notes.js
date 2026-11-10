@@ -34,6 +34,8 @@
     favs: {},          // noteId → true
     dirty: false,
     saveTimer: null,
+    bin: [],           // 回收站：[{id, title, deleted_at}]
+    softDel: false,    // notes.deleted_at 列是否可用（v5；旧表降级硬删除）
   };
 
   /* ---------- DOM ---------- */
@@ -55,6 +57,12 @@
   var saveState = $('nb-save-state');
   var updatedEl = $('nb-updated');
   var toast = $('toast');
+  var binBtn = $('nb-bin-btn');
+  var binCountEl = $('nb-bin-count');
+  var binListEl = $('nb-bin-list');
+  var previewEl = $('nb-preview');
+  var editorEl = document.querySelector('.nb-editor');
+  var viewBox = $('nb-view');
 
   function showToast(text) {
     toast.textContent = text;
@@ -108,8 +116,7 @@
     var c = client();
     Promise.all([
       c.from('folders').select('id,name').order('created_at', { ascending: true }),
-      c.from('notes').select('id,folder_id,title,content,is_quick,updated_at')
-        .order('updated_at', { ascending: false }),
+      loadNotesQuery(c),
     ]).then(function (res) {
       var fErr = res[0].error, nErr = res[1].error;
       if (isMissingTable(fErr) || isMissingTable(nErr)) {
@@ -117,10 +124,39 @@
       }
       state.folders = (res[0].data && !fErr) ? res[0].data : [];
       state.notes = (res[1].data && !nErr) ? res[1].data : [];
+      purgeBin();          // 过期（>30 天）回收站项自动清理
+      renderBinBadge();
       ensureQuick(function () {
         loadFavs(function () { done && done(); });
       });
     });
+  }
+
+  /* notes 查询：v5 表带 deleted_at（本地拆分在册/回收站）；
+     旧表报 PGRST204 → 降级不带该列（回收站不可用，删除回退硬删） */
+  function loadNotesQuery(c) {
+    return c.from('notes')
+      .select('id,folder_id,title,content,is_quick,updated_at,deleted_at')
+      .order('updated_at', { ascending: false })
+      .then(function (r) {
+        if (r.error && (r.error.code === 'PGRST204' || r.error.code === '42703' || /could not find the column|does not exist/i.test(r.error.message || ''))) {
+          state.softDel = false;
+          state.bin = [];
+          return c.from('notes')
+            .select('id,folder_id,title,content,is_quick,updated_at')
+            .order('updated_at', { ascending: false });
+        }
+        if (!r.error) {
+          state.softDel = true;
+          var bin = [];
+          (r.data || []).forEach(function (n) {
+            if (n.deleted_at) bin.push({ id: n.id, title: n.title, deleted_at: n.deleted_at });
+          });
+          state.bin = bin;
+          r.data = (r.data || []).filter(function (n) { return !n.deleted_at; });
+        }
+        return r;
+      });
   }
 
   /* 快捷笔记兜底（新用户触发器已建；这里兜存量/异常） */
@@ -288,6 +324,187 @@
     renderFolders(); renderList(); renderPath();
   }
 
+  /* =====================================================
+   * Markdown 预览（零依赖，XSS 安全：先整体转义再白名单变换）
+   * 支持：标题 / 粗斜体 / 删除线 / 行内码 / 代码块（带语言标签）/ 引用 /
+   *       分隔线 / 有序·无序·嵌套列表 / 表格 / 链接与图片（仅 http(s)）/ 裸链接
+   * ===================================================== */
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function mdInline(s) {
+    // s 已经过 escapeHtml
+    s = s.replace(/`([^`]+)`/g, function (m, c) { return '<code class="md-code-inline">' + c + '</code>'; });
+    s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![\w*])/g, '$1<i>$2</i>');
+    s = s.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    // 图片与链接（仅 http/https，阻断 javascript: 等协议）
+    s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, url) {
+      if (!/^https?:\/\//i.test(url)) return m;
+      return '<img src="' + url + '" alt="' + alt + '" loading="lazy" />';
+    });
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, txt, url) {
+      if (!/^https?:\/\//i.test(url)) return m;
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + txt + '</a>';
+    });
+    s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, function (m, pre, url) {
+      return pre + '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+    });
+    return s;
+  }
+
+  function md2html(src) {
+    if (!src) return '';
+    var codes = [];
+    src = String(src).replace(/```([^\n]*)\n([\s\S]*?)```/g, function (m, lang, code) {
+      codes.push({ lang: String(lang).trim(), code: code.replace(/\n$/, '') });
+      return '\u0000C' + (codes.length - 1) + '\u0000';
+    });
+
+    var lines = escapeHtml(src).split('\n');
+    var html = [];
+    var para = [];
+    var i = 0;
+
+    function flushPara() {
+      if (para.length) { html.push('<p>' + para.join('<br>') + '</p>'); para = []; }
+    }
+    function splitRow(l) {
+      var t = l.trim();
+      if (t.charAt(0) === '|') t = t.slice(1);
+      if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
+      return t.split('|').map(function (c) { return c.trim(); });
+    }
+
+    while (i < lines.length) {
+      var line = lines[i];
+      var codeM = line.match(/^\u0000C(\d+)\u0000$/);
+      if (codeM) {
+        flushPara();
+        var cb = codes[parseInt(codeM[1], 10)] || { lang: '', code: '' };
+        html.push('<pre class="md-code"><b class="md-lang mono">' + (cb.lang ? escapeHtml(cb.lang) : 'code') + '</b><code>' + escapeHtml(cb.code) + '</code></pre>');
+        i++;
+        continue;
+      }
+      var hh = line.match(/^(#{1,6})\s+(.*)$/);
+      if (hh) {
+        flushPara();
+        var lv = hh[1].length;
+        html.push('<h' + lv + '>' + mdInline(hh[2]) + '</h' + lv + '>');
+        i++;
+        continue;
+      }
+      if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { flushPara(); html.push('<hr>'); i++; continue; }
+
+      var q = line.match(/^&gt;\s?(.*)$/);
+      if (q) {
+        flushPara();
+        var qbuf = [q[1]];
+        i++;
+        while (i < lines.length) {
+          var q2 = lines[i].match(/^&gt;\s?(.*)$/);
+          if (!q2) break;
+          qbuf.push(q2[1]);
+          i++;
+        }
+        html.push('<blockquote>' + qbuf.map(mdInline).join('<br>') + '</blockquote>');
+        continue;
+      }
+
+      // 表格：当前行含 | 且下一行是 |---|---| 分隔行
+      if (line.indexOf('|') !== -1 && i + 1 < lines.length &&
+          /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1]) && lines[i + 1].indexOf('-') !== -1) {
+        flushPara();
+        var head = splitRow(line);
+        i += 2;
+        var rows = [];
+        while (i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== '') {
+          rows.push(splitRow(lines[i]));
+          i++;
+        }
+        html.push('<div class="md-table-wrap"><table><thead><tr>' +
+          head.map(function (c) { return '<th>' + mdInline(c) + '</th>'; }).join('') +
+          '</tr></thead><tbody>' +
+          rows.map(function (r) {
+            return '<tr>' + r.map(function (c) { return '<td>' + mdInline(c) + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table></div>');
+        continue;
+      }
+
+      // 列表（支持一层嵌套：缩进 2 空格）
+      var li = line.match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+      if (li) {
+        flushPara();
+        var ordered2 = /\d/.test(li[2]);
+        var items = [];
+        while (i < lines.length) {
+          var m2 = lines[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+          if (!m2) break;
+          items.push({
+            indent: Math.floor(m2[1].replace(/\t/g, '  ').length / 2),
+            text: m2[3],
+          });
+          i++;
+        }
+        var depth = 0;
+        var out = ordered2 ? '<ol>' : '<ul>';
+        items.forEach(function (it) {
+          while (it.indent > depth) { out += '<li><' + (ordered2 ? 'ol' : 'ul') + '>'; depth++; }
+          while (it.indent < depth) { out += '</' + (ordered2 ? 'ol' : 'ul') + '></li>'; depth--; }
+          out += '<li>' + mdInline(it.text) + '</li>';
+        });
+        while (depth > 0) { out += '</' + (ordered2 ? 'ol' : 'ul') + '></li>'; depth--; }
+        out += '</' + (ordered2 ? 'ol' : 'ul') + '>';
+        html.push(out);
+        continue;
+      }
+
+      if (line.trim() === '') { flushPara(); i++; continue; }
+      para.push(mdInline(line));
+      i++;
+    }
+    flushPara();
+    return html.join('\n');
+  }
+
+  /* ---------- 视图模式：编辑 / 分屏 / 预览 ---------- */
+  var VIEW_KEY = 'fuo-note-view';
+  var viewMode = 'edit';
+  try {
+    var _vm = localStorage.getItem(VIEW_KEY);
+    if (_vm === 'edit' || _vm === 'split' || _vm === 'preview') viewMode = _vm;
+  } catch (e) { /* ignore */ }
+
+  var previewTimer = null;
+  function renderPreview() {
+    if (!previewEl) return;
+    previewEl.innerHTML = md2html(state.cur ? state.cur.content : '');
+  }
+  function renderPreviewSoon() {
+    if (!previewEl) return;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 120);
+  }
+
+  function setView(mode) {
+    viewMode = mode;
+    try { localStorage.setItem(VIEW_KEY, mode); } catch (e) { /* ignore */ }
+    if (editorEl) editorEl.setAttribute('data-view', mode);
+    if (viewBox) {
+      var btns = viewBox.querySelectorAll('button');
+      Array.prototype.forEach.call(btns, function (b) {
+        var on = b.getAttribute('data-view') === mode;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+    }
+    renderPreview();
+  }
+
   /* ---------- 渲染：编辑器 ---------- */
   function renderEditor() {
     var n = state.cur;
@@ -302,6 +519,7 @@
       moveSel.disabled = true;
       delBtn.style.display = 'none';
       renderMoveOptions();
+      renderPreview();
       return;
     }
     titleEl.hidden = false;
@@ -320,6 +538,7 @@
     starBtn.setAttribute('aria-pressed', String(!!state.favs[n.id]));
     renderMoveOptions();
     renderPath();
+    renderPreview();
   }
 
   function renderMoveOptions() {
@@ -398,6 +617,7 @@
     if (!state.cur) return;
     state.cur.content = bodyEl.value;
     countInfo.textContent = bodyEl.value.length + ' 字';
+    renderPreviewSoon();
     state.dirty = true;
     if (settingOn('noteAutosave', true)) {
       setSaveState('is-saving', '保存中…');
@@ -556,14 +776,38 @@
   }
 
   function doDeleteNote(n) {
-    client().from('notes').delete().eq('id', n.id)
+    if (!state.softDel) {
+      // 旧表（未执行 v5 SQL）：保持硬删除，并提示可升级
+      client().from('notes').delete().eq('id', n.id)
+        .then(function (_a) {
+          $('nb-confirm').hidden = true;
+          if (_a.error) {
+            var code = _a.error.code || '';
+            var msg = _a.error.message || '';
+            if (/FUO_QUICK_PINNED/.test(msg)) { showToast('快捷笔记无法删除'); return; }
+            showToast('删除失败：' + (msg || '未知错误') + (code ? ' (' + code + ')' : ''));
+            return;
+          }
+          state.notes = state.notes.filter(function (x) { return x.id !== n.id; });
+          delete state.favs[n.id];
+          client().from('favorites')
+            .delete().eq('user_id', user.id).eq('kind', 'note').eq('ref', n.id)
+            .then(function () { /* 收藏清理失败不阻塞 */ });
+          state.cur = null;
+          showToast('已删除「' + n.title + '」（执行 supabase-v5.sql 后可获得回收站）');
+          renderFolders(); renderList(); renderEditor();
+          var rows = filteredNotes().filter(function (x) { return !x.is_quick; });
+          if (rows.length) select(rows[0].id);
+        });
+      return;
+    }
+
+    // v5：软删除 → 回收站（30 天可恢复）
+    client().from('notes').update({ deleted_at: new Date().toISOString() }).eq('id', n.id)
       .then(function (_a) {
         $('nb-confirm').hidden = true;
         if (_a.error) {
-          var code = _a.error.code || '';
-          var msg = _a.error.message || '';
-          if (/FUO_QUICK_PINNED/.test(msg)) { showToast('快捷笔记无法删除'); return; }
-          showToast('删除失败：' + (msg || '未知错误') + (code ? ' (' + code + ')' : ''));
+          showToast('删除失败：' + (_a.error.message || '未知错误'));
           return;
         }
         state.notes = state.notes.filter(function (x) { return x.id !== n.id; });
@@ -571,11 +815,156 @@
         client().from('favorites')
           .delete().eq('user_id', user.id).eq('kind', 'note').eq('ref', n.id)
           .then(function () { /* 收藏清理失败不阻塞 */ });
+        state.bin.unshift({ id: n.id, title: n.title, deleted_at: new Date().toISOString() });
         state.cur = null;
-        showToast('已删除「' + n.title + '」');
+        showToast('已移入回收站（30 天内可恢复）');
         renderFolders(); renderList(); renderEditor();
+        renderBinBadge();
         var rows = filteredNotes().filter(function (x) { return !x.is_quick; });
         if (rows.length) select(rows[0].id);
+      });
+  }
+
+  /* ---------- 回收站 ---------- */
+  function purgeBin() {
+    // 到期（>30 天）项懒清理：本地先移除，后台删除，失败不影响使用
+    if (!state.softDel || !state.bin.length) return;
+    var cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+    var expired = state.bin.filter(function (n) { return n.deleted_at < cutoff; });
+    if (!expired.length) return;
+    var ids = expired.map(function (n) { return n.id; });
+    state.bin = state.bin.filter(function (n) { return ids.indexOf(n.id) === -1; });
+    client().from('notes').delete().in('id', ids)
+      .then(function () { /* 忽略 */ });
+    client().from('favorites').delete().eq('user_id', user.id).eq('kind', 'note').in('ref', ids)
+      .then(function () { /* 忽略 */ });
+  }
+
+  function binDaysLeft(iso) {
+    var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    return Math.max(0, 30 - days);
+  }
+
+  function renderBinBadge() {
+    if (!binBtn) return;
+    if (!state.softDel) { binBtn.hidden = true; return; }
+    binBtn.hidden = false;
+    if (state.bin.length) {
+      binCountEl.textContent = String(state.bin.length);
+      binCountEl.hidden = false;
+    } else {
+      binCountEl.hidden = true;
+    }
+  }
+
+  function openBin() {
+    renderBinList();
+    $('nb-bin').hidden = false;
+  }
+  function closeBin() {
+    $('nb-bin').hidden = true;
+  }
+
+  function renderBinList() {
+    binListEl.innerHTML = '';
+    if (!state.bin.length) {
+      var p = document.createElement('p');
+      p.className = 'nb-empty-list';
+      p.textContent = '回收站是空的。删除的笔记会在这里保留 30 天。';
+      binListEl.appendChild(p);
+      return;
+    }
+    state.bin.forEach(function (n) {
+      var row = document.createElement('div');
+      row.className = 'nb-bin-row';
+
+      var info = document.createElement('div');
+      info.className = 'nb-bin-info';
+      var b = document.createElement('b');
+      b.textContent = n.title || '未命名笔记';
+      var small = document.createElement('small');
+      small.className = 'mono';
+      small.textContent = '剩 ' + binDaysLeft(n.deleted_at) + ' 天';
+      info.appendChild(b);
+      info.appendChild(small);
+
+      var ops = document.createElement('div');
+      ops.className = 'nb-bin-ops';
+      var restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'tbtn';
+      restore.textContent = '恢复';
+      restore.addEventListener('click', function () { restoreNote(n.id); });
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'tbtn nb-confirm-danger';
+      del.textContent = '彻底删除';
+      del.addEventListener('click', function () { hardDeleteNote(n.id); });
+      ops.appendChild(restore);
+      ops.appendChild(del);
+
+      row.appendChild(info);
+      row.appendChild(ops);
+      binListEl.appendChild(row);
+    });
+  }
+
+  function restoreNote(id) {
+    if (PREVIEW) { showToast('预览模式：登录后即可恢复'); return; }
+    client().from('notes').update({ deleted_at: null }).eq('id', id)
+      .then(function (_a) {
+        if (_a.error) { showToast('恢复失败：' + (_a.error.message || '未知错误')); return; }
+        closeBin();
+        showToast('已恢复，回到笔记列表');
+        refresh(function () {
+          renderFolders(); renderList(); renderBinBadge();
+          var rows = filteredNotes().filter(function (x) { return !x.is_quick; });
+          if (rows.length) select(rows[0].id);
+        });
+      });
+  }
+
+  function hardDeleteNote(id) {
+    if (PREVIEW) { showToast('预览模式：登录后即可删除'); return; }
+    client().from('notes').delete().eq('id', id)
+      .then(function (_a) {
+        if (_a.error) {
+          var msg = _a.error.message || '';
+          if (/FUO_QUICK_PINNED/.test(msg)) { showToast('快捷笔记无法删除'); return; }
+          showToast('删除失败：' + (msg || '未知错误'));
+          return;
+        }
+        state.bin = state.bin.filter(function (x) { return x.id !== id; });
+        client().from('favorites').delete().eq('user_id', user.id).eq('kind', 'note').eq('ref', id)
+          .then(function () { /* 忽略 */ });
+        renderBinList();
+        renderBinBadge();
+        showToast('已彻底删除');
+      });
+  }
+
+  function clearBin() {
+    if (PREVIEW) { showToast('预览模式：登录后即可清空'); return; }
+    if (!state.bin.length) { showToast('回收站已经是空的'); return; }
+    if (!settingOn('confirmDelete', true)) { doClearBin(); return; }
+    confirmCtx = { type: 'bin' };
+    $('nb-confirm-text').textContent =
+      '确定清空回收站吗？其中 ' + state.bin.length + ' 篇笔记将被彻底删除，不可恢复。';
+    $('nb-confirm').hidden = false;
+  }
+
+  function doClearBin() {
+    var ids = state.bin.map(function (n) { return n.id; });
+    client().from('notes').delete().in('id', ids)
+      .then(function (_a) {
+        $('nb-confirm').hidden = true;
+        if (_a.error) { showToast('清空失败：' + (_a.error.message || '未知错误')); return; }
+        state.bin = [];
+        client().from('favorites').delete().eq('user_id', user.id).eq('kind', 'note').in('ref', ids)
+          .then(function () { /* 忽略 */ });
+        renderBinList();
+        renderBinBadge();
+        showToast('回收站已清空');
       });
   }
 
@@ -725,6 +1114,20 @@
     countInfo.style.cursor = 'pointer';
     countInfo.title = '点击立即保存（Ctrl+S）';
 
+    // 视图模式：编辑 / 分屏 / 预览
+    if (viewBox) {
+      Array.prototype.forEach.call(viewBox.querySelectorAll('button'), function (b) {
+        b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
+      });
+    }
+
+    // 回收站
+    if (binBtn) binBtn.addEventListener('click', openBin);
+    $('nb-bin').addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-nb-binclose]')) closeBin();
+    });
+    $('nb-bin-clear').addEventListener('click', clearBin);
+
     starBtn.addEventListener('click', function () {
       if (PREVIEW) { showToast('预览模式：登录后即可收藏'); return; }
       toggleStar();
@@ -755,6 +1158,7 @@
       if (!confirmCtx) { $('nb-confirm').hidden = true; return; }
       if (confirmCtx.type === 'note') doDeleteNote(confirmCtx.note);
       else if (confirmCtx.type === 'folder') doDeleteFolder(confirmCtx.folder);
+      else if (confirmCtx.type === 'bin') doClearBin();
       confirmCtx = null;
     });
     $('nb-confirm').addEventListener('click', function (e) {
@@ -768,6 +1172,7 @@
       if (e.key === 'Escape') {
         if (!$('nb-modal').hidden) { $('nb-modal').hidden = true; modalCb = null; }
         else if (!$('nb-confirm').hidden) { $('nb-confirm').hidden = true; confirmCtx = null; }
+        else if (!$('nb-bin').hidden) closeBin();
       }
     });
   }
@@ -780,11 +1185,16 @@
     ];
     state.notes = [
       { id: 'q', folder_id: null, title: '快捷笔记', content: '随手记点什么…\n这行内容可以修改，但这条笔记永远删不掉。', is_quick: true, updated_at: new Date().toISOString() },
-      { id: 'n1', folder_id: 'f1', title: '欢迎来到云笔记', content: '这是云同步的多笔记空间：\n\n· 左侧可以搜索、新建笔记和文件夹\n· 点标题可以改名\n· 编辑自动保存（可在设置里关闭改为手动）\n· 星标收藏后可在「收藏」页看到', is_quick: false, updated_at: new Date(Date.now() - 3600000).toISOString() },
-      { id: 'n2', folder_id: 'f2', title: '待办清单', content: '□ 试用文件夹整理\n□ 把常用笔记加入收藏\n□ 在设置页调一下开关', is_quick: false, updated_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 'n1', folder_id: 'f1', title: '欢迎来到云笔记', content: '# 欢迎来到云笔记\n\n这是云同步的多笔记空间，**支持 Markdown**：\n\n- 左侧可以搜索、新建笔记和文件夹\n- 点标题可以改名，点「预览」看渲染效果\n- 编辑自动保存（可在设置里改为手动）\n- 星标收藏后可在「收藏」页看到\n\n> 试试右上角的「分屏」模式，边写边看。\n\n```js\n// 代码块也支持\nconsole.log("hello fuo");\n```\n\n| 功能 | 状态 |\n| --- | --- |\n| 多笔记 | ✓ |\n| 文件夹 | ✓ |\n| 回收站 | ✓ |', is_quick: false, updated_at: new Date(Date.now() - 3600000).toISOString() },
+      { id: 'n2', folder_id: 'f2', title: '待办清单', content: '## 待办\n\n1. 试用文件夹整理\n2. 把常用笔记加入收藏\n3. 在设置页调一下开关\n4. 试试 Ctrl+K 全局搜索', is_quick: false, updated_at: new Date(Date.now() - 86400000).toISOString() },
     ];
     state.favs = { n1: true };
+    state.softDel = true;
+    state.bin = [
+      { id: 'b1', title: '旧草稿（演示）', deleted_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+    ];
     renderFolders(); renderList(); renderPath();
+    renderBinBadge();
     select('q');
   }
 
@@ -794,8 +1204,9 @@
     if (!c || !user) return;
     loadAll(function () {
       renderFolders(); renderList();
-      // 深链：?note=<id>
+      // 深链：?note=new → 直接新建；?note=<id> → 直达该笔记
       var m = window.location.search.match(/[?&]note=([\w-]+)/);
+      if (m && m[1] === 'new') { createNote(); return; }
       if (m && state.notes.some(function (n) { return n.id === m[1]; })) {
         var target = null;
         state.notes.forEach(function (n) { if (n.id === m[1]) target = n; });
@@ -818,6 +1229,7 @@
   }
 
   bind();            // 事件只绑一次（preview / 正式模式共用）
+  setView(viewMode); // 初始化视图模式（编辑 / 分屏 / 预览）
   if (PREVIEW) bootPreview();
   else guard();      // 正式模式：先过登录守卫 → boot()
 })();

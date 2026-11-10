@@ -111,6 +111,11 @@
     base64: '<path d="M5 9h14M5 15h14M9.5 4l-2 16M16.5 4l-2 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
     uuid: '<rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M13 10h4.5M13 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
     diff: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v15M7 12h2.5M15 12h2.5M16.2 9.8v4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
+    regex: '<path d="M8.5 4.5 4.5 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15 7.5v9M11.3 9.7l7.4 4.6M18.7 9.7l-7.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20.2" cy="19" r="1.3" fill="currentColor"/>',
+    qrcode: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M14 14h2.6M19.2 14h1.3M14 17.6v2.4M17.6 17.6h2.9M14 21h1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
+    hash: '<path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
+    url: '<path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+    imgcom: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
   };
 
   var TOOLS = {};
@@ -590,9 +595,561 @@
     },
   };
 
-  /* =====================================================
-   * 使用记录（与仪表盘「最近使用」共用 localStorage 键）
-   * ===================================================== */
+  /* ---------- 9. 正则测试器 ---------- */
+  TOOLS.regex = {
+    name: '正则测试器', tone: 'tone-rose', desc: '实时匹配高亮 · 捕获组 · 替换预览',
+    render: function (body) {
+      var patIn = document.createElement('input');
+      patIn.type = 'text'; patIn.className = 'tf-input mono';
+      patIn.placeholder = '正则表达式，例如 \\d+|[a-f0-9]{4}';
+      patIn.value = '\\b[\\w.+-]+@[\\w-]+\\.[\\w.]+\\b';
+
+      var flags = {};
+      var flagWrap = h('div', 'rx-flags');
+      [['g', '全局 g'], ['i', '忽略大小写 i'], ['m', '多行 m'], ['s', '点号跨行 s'], ['u', 'Unicode u']].forEach(function (f) {
+        var l = h('label', 'pw-opt');
+        var box = document.createElement('input');
+        box.type = 'checkbox';
+        if (f[0] === 'g' || f[0] === 'i') box.checked = true;
+        box.addEventListener('change', update);
+        l.appendChild(box);
+        l.appendChild(h('span', null, f[1]));
+        flagWrap.appendChild(l);
+        flags[f[0]] = box;
+      });
+
+      var ta = makeTextarea('grow', '输入测试文本…');
+      ta.value = '联系我：finokuo@example.com 或 admin@test.org\n电话 138-8888-6666，备用 159 0000 1234\n日期 2026-11-09 / 2026/11/10';
+
+      var out = h('div', 'rx-hl mono', '');
+      var stat = h('p', 'tf-msg', '');
+      var err = h('p', 'tf-msg is-err', '');
+      var groupsEl = h('div', 'rx-groups mono', '');
+      var repIn = document.createElement('input');
+      repIn.type = 'text'; repIn.className = 'tf-input mono';
+      repIn.placeholder = '替换为（支持 $1 $& 等），例如 [$&]';
+      var repOut = h('pre', 'tf-out mono', '—');
+      stat.hidden = true; err.hidden = true;
+
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      function flagStr() {
+        var s = '';
+        ['g', 'i', 'm', 's', 'u'].forEach(function (k) { if (flags[k] && flags[k].checked) s += k; });
+        return s;
+      }
+
+      function update() {
+        err.hidden = true; stat.hidden = true;
+        out.innerHTML = ''; groupsEl.innerHTML = ''; repOut.textContent = '—';
+        var src = ta.value;
+        if (!patIn.value || !src) {
+          out.innerHTML = '<span class="rx-dim">// 输入正则与测试文本后实时匹配</span>';
+          return;
+        }
+        var re;
+        try { re = new RegExp(patIn.value, flagStr()); }
+        catch (e) { err.hidden = false; err.textContent = '✗ 正则语法错误：' + e.message; return; }
+
+        var matches = [];
+        if (re.global) {
+          var it = src.matchAll(re);
+          var step;
+          while ((step = it.next()) && !step.done) {
+            matches.push(step.value);
+            if (matches.length >= 2000) break;
+          }
+        } else {
+          var m0 = re.exec(src);
+          if (m0) matches.push(m0);
+        }
+
+        var html = '';
+        var last = 0;
+        matches.forEach(function (m) {
+          var s = m.index, e2 = s + m[0].length;
+          if (e2 <= s) return; // 空匹配不渲染标记
+          html += esc(src.slice(last, s)) + '<mark class="rx-hit">' + esc(m[0]) + '</mark>';
+          last = e2;
+        });
+        html += esc(src.slice(last));
+        out.innerHTML = html;
+
+        stat.hidden = false;
+        stat.textContent = '✓ ' + matches.length + ' 处匹配' + (re.global ? '' : '（无 g 标志只显示第一处）');
+
+        if (matches.length && matches[0].length > 1) {
+          var m = matches[0];
+          groupsEl.appendChild(h('b', 'rx-g-head', '第 1 处匹配的捕获组'));
+          for (var i = 1; i < m.length; i++) {
+            var row = h('div', 'rx-g-row');
+            row.appendChild(h('span', 'rx-g-idx', '$' + i));
+            row.appendChild(h('code', 'rx-g-val', m[i] === undefined ? '(未参与匹配)' : m[i]));
+            groupsEl.appendChild(row);
+          }
+        }
+
+        if (repIn.value) {
+          try { repOut.textContent = src.replace(re, repIn.value); }
+          catch (e) { repOut.textContent = '—'; }
+        }
+      }
+
+      body.appendChild(fieldRow('正则表达式', patIn));
+      body.appendChild(flagWrap);
+      body.appendChild(fieldRow('测试文本', ta));
+      body.appendChild(out);
+      body.appendChild(stat);
+      body.appendChild(err);
+      body.appendChild(h('span', 'tf-label mono', '替换预览（可选）'));
+      body.appendChild(repIn);
+      body.appendChild(repOut);
+      body.appendChild(btnRow(copyBtn(function () { return repOut.textContent; })));
+      body.appendChild(h('span', 'tf-label mono', '捕获组'));
+      body.appendChild(groupsEl);
+      patIn.addEventListener('input', update);
+      ta.addEventListener('input', update);
+      repIn.addEventListener('input', update);
+      update();
+    },
+  };
+
+  /* ---------- 10. 二维码生成 ---------- */
+  TOOLS.qrcode = {
+    name: '二维码生成', tone: 'tone-cyan', desc: '本地生成可下载 PNG · 支持中文与长文本',
+    render: function (body) {
+      if (!window.qrcodegen) {
+        body.appendChild(h('p', 'tf-msg is-err', '二维码库未加载：assets/vendor/qrcodegen.js 缺失。'));
+        return;
+      }
+      var input = makeTextarea('', '输入内容（网址 / 文本 / Wi-Fi 名密码…）');
+      input.value = 'https://finokuo.github.io';
+
+      var eclSel = document.createElement('select');
+      eclSel.className = 'tf-input';
+      [['MEDIUM', '纠错 M · 推荐'], ['LOW', '纠错 L · 容量最大'], ['QUART', '纠错 Q'], ['HIGH', '纠错 H · 最抗损']].forEach(function (o) {
+        var op = document.createElement('option');
+        op.value = o[0]; op.textContent = o[1];
+        eclSel.appendChild(op);
+      });
+
+      var scaleIn = document.createElement('input');
+      scaleIn.type = 'range'; scaleIn.min = '2'; scaleIn.max = '12'; scaleIn.value = '4';
+      var scaleVal = h('b', 'mono', '4x');
+      var bordIn = document.createElement('input');
+      bordIn.type = 'range'; bordIn.min = '0'; bordIn.max = '8'; bordIn.value = '4';
+      var bordVal = h('b', 'mono', '4');
+
+      var canvas = document.createElement('canvas');
+      canvas.className = 'qr-canvas';
+      canvas.setAttribute('aria-label', '二维码预览');
+      var info = h('p', 'tf-msg', '');
+      info.hidden = true;
+
+      function update() {
+        scaleVal.textContent = scaleIn.value + 'x';
+        bordVal.textContent = bordIn.value;
+        var text = input.value;
+        info.hidden = true;
+        var ctx0 = canvas.getContext('2d');
+        canvas.width = canvas.height = 1;
+        if (!text.trim()) { ctx0.clearRect(0, 0, 1, 1); return; }
+        try {
+          var qr = qrcodegen.QrCode.encodeText(text, qrcodegen.QrCode.Ecc[eclSel.value]);
+          var scale = parseInt(scaleIn.value, 10);
+          var border = parseInt(bordIn.value, 10);
+          canvas.width = canvas.height = (qr.size + border * 2) * scale;
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#101014';
+          for (var y = 0; y < qr.size; y++) {
+            for (var x = 0; x < qr.size; x++) {
+              if (qr.getModule(x, y)) ctx.fillRect((x + border) * scale, (y + border) * scale, scale, scale);
+            }
+          }
+          info.hidden = false;
+          info.textContent = '✓ 版本 ' + qr.version + ' · ' + qr.size + '×' + qr.size + ' 模块 · ' +
+            (canvas.width + '×' + canvas.height + ' px');
+        } catch (e) {
+          info.hidden = false;
+          info.textContent = '✗ ' + (e && e.message ? e.message : '生成失败（内容过长？）');
+        }
+      }
+
+      var bDown = makeBtn('下载 PNG', true);
+      bDown.addEventListener('click', function () {
+        if (!canvas.width || canvas.width <= 1) { miniToast('先输入内容生成二维码'); return; }
+        var a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'fuo-qrcode.png';
+        a.click();
+      });
+
+      var optRow1 = h('div', 'pw-len');
+      optRow1.appendChild(h('span', 'tf-label mono', '比例'));
+      optRow1.appendChild(scaleIn);
+      optRow1.appendChild(scaleVal);
+      var optRow2 = h('div', 'pw-len');
+      optRow2.appendChild(h('span', 'tf-label mono', '留白'));
+      optRow2.appendChild(bordIn);
+      optRow2.appendChild(bordVal);
+
+      var qrBox = h('div', 'qr-box');
+      qrBox.appendChild(canvas);
+
+      body.appendChild(fieldRow('内容', input));
+      body.appendChild(fieldRow('纠错等级', eclSel));
+      body.appendChild(optRow1);
+      body.appendChild(optRow2);
+      body.appendChild(btnRow(bDown));
+      body.appendChild(qrBox);
+      body.appendChild(info);
+      input.addEventListener('input', update);
+      eclSel.addEventListener('change', update);
+      scaleIn.addEventListener('input', update);
+      bordIn.addEventListener('input', update);
+      update();
+    },
+  };
+
+  /* ---------- 11. 哈希计算 ---------- */
+  TOOLS.hash = {
+    name: '哈希计算', tone: 'tone-emerald', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件 · 本地计算',
+    render: function (body) {
+      if (!(window.crypto && window.crypto.subtle && window.TextEncoder)) {
+        body.appendChild(h('p', 'tf-msg is-err', '当前环境不支持安全哈希（需要 HTTPS 或 localhost）。'));
+        return;
+      }
+      var ta = makeTextarea('grow', '输入文本，或把文件拖到这里…');
+      var fileIn = document.createElement('input');
+      fileIn.type = 'file'; fileIn.hidden = true;
+
+      var algo = 'SHA-256';
+      var seg = h('div', 'hash-algos mono');
+      ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'].forEach(function (a) {
+        var b = h('button', 'hash-algo' + (a === algo ? ' is-on' : ''), a);
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          algo = a;
+          Array.prototype.forEach.call(seg.children, function (x) { x.classList.remove('is-on'); });
+          b.classList.add('is-on');
+          run();
+        });
+        seg.appendChild(b);
+      });
+
+      var out = h('code', 'tf-out hash-out mono', '—');
+      var meta = h('p', 'tf-msg', '');
+      meta.hidden = true;
+
+      var bFile = makeBtn('选择文件');
+      bFile.addEventListener('click', function () { fileIn.click(); });
+      fileIn.addEventListener('change', function () {
+        if (fileIn.files && fileIn.files[0]) handleFile(fileIn.files[0]);
+        fileIn.value = '';
+      });
+
+      ta.addEventListener('dragover', function (e) { e.preventDefault(); ta.classList.add('is-drop'); });
+      ta.addEventListener('dragleave', function () { ta.classList.remove('is-drop'); });
+      ta.addEventListener('drop', function (e) {
+        e.preventDefault();
+        ta.classList.remove('is-drop');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      function toHex(buf) {
+        var arr = new Uint8Array(buf);
+        var s = '';
+        for (var i = 0; i < arr.length; i++) s += (arr[i] < 16 ? '0' : '') + arr[i].toString(16);
+        return s;
+      }
+      function fmtSize(n) {
+        return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
+      }
+      function digest(data, label) {
+        out.textContent = '计算中…';
+        window.crypto.subtle.digest(algo, data).then(function (buf) {
+          out.textContent = toHex(buf);
+          meta.hidden = false;
+          meta.textContent = '✓ ' + algo + ' · ' + label;
+        }).catch(function (e) {
+          out.textContent = '—';
+          meta.hidden = false;
+          meta.textContent = '✗ 计算失败：' + (e && e.message ? e.message : '未知错误');
+        });
+      }
+      function run() {
+        if (!ta.value) { out.textContent = '—'; meta.hidden = true; return; }
+        digest(new TextEncoder().encode(ta.value), '文本 ' + ta.value.length + ' 字');
+      }
+      function handleFile(file) {
+        if (file.size > 64 * 1048576) { miniToast('文件过大（上限 64 MB）'); return; }
+        var fr = new FileReader();
+        fr.onload = function () {
+          digest(fr.result, '文件 ' + file.name + ' · ' + fmtSize(file.size));
+        };
+        fr.onerror = function () { miniToast('文件读取失败'); };
+        fr.readAsArrayBuffer(file);
+      }
+
+      ta.addEventListener('input', run);
+      body.appendChild(seg);
+      body.appendChild(fieldRow('输入', ta));
+      body.appendChild(fileIn);
+      body.appendChild(btnRow(bFile, copyBtn(function () { return out.textContent; })));
+      body.appendChild(out);
+      body.appendChild(meta);
+    },
+  };
+
+  /* ---------- 12. URL 编解码 ---------- */
+  TOOLS.url = {
+    name: 'URL 编解码', tone: 'tone-amber', desc: '编码 / 解码 / 链接解析（参数表）',
+    render: function (body) {
+      var input = makeTextarea('', '输入 URL 或任意文本…');
+      input.value = 'https://finokuo.github.io/search?q=云笔记 页面&lang=zh-CN#top';
+      var out = h('pre', 'tf-out mono', '—');
+      var err = h('p', 'tf-msg is-err', '');
+      err.hidden = true;
+      var parseBox = h('div', 'url-parse');
+
+      function runEnc() {
+        err.hidden = true;
+        out.textContent = encodeURIComponent(input.value);
+      }
+      function runDec() {
+        err.hidden = true;
+        try { out.textContent = decodeURIComponent(input.value.replace(/\+/g, '%20')); }
+        catch (e) { err.hidden = false; err.textContent = '✗ 解码失败：不是合法的百分号编码。'; }
+      }
+      function runParse() {
+        err.hidden = true;
+        parseBox.innerHTML = '';
+        var raw = input.value.trim();
+        if (!raw) { return; }
+        var u;
+        try { u = new URL(raw); }
+        catch (e) {
+          try { u = new URL('https://' + raw); }
+          catch (e2) { err.hidden = false; err.textContent = '✗ 无法解析为链接。'; return; }
+        }
+        var rows = [
+          ['协议', u.protocol.replace(':', '') || '—'],
+          ['主机', u.host || '—'],
+          ['路径', u.pathname || '—'],
+          ['哈希', u.hash.replace('#', '') || '—'],
+        ];
+        var table = h('div', 'url-rows');
+        rows.forEach(function (r) {
+          var row = h('div', 'url-row');
+          row.appendChild(h('span', 'mono url-key', r[0]));
+          row.appendChild(h('code', 'mono url-val', r[1]));
+          table.appendChild(row);
+        });
+        parseBox.appendChild(h('span', 'tf-label mono', '链接结构'));
+        parseBox.appendChild(table);
+
+        if (u.search) {
+          parseBox.appendChild(h('span', 'tf-label mono', '查询参数'));
+          var ptable = h('div', 'url-rows');
+          u.searchParams.forEach(function (v, k) {
+            var row = h('div', 'url-row');
+            row.appendChild(h('span', 'mono url-key', k));
+            row.appendChild(h('code', 'mono url-val', v || '(空)'));
+            ptable.appendChild(row);
+          });
+          parseBox.appendChild(ptable);
+        }
+        out.textContent = u.href;
+      }
+
+      var bEnc = makeBtn('编码 →', true);
+      var bDec = makeBtn('← 解码');
+      var bParse = makeBtn('解析链接');
+      var bSwap = makeBtn('结果当作输入');
+      bEnc.addEventListener('click', runEnc);
+      bDec.addEventListener('click', runDec);
+      bParse.addEventListener('click', runParse);
+      bSwap.addEventListener('click', function () {
+        if (out.textContent && out.textContent !== '—') {
+          input.value = out.textContent;
+          out.textContent = '—';
+          parseBox.innerHTML = '';
+        }
+      });
+
+      body.appendChild(fieldRow('输入', input));
+      body.appendChild(btnRow(bEnc, bDec, bParse, bSwap, copyBtn(function () { return out.textContent; })));
+      body.appendChild(out);
+      body.appendChild(err);
+      body.appendChild(parseBox);
+      runParse(); // 默认给一次解析结果
+    },
+  };
+
+  /* ---------- 13. 图片压缩 ---------- */
+  TOOLS.imgcom = {
+    name: '图片压缩', tone: 'tone-orange', desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
+    render: function (body) {
+      var fileIn = document.createElement('input');
+      fileIn.type = 'file'; fileIn.accept = 'image/*'; fileIn.hidden = true;
+
+      var drop = h('div', 'ic-drop');
+      drop.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>' +
+        '<b>点击选择图片，或拖拽到此处</b>' +
+        '<p class="mono">JPG / PNG / WebP · 全程在本机处理，不会上传</p>';
+      drop.addEventListener('click', function () { fileIn.click(); });
+      drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+      drop.addEventListener('dragleave', function () { drop.classList.remove('is-over'); });
+      drop.addEventListener('drop', function (e) {
+        e.preventDefault();
+        drop.classList.remove('is-over');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]);
+      });
+      fileIn.addEventListener('change', function () {
+        if (fileIn.files && fileIn.files[0]) handle(fileIn.files[0]);
+        fileIn.value = '';
+      });
+
+      var quality = document.createElement('input');
+      quality.type = 'range'; quality.min = '10'; quality.max = '95'; quality.value = '80';
+      var qualityVal = h('b', 'mono', '80%');
+
+      var maxW = document.createElement('input');
+      maxW.type = 'number'; maxW.className = 'tf-input ic-maxw';
+      maxW.placeholder = '不限制'; maxW.min = '16';
+
+      var webpOk = false;
+      try {
+        var probe = document.createElement('canvas');
+        probe.width = probe.height = 1;
+        webpOk = probe.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+      } catch (e) { webpOk = false; }
+
+      var fmtSel = document.createElement('select');
+      fmtSel.className = 'tf-input';
+      var fmtOpts = [['jpeg', 'JPEG（兼容最好）']];
+      if (webpOk) fmtOpts.push(['webp', 'WebP（更小，保留透明）']);
+      fmtOpts.forEach(function (o) {
+        var op = document.createElement('option');
+        op.value = o[0]; op.textContent = o[1];
+        fmtSel.appendChild(op);
+      });
+
+      var result = h('div', 'ic-result');
+      var msg = h('p', 'tf-msg', '');
+      msg.hidden = true;
+      var lastUrl = null;
+      var lastName = 'fuo.jpg';
+
+      function fmtSize(n) {
+        return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
+      }
+
+      function handle(file) {
+        if (!/^image\//.test(file.type)) { miniToast('请选择图片文件'); return; }
+        if (file.size > 32 * 1048576) { miniToast('图片过大（上限 32 MB）'); return; }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          compress(img, file, url);
+        };
+        img.onerror = function () {
+          miniToast('图片读取失败');
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      }
+
+      function compress(img, file, url) {
+        var maxWNum = parseInt(maxW.value, 10) || 0;
+        var w = img.naturalWidth, hh = img.naturalHeight;
+        if (maxWNum && w > maxWNum) {
+          hh = Math.round(hh * maxWNum / w);
+          w = maxWNum;
+        }
+        if (w < 1 || hh < 1) { miniToast('图片尺寸异常'); return; }
+
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = hh;
+        var ctx = canvas.getContext('2d');
+        var mime = fmtSel.value === 'webp' && webpOk ? 'image/webp' : 'image/jpeg';
+        if (mime === 'image/jpeg') {
+          ctx.fillStyle = '#ffffff'; // PNG 透明区域避免变黑
+          ctx.fillRect(0, 0, w, hh);
+        }
+        ctx.drawImage(img, 0, 0, w, hh);
+
+        canvas.toBlob(function (blob) {
+          URL.revokeObjectURL(url);
+          if (!blob) { msg.hidden = false; msg.className = 'tf-msg is-err'; msg.textContent = '✗ 压缩失败，换一张试试。'; return; }
+          renderResult(blob, file, w, hh);
+        }, mime, parseInt(quality.value, 10) / 100);
+      }
+
+      function renderResult(blob, file, w, hh) {
+        if (lastUrl) URL.revokeObjectURL(lastUrl);
+        lastUrl = URL.createObjectURL(blob);
+        var saved = file.size ? Math.max(0, Math.round((1 - blob.size / file.size) * 100)) : 0;
+        var ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+        lastName = (file.name || 'image').replace(/\.[^.]+$/, '') + '-fuo.' + ext;
+
+        result.innerHTML = '';
+        var img = document.createElement('img');
+        img.src = lastUrl;
+        img.alt = '压缩结果预览';
+        var stats = h('div', 'ic-stats mono');
+        stats.innerHTML =
+          '<span>原始 <b>' + fmtSize(file.size) + '</b></span>' +
+          '<span>→ <b>' + fmtSize(blob.size) + '</b></span>' +
+          '<span class="' + (saved >= 5 ? 'is-good' : '') + '">' + (saved > 0 ? '省 ' + saved + '%' : '未变小（已经很优了）') + '</span>' +
+          '<span>' + w + '×' + hh + '</span>';
+
+        var bDown = makeBtn('下载压缩图', true);
+        bDown.addEventListener('click', function () {
+          var a = document.createElement('a');
+          a.href = lastUrl;
+          a.download = lastName;
+          a.click();
+        });
+
+        result.appendChild(img);
+        result.appendChild(stats);
+        result.appendChild(btnRow(bDown));
+        result.hidden = false;
+        msg.hidden = true;
+      }
+
+      var qRow = h('div', 'pw-len');
+      qRow.appendChild(h('span', 'tf-label mono', '质量'));
+      qRow.appendChild(quality);
+      qRow.appendChild(qualityVal);
+      quality.addEventListener('input', function () {
+        qualityVal.textContent = quality.value + '%';
+      });
+
+      var fmtRow = h('div', 'ic-opts');
+      fmtRow.appendChild(fieldRow('输出格式', fmtSel));
+      fmtRow.appendChild(fieldRow('最大宽度 px', maxW));
+
+      var note = h('p', 'tf-msg', '');
+      note.textContent = '提示：PNG 透明图选 JPEG 会填白底，选 WebP 可保留透明；调整质量或尺寸后需重新选择图片。';
+
+      result.hidden = true;
+      body.appendChild(fileIn);
+      body.appendChild(drop);
+      body.appendChild(qRow);
+      body.appendChild(fmtRow);
+      body.appendChild(note);
+      body.appendChild(msg);
+      body.appendChild(result);
+    },
+  };
   function record(id) {
     if (!settingOn('toolHistory', true)) return; // 设置里关闭了使用记录
     var t = TOOLS[id];
@@ -750,12 +1307,12 @@
     return a;
   }
 
-  function adminCard() {
+  function adminCard(idx) {
     var url = window.FUO_TOOL_URL ? window.FUO_TOOL_URL('terminal') : 'terminal/index.html';
     var a = h('a', 'tc-card tc-card-admin');
     a.href = url;
     a.setAttribute('aria-label', '打开 Terminal（仅 System 账号可用）');
-    a.style.setProperty('--i', '9'); // 入场交错动画排在最后
+    a.style.setProperty('--i', String(idx)); // 入场交错动画排在最后
 
     var ic = h('i', 't-ic tc-card-ic tone-rose');
     ic.setAttribute('aria-hidden', 'true');
@@ -775,7 +1332,7 @@
   function maybeAdminCard() {
     var grid = document.getElementById('tc-grid');
     if (!grid) return;
-    if (PREVIEW) { grid.appendChild(adminCard()); return; } // 预览：展示外壳
+    if (PREVIEW) { grid.appendChild(adminCard(grid.children.length)); return; } // 预览：展示外壳
     if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return;
     try {
       var c = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
@@ -785,7 +1342,7 @@
         c.from('profiles').select('username').eq('id', s.user.id).maybeSingle()
           .then(function (_b) {
             if (_b.data && _b.data.username === 'System') {
-              grid.appendChild(adminCard());
+              grid.appendChild(adminCard(grid.children.length));
             }
           });
       });

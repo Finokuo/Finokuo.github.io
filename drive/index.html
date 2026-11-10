@@ -6,9 +6,11 @@
   <title>工作台 · Fuo Tools</title>
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="assets/js/theme.js?v=3"></script>
-  <link rel="stylesheet" href="assets/css/style.css?v=2" />
+  <link rel="stylesheet" href="assets/css/style.css?v=4" />
 </head>
 <body>
   <div class="shell">
@@ -28,7 +30,7 @@
         </a>
         <a class="side-item" id="nav-tools" href="#">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4.5 4.5 0 0 0-6.09 5.9L3 17.8V21h3.2l5.6-5.61a4.5 4.5 0 0 0 5.9-6.09l-2.8 2.8-2.11-.7-.7-2.11 2.61-2.99Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
-          工具集 <i class="mono">9 款</i>
+          工具集 <i class="mono">14 款</i>
         </a>
         <a class="side-item" id="nav-favorites" href="#">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
@@ -57,11 +59,11 @@
       <header class="topbar">
         <span class="topbar-date mono" id="topbar-date">—</span>
         <div class="topbar-actions">
-          <span class="topbar-search" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            全局搜索 · 即将上线
-            <kbd class="mono">⌘K</kbd>
-          </span>
+          <button class="topbar-search" id="pal-open" type="button" aria-label="打开全局搜索（Ctrl+K）" title="全局搜索（Ctrl+K）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span class="ts-text">全局搜索 · 工具 / 笔记 / 页面</span>
+            <kbd class="mono ts-kbd">Ctrl K</kbd>
+          </button>
           <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
             <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
@@ -110,7 +112,7 @@
                 <i class="head-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg></i>
                 工具快捷入口
               </h2>
-              <span class="chip chip-live mono">8 款可用</span>
+              <span class="chip chip-live mono">13 款可用</span>
             </header>
             <div class="tool-grid" id="tool-grid">
               <a class="tool" href="#" data-tool-link="json" aria-label="打开 JSON 格式化工具"><b class="t-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>JSON</span></a>
@@ -121,6 +123,11 @@
               <a class="tool" href="#" data-tool-link="base64" aria-label="打开 Base64 编解码工具"><b class="t-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14M9.5 4l-2 16M16.5 4l-2 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>Base64</span></a>
               <a class="tool" href="#" data-tool-link="uuid" aria-label="打开 UUID 生成器"><b class="t-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M13 10h4.5M13 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>UUID</span></a>
               <a class="tool" href="#" data-tool-link="diff" aria-label="打开文本 Diff 工具"><b class="t-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v15M7 12h2.5M15 12h2.5M16.2 9.8v4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>Diff</span></a>
+              <a class="tool" href="#" data-tool-link="regex" aria-label="打开正则测试器"><b class="t-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 4.5 4.5 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15 7.5v9M11.3 9.7l7.4 4.6M18.7 9.7l-7.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20.2" cy="19" r="1.3" fill="currentColor"/></svg></b><span>正则</span></a>
+              <a class="tool" href="#" data-tool-link="qrcode" aria-label="打开二维码生成器"><b class="t-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M14 14h2.6M19.2 14h1.3M14 17.6v2.4M17.6 17.6h2.9M14 21h1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>二维码</span></a>
+              <a class="tool" href="#" data-tool-link="hash" aria-label="打开哈希计算工具"><b class="t-ic tone-emerald" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>哈希</span></a>
+              <a class="tool" href="#" data-tool-link="url" aria-label="打开 URL 编解码工具"><b class="t-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>URL</span></a>
+              <a class="tool" href="#" data-tool-link="imgcom" aria-label="打开图片压缩工具"><b class="t-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>图片压缩</span></a>
             </div>
           </article>
 
@@ -195,7 +202,7 @@
   <script src="assets/vendor/supabase.min.js"></script>
   <script src="assets/js/config.js?v=2"></script>
   <script src="assets/js/fx.js?v=2"></script>
-  <script src="assets/js/sidebar.js?v=2"></script>
-  <script src="assets/js/app.js?v=2"></script>
+  <script src="assets/js/sidebar.js?v=3"></script>
+  <script src="assets/js/app.js?v=3"></script>
 </body>
 </html>

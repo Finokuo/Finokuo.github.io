@@ -1,0 +1,38 @@
+{
+  "name": "Fuo Tools",
+  "short_name": "FuoTools",
+  "description": "Fuo Tools 工作台：13 款本地小工具 · 云笔记 · 收藏 · 设置，全部随开随用。",
+  "lang": "zh-CN",
+  "start_url": "/drive/",
+  "scope": "/drive/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#101014",
+  "theme_color": "#101014",
+  "icons": [
+    {
+      "src": "/drive/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/drive/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/drive/assets/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/drive/assets/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

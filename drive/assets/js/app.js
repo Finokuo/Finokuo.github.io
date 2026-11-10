@@ -255,7 +255,7 @@
           if (isMissingTable(error)) {
             setNoteStatus('error', '未就绪');
             showBanner('warn', '数据库尚未初始化：请在 Supabase SQL Editor 执行 supabase-notes.sql 后刷新。');
-          } else if (error.code === 'PGRST204' || /is_quick/i.test(error.message || '')) {
+          } else if (error.code === 'PGRST204' || error.code === '42703' || /is_quick|does not exist/i.test(error.message || '')) {
             // notes 表还是旧结构（没有 is_quick 列）
             setNoteStatus('error', '需升级');
             showBanner('warn', 'notes 表需要升级到 v4：请在 Supabase SQL Editor 执行 supabase-notes.sql 后刷新（云笔记多行化 + 文件夹 + 收藏）。');

@@ -1,5 +1,5 @@
 /* =====================================================
- * Fuo Tools · 共享侧栏 + 可点击面包屑 + 折叠（/drive 全部子页面复用）
+ * Fuo Tools · 共享侧栏 + 可点击面包屑 + 折叠 + 公告（/drive 全部子页面复用）
  *
  * 用法（页面里只需一个空壳，由本脚本填充）：
  *   <aside class="sidebar" id="sidebar" data-active="tools" data-guard="1" hidden></aside>
@@ -7,10 +7,14 @@
  *   <script src="…/config.js"></script>
  *   <script src="…/sidebar.js"></script>
  *
- * data-active：home | tools | favorites | settings
+ * data-active：home | tools | favorites | settings |（空 = 无高亮，如公开主页）
  * data-guard="1"：承担子页面登录守卫（未登录 → 送回主页；被封禁 → 登出踢回）。
  *                 工作台原生侧栏（drive/index.html）不设该属性：守卫由 app.js 负责。
  * 折叠：侧栏底部「«」按钮 → 纯图标迷你列（68px），状态存 localStorage，全站同步。
+ * 公告：登录后拉取最新一条 announcements（v5 表），未读则顶栏下方横幅展示，
+ *       可关闭并记忆已读（localStorage fuo-read-ann）；表未建时静默跳过。
+ * 附带：本脚本同时负责加载 palette.js（Ctrl+K 命令面板，同目录）与
+ *       注册 sw.js（PWA 离线壳，仅 https 下生效）——全站只改这一处。
  * ===================================================== */
 (function () {
   'use strict';
@@ -20,6 +24,34 @@
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
   var sb = null;
   var MINI_KEY = 'fuo-sidebar-mini';
+
+  /* 本脚本自身 URL（推算同目录 palette.js / 上一级 sw.js 用） */
+  var SELF_BASE = '';
+  try {
+    if (document.currentScript && document.currentScript.src) {
+      SELF_BASE = String(document.currentScript.src).replace(/[^/]*$/, '');
+    }
+  } catch (e) { /* ignore */ }
+
+  /* ---------- 全站附带：命令面板 + Service Worker ---------- */
+  function loadSidecars() {
+    if (!SELF_BASE) return;
+    // Ctrl+K 命令面板（palette.js 自带去重，重复注入无害）
+    if (!window.__FUO_PALETTE__) {
+      window.__FUO_PALETTE__ = true;
+      var s = document.createElement('script');
+      s.src = SELF_BASE + 'palette.js?v=2';
+      document.head.appendChild(s);
+    }
+    // PWA Service Worker（仅 https / localhost；scope = /drive/）
+    try {
+      if ('serviceWorker' in navigator &&
+          (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        var root = SELF_BASE.replace(/assets\/js\/$/, '');
+        navigator.serviceWorker.register(root + 'sw.js?v=1').catch(function () { /* ignore */ });
+      }
+    } catch (e) { /* ignore */ }
+  }
 
   /* ---------- 面包屑 ---------- */
   function crumbLink(label, href) {
@@ -69,6 +101,8 @@
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('favorites')];
     } else if (page === 'settings') {
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('settings')];
+    } else if (page === 'profile') {
+      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('u')];
     } else {
       el.hidden = true;
       return;
@@ -109,7 +143,7 @@
       '</a>' +
       '<nav class="side-nav" aria-label="工作台导航">' +
         navItem('home', active, drive, IC.grid, '工作台', '') +
-        navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">9 款</i>') +
+        navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">14 款</i>') +
         navItem('favorites', active, favorites, IC.star, '收藏', '<i class="mono" id="sb-fav-count" hidden></i>') +
         navItem('settings', active, settings, IC.gear, '设置', '') +
       '</nav>' +
@@ -177,6 +211,7 @@
       fillUser(session.user);
       banCheck(session.user);
       loadFavCount(session.user);
+      loadAnnouncement();
       sb.auth.onAuthStateChange(function (event) {
         if (event === 'SIGNED_OUT') {
           window.location.replace(PATHS.MAIN || '../../');
@@ -245,6 +280,64 @@
       });
   }
 
+  /* ---------- 公告横幅（announcements 表，v5；未建表/无公告静默） ---------- */
+  function loadAnnouncement() {
+    if (!sb) return;
+    sb.from('announcements')
+      .select('id,content,created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(function (_a) {
+        if (_a.error || !_a.data || !_a.data.length) return; // 表未建 / 出错：静默
+        var a = _a.data[0];
+        var readId = null;
+        try { readId = localStorage.getItem('fuo-read-ann'); } catch (e) { /* ignore */ }
+        if (String(a.id) === String(readId)) return; // 已读
+        showAnnBar(a);
+      });
+  }
+
+  function showAnnBar(a) {
+    var wrap = document.querySelector('.main-wrap');
+    if (!wrap || document.getElementById('fuo-ann')) return;
+
+    var bar = document.createElement('div');
+    bar.className = 'ann-bar';
+    bar.id = 'fuo-ann';
+
+    var ic = document.createElement('span');
+    ic.className = 'ann-ic';
+    ic.setAttribute('aria-hidden', 'true');
+    ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M4 10v4a1.5 1.5 0 0 0 1.5 1.5H7l3.6 3.2a1 1 0 0 0 1.7-.8V6.1a1 1 0 0 0-1.7-.8L7 8.5H5.5A1.5 1.5 0 0 0 4 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16.5 9.5a3.6 3.6 0 0 1 0 5M19 7a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+    var text = document.createElement('div');
+    text.className = 'ann-text';
+    var tag = document.createElement('b');
+    tag.textContent = '公告';
+    var body = document.createElement('span');
+    body.textContent = a.content || '';
+    text.appendChild(tag);
+    text.appendChild(body);
+
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'ann-close';
+    close.setAttribute('aria-label', '关闭公告');
+    close.title = '知道了';
+    close.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    close.addEventListener('click', function () {
+      try { localStorage.setItem('fuo-read-ann', String(a.id)); } catch (e) { /* ignore */ }
+      bar.remove();
+    });
+
+    bar.appendChild(ic);
+    bar.appendChild(text);
+    bar.appendChild(close);
+
+    var topbar = wrap.querySelector('.topbar');
+    wrap.insertBefore(bar, topbar ? topbar.nextSibling : wrap.firstChild);
+  }
+
   /* ---------- 启动 ---------- */
   function boot() {
     var aside = document.getElementById('sidebar');
@@ -253,8 +346,23 @@
     if (!aside.firstChild) buildSidebar(aside.getAttribute('data-active') || 'tools');
     initCollapse(aside);
     renderCrumb();
-    if (aside.getAttribute('data-guard') !== '1') return; // drive 原生侧栏：守卫由 app.js 负责
-    loadSession();
+    loadSidecars();
+    if (aside.getAttribute('data-guard') === '1') {
+      loadSession(); // 守卫 + 用户信息 + 公告
+      return;
+    }
+    // 工作台原生侧栏：守卫由 app.js 负责；这里只补公告（轻量会话检查）
+    if (!PREVIEW && window.supabase && CFG && CFG.SUPABASE_URL && !sb) {
+      try {
+        sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+        sb.auth.getSession().then(function (_a) {
+          if (_a.data && _a.data.session) {
+            fillUser(_a.data.session.user); // 公开页也显示用户名（如 /u/ 主页）
+            loadAnnouncement();
+          }
+        });
+      } catch (e) { /* ignore */ }
+    }
   }
 
   if (document.readyState === 'loading') {

@@ -95,23 +95,44 @@
       $('st-username').textContent =
         (user.user_metadata && user.user_metadata.username) || '加载中…';
 
-      c.from('profiles').select('username,status').eq('id', user.id).maybeSingle()
-        .then(function (_b) {
-          var p = _b.data;
-          if (p && p.status === 'banned') {
-            c.auth.signOut().then(function () {
-              window.location.replace((PATHS.MAIN || '../../') + '?banned=1');
-            });
-            return;
-          }
-          if (!p) return;
-          profile = p;
-          $('st-username').textContent = p.username;
-        });
+      loadProfile();
     });
     c.auth.onAuthStateChange(function (event) {
       if (event === 'SIGNED_OUT') window.location.replace(PATHS.MAIN || '../../');
     });
+  }
+
+  function loadProfile() {
+    var c = client();
+    // v5 表带 bio（简介）；旧表报 PGRST204 → 降级不带该列
+    c.from('profiles').select('username,status,bio').eq('id', user.id).maybeSingle()
+      .then(function (_b) {
+        if (_b.error && (_b.error.code === 'PGRST204' || _b.error.code === '42703' ||
+            /could not find the column|does not exist/i.test(_b.error.message || ''))) {
+          return c.from('profiles').select('username,status').eq('id', user.id).maybeSingle()
+            .then(function (_c) { paintProfile(_c.data, null); });
+        }
+        paintProfile(_b.data, _b.data ? (_b.data.bio || '') : null);
+      });
+  }
+
+  function paintProfile(p, bio) {
+    if (p && p.status === 'banned') {
+      client().auth.signOut().then(function () {
+        window.location.replace((PATHS.MAIN || '../../') + '?banned=1');
+      });
+      return;
+    }
+    if (!p) return;
+    profile = p;
+    $('st-username').textContent = p.username;
+    var bioEl = $('st-bio');
+    if (bioEl && bio != null) {
+      bioEl.textContent = bio || '（未填写）';
+      bioEl.title = bio || '';
+    } else if (bioEl) {
+      bioEl.textContent = '（需执行 supabase-v5.sql）';
+    }
   }
 
   /* ---------- 修改用户名 ---------- */
@@ -182,6 +203,118 @@
       });
   }
 
+  /* ---------- 修改简介（v0.7：profiles.bio，需 v5 列） ---------- */
+  var bioBusy = false;
+  function openBio() {
+    var cur = (profile && profile.bio != null) ? profile.bio : '';
+    $('st-bio-input').value = cur;
+    $('st-bio-msg').hidden = true;
+    $('st-bio-save').disabled = false;
+    $('st-bio-save').textContent = '保存';
+    $('st-bio-modal').hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('st-bio-input').focus(); }, 60);
+  }
+  function closeBio() {
+    $('st-bio-modal').hidden = true;
+    document.body.style.overflow = '';
+    bioBusy = false;
+  }
+  function saveBio() {
+    if (bioBusy) return;
+    var text = $('st-bio-input').value.trim();
+    var msg = $('st-bio-msg');
+    function fail(t) {
+      msg.className = 'tf-msg is-err';
+      msg.textContent = t;
+      msg.hidden = false;
+      bioBusy = false;
+      $('st-bio-save').disabled = false;
+      $('st-bio-save').textContent = '保存';
+    }
+    bioBusy = true;
+    $('st-bio-save').disabled = true;
+    $('st-bio-save').textContent = '保存中…';
+    msg.hidden = true;
+
+    client().from('profiles').update({ bio: text }).eq('id', user.id)
+      .then(function (_a) {
+        if (_a.error) {
+          if (_a.error.code === 'PGRST204' || _a.error.code === '42703' || /could not find the column|does not exist/i.test(_a.error.message || '')) {
+            fail('简介列尚未创建：请先在 Supabase SQL Editor 执行 supabase-v5.sql。');
+            return;
+          }
+          fail('保存失败：' + (_a.error.message || '未知错误'));
+          return;
+        }
+        profile = profile || {};
+        profile.bio = text;
+        var bioEl = $('st-bio');
+        if (bioEl) {
+          bioEl.textContent = text || '（未填写）';
+          bioEl.title = text;
+        }
+        closeBio();
+        showToast(text ? '简介已更新' : '简介已清空');
+      })
+      .catch(function () { fail('网络异常，请稍后再试。'); });
+  }
+
+  /* ---------- 修改密码（v0.7：auth.updateUser） ---------- */
+  var pwBusy = false;
+  function openPw() {
+    $('st-pw-input').value = '';
+    $('st-pw-input2').value = '';
+    $('st-pw-msg').hidden = true;
+    $('st-pw-save').disabled = false;
+    $('st-pw-save').textContent = '确认修改';
+    $('st-pw-modal').hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('st-pw-input').focus(); }, 60);
+  }
+  function closePw() {
+    $('st-pw-modal').hidden = true;
+    document.body.style.overflow = '';
+    pwBusy = false;
+  }
+  function savePassword() {
+    if (pwBusy) return;
+    var p1 = $('st-pw-input').value;
+    var p2 = $('st-pw-input2').value;
+    var msg = $('st-pw-msg');
+    function fail(t) {
+      msg.className = 'tf-msg is-err';
+      msg.textContent = t;
+      msg.hidden = false;
+      pwBusy = false;
+      $('st-pw-save').disabled = false;
+      $('st-pw-save').textContent = '确认修改';
+    }
+    if (!p1 || p1.length < 6) { fail('新密码至少 6 位。'); return; }
+    if (p1.length > 72) { fail('密码最长 72 位。'); return; }
+    if (p1 !== p2) { fail('两次输入的密码不一致。'); return; }
+
+    pwBusy = true;
+    $('st-pw-save').disabled = true;
+    $('st-pw-save').textContent = '提交中…';
+    msg.hidden = true;
+
+    client().auth.updateUser({ password: p1 })
+      .then(function (_a) {
+        if (_a.error) {
+          var m = _a.error.message || '';
+          if (_a.error.code === 'weak_password' || /at least 6/i.test(m)) fail('密码强度不够：至少 6 位。');
+          else if (/different from the old/i.test(m)) fail('新密码不能和旧密码相同。');
+          else if (_a.error.code === 422 || /session/i.test(m)) fail('登录状态过期，请刷新页面后重试。');
+          else fail('修改失败：' + m);
+          return;
+        }
+        closePw();
+        showToast('密码已修改，下次登录请用新密码');
+      })
+      .catch(function () { fail('网络异常，请稍后再试。'); });
+  }
+
   /* ---------- 清除本地数据 ---------- */
   function clearLocal() {
     try {
@@ -207,8 +340,23 @@
     $('st-modal').addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('[data-st-close]')) closeModal();
     });
+    $('st-edit-bio').addEventListener('click', openBio);
+    $('st-bio-save').addEventListener('click', saveBio);
+    $('st-bio-modal').addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-bio-close]')) closeBio();
+    });
+
+    $('st-changepw').addEventListener('click', openPw);
+    $('st-pw-save').addEventListener('click', savePassword);
+    $('st-pw-modal').addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-pw-close]')) closePw();
+    });
+
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !$('st-modal').hidden) closeModal();
+      if (e.key !== 'Escape') return;
+      if (!$('st-modal').hidden) closeModal();
+      if (!$('st-bio-modal').hidden) closeBio();
+      if (!$('st-pw-modal').hidden) closePw();
     });
 
     $('st-logout').addEventListener('click', function () {

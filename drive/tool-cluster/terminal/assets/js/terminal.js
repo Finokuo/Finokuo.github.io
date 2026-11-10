@@ -15,6 +15,8 @@
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
   var USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
   var ADMIN_NAME = 'System';
+  var USERS_PER_PAGE = 15;
+  var AUDIT_PER_PAGE = 15;
 
   var sb = null;
   var me = null;          // { id, username, email }
@@ -43,15 +45,19 @@
     if (!iso) return '-';
     try { return new Date(iso).toISOString().slice(0, 10); } catch (e) { return '-'; }
   }
+  function fmtDateTime(iso) {
+    if (!iso) return '-';
+    try { return new Date(iso).toISOString().slice(0, 19).replace('T', ' '); } catch (e) { return '-'; }
+  }
   function dbHint(err) {
     var m = (err && err.message) || '';
     if (err && (err.code === '42P01' || err.code === 'PGRST205' ||
         /could not find the table|schema cache/i.test(m))) {
-      return 'profiles 表不存在：请先执行 supabase-setup.sql。';
+      return '缺少数据表：请先执行 supabase-v5.sql（回收站/公告/日志增量）或 supabase-setup.sql（全新建库，两者均幂等）。';
     }
     if (err && (err.code === 'PGRST204' ||
         /could not find the column/i.test(m))) {
-      return '缺少 status 列：请在 SQL Editor 执行 supabase-admin.sql（v3 增量）。';
+      return '缺少数据列：请执行 supabase-v5.sql（回收站/公告/日志/简介增量，幂等可重复执行）。';
     }
     if (err && (err.code === '42501' || /row-level security/i.test(m))) {
       return '没有权限：请确认当前登录的是 System 账号，且已执行 supabase-admin.sql。';
@@ -103,6 +109,18 @@
       .maybeSingle());
   }
 
+  /* 操作留痕：audit_log 仅 System 可写（RLS），写失败静默不影响主流程 */
+  function logAudit(action, target, detail) {
+    if (!sb) return;
+    try {
+      sb.from('audit_log').insert({
+        action: action,
+        target: target || '',
+        detail: detail || ''
+      }).then(function () { /* ignore */ }, function () { /* ignore */ });
+    } catch (e) { /* ignore */ }
+  }
+
   /* ---------- 命令表 ---------- */
   var CMDS = {
     help: {
@@ -124,16 +142,24 @@
       }
     },
     users: {
-      desc: '列出所有账号',
-      run: function () {
-        if (PREVIEW) return previewUsers();
+      desc: '列出账号  users [页码]（每页 15，可翻页）',
+      run: function (args) {
+        var page = Math.max(1, parseInt(args[0], 10) || 1);
+        if (PREVIEW) return previewUsers(page);
         print('查询中…', '_dim');
         q(sb.from('profiles')
-          .select('username,email,status,created_at')
+          .select('username,email,status,created_at', { count: 'exact' })
           .order('created_at', { ascending: true })
-          .limit(200)).then(function (r) {
+          .range((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE - 1))
+          .then(function (r) {
             if (r.error) return print(dbHint(r.error), '_err');
+            var total = r.count || 0;
+            var pages = Math.max(1, Math.ceil(total / USERS_PER_PAGE));
             renderUsers(r.data || []);
+            if (pages > 1) {
+              print('第 ' + Math.min(page, pages) + ' / ' + pages + ' 页 · 共 ' + total + ' 个账号 · 翻页：users ' +
+                (page < pages ? page + 1 : 1), '_dim');
+            }
           });
       }
     },
@@ -174,6 +200,22 @@
     setnote: {
       desc: '改写某账号的快捷笔记  setnote <用户名> <内容>',
       run: function (args) { setNote(args[0], args.slice(1).join(' ')); }
+    },
+    ncount: {
+      desc: '查看某用户笔记数  ncount <用户名>',
+      run: function (args) { showNoteCount(args[0]); }
+    },
+    announce: {
+      desc: '发布公告  announce <内容>（≤500 字，全站横幅）',
+      run: function (args) { doAnnounce(args.join(' ')); }
+    },
+    unann: {
+      desc: '撤销最新一条公告',
+      run: function () { doUnannounce(); }
+    },
+    audit: {
+      desc: '查看操作日志  audit [页码]（每页 15）',
+      run: function (args) { showAudit(Math.max(1, parseInt(args[0], 10) || 1)); }
     },
     stats: {
       desc: '站点统计',
@@ -219,13 +261,140 @@
       if (u.status === 'banned') { /* 上一行已加粗 */ }
     });
   }
-  function previewUsers() {
-    print('[预览模式] 模拟数据：', '_dim');
+  function previewUsers(page) {
+    page = page || 1;
+    print('[预览模式] 模拟数据（第 ' + page + ' 页）：', '_dim');
     renderUsers([
       { username: 'System', email: 'system@fuo.tools', status: 'active', created_at: new Date().toISOString() },
       { username: '1539399903', email: '1539399903@qq.com', status: 'active', created_at: '2026-11-07' },
       { username: 'demo_user', email: 'demo@example.com', status: 'banned', created_at: '2026-11-08' }
     ]);
+    print('第 1 / 3 页 · 共 42 个账号 · 翻页：users ' + (page < 3 ? page + 1 : 1) + '（模拟）', '_dim');
+  }
+
+  /* ---------- 新增：公告 / 日志 / 笔记数 ---------- */
+  function doAnnounce(text) {
+    text = (text || '').trim().replace(/\s+/g, ' ');
+    if (!text) return print('用法：announce <公告内容>（发布后全站顶部横幅展示，≤500 字）', '_warn');
+    if (text.length > 500) return print('公告过长（上限 500 字，当前 ' + text.length + ' 字）。', '_err');
+    if (PREVIEW) {
+      print('✔ [预览] 公告已模拟发布：' + text, '_ok');
+      print('  （登录 System 后执行，将写入 announcements 表并全站展示）', '_dim');
+      return;
+    }
+    print('发布中…', '_dim');
+    q(sb.from('announcements').insert({ content: text, author_id: me.id }))
+      .then(function (r) {
+        if (r.error) return print(dbHint(r.error), '_err');
+        print('✔ 公告已发布，全站登录用户刷新后可见横幅。', '_ok');
+        logAudit('announce', trunc(text, 120));
+      });
+  }
+
+  function doUnannounce() {
+    if (PREVIEW) {
+      print('✔ [预览] 已模拟撤销最新公告。', '_ok');
+      return;
+    }
+    print('撤销中…', '_dim');
+    q(sb.from('announcements')
+      .select('id,content')
+      .order('created_at', { ascending: false })
+      .limit(1))
+      .then(function (r) {
+        if (r.error) return print(dbHint(r.error), '_err');
+        if (!r.data || !r.data.length) return print('当前没有公告可撤销。', '_warn');
+        var a = r.data[0];
+        q(sb.from('announcements').delete().eq('id', a.id))
+          .then(function (r2) {
+            if (r2.error) return print(dbHint(r2.error), '_err');
+            print('✔ 已撤销公告：' + trunc(a.content, 60), '_ok');
+            logAudit('delannounce', trunc(a.content, 120));
+          });
+      });
+  }
+
+  function showAudit(page) {
+    if (PREVIEW) return previewAudit(page);
+    print('查询日志…', '_dim');
+    q(sb.from('audit_log')
+      .select('action,target,detail,created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range((page - 1) * AUDIT_PER_PAGE, page * AUDIT_PER_PAGE - 1))
+      .then(function (r) {
+        if (r.error) return print(dbHint(r.error), '_err');
+        var rows = r.data || [];
+        var total = r.count || 0;
+        var pages = Math.max(1, Math.ceil(total / AUDIT_PER_PAGE));
+        if (!rows.length) return print('日志为空（还没有执行过管理操作）。', '_warn');
+        print('操作日志（新 → 旧）：', '_dim');
+        printRich([{ t: '  ' + pad('TIME (UTC)', 21) + pad('ACTION', 14) + 'TARGET', b: true }]);
+        rows.forEach(function (a) {
+          printRich([
+            { t: '  ' + pad(fmtDateTime(a.created_at), 21) + pad(a.action, 14) },
+            { t: trunc(a.target || '-', 44) }
+          ]);
+        });
+        if (pages > 1) {
+          print('第 ' + Math.min(page, pages) + ' / ' + pages + ' 页 · 共 ' + total + ' 条 · 翻页：audit ' +
+            (page < pages ? page + 1 : 1), '_dim');
+        }
+      });
+  }
+
+  function previewAudit(page) {
+    page = page || 1;
+    print('[预览模式] 模拟日志（第 ' + page + ' 页，新 → 旧）：', '_dim');
+    printRich([{ t: '  ' + pad('TIME (UTC)', 21) + pad('ACTION', 14) + 'TARGET', b: true }]);
+    [
+      { action: 'announce', target: 'v0.7 上线：回收站 / 公告 / 13 款工具', at: 0 },
+      { action: 'rename', target: 'demo_user → demo_2026', at: 6 },
+      { action: 'setnote', target: '1539399903', at: 26 },
+      { action: 'unban', target: 'ripple_test', at: 49 },
+      { action: 'ban', target: 'spam_bot_1', at: 73 }
+    ].forEach(function (a) {
+      var t = new Date(Date.now() - a.at * 60000).toISOString().slice(0, 19).replace('T', ' ');
+      printRich([{ t: '  ' + pad(t, 21) + pad(a.action, 14) }, { t: trunc(a.target, 44) }]);
+    });
+    print('第 ' + page + ' / 2 页 · 共 23 条 · 翻页：audit ' + (page < 2 ? page + 1 : 1) + '（模拟）', '_dim');
+  }
+
+  function showNoteCount(username) {
+    username = (username || '').trim();
+    if (!username) return print('用法：ncount <用户名>', '_warn');
+    if (PREVIEW) {
+      printRich([{ t: '  ' + pad(username, 17) }, { t: '在册 3 篇 · 回收站 1 篇（预览数据）' }]);
+      return;
+    }
+    print('统计 ' + username + ' 的笔记…', '_dim');
+    getProfileByUsername(username).then(function (r) {
+      if (r.error) return print(dbHint(r.error), '_err');
+      if (!r.data) return print('用户名不存在：' + username, '_err');
+      q(sb.from('notes')
+        .select('id,deleted_at', { count: 'exact' })
+        .eq('user_id', r.data.id))
+        .then(function (r2) {
+          if (r2.error) {
+            // 旧表无 deleted_at：降级只查总数
+            if (r2.error.code === 'PGRST204' || /could not find the column/i.test(r2.error.message || '')) {
+              return q(sb.from('notes')
+                .select('id', { count: 'exact' })
+                .eq('user_id', r.data.id))
+                .then(function (r3) {
+                  if (r3.error) return print(dbHint(r3.error), '_err');
+                  printRich([{ t: '  ' + username + ' : ', b: true },
+                    { t: (r3.count || 0) + ' 篇（执行 supabase-v5.sql 后可区分回收站）' }]);
+                });
+            }
+            return print(dbHint(r2.error), '_err');
+          }
+          var rows = r2.data || [];
+          var bin = rows.filter(function (n) { return n.deleted_at; }).length;
+          var live = (r2.count || 0) - bin;
+          printRich([{ t: '  ' + username + ' : ', b: true },
+            { t: live + ' 篇在册' + (bin ? ' · ' + bin + ' 篇在回收站' : '') }]);
+        });
+    });
   }
 
   /* ---------- 管理动作 ---------- */
@@ -245,6 +414,7 @@
           if (r2.error) return print(dbHint(r2.error), '_err');
           print('✔ 已' + (status === 'banned' ? '封禁 ' : '解封 ') + username +
             (status === 'banned' ? '（其下次访问即被踢出并无法登录）' : ''), '_ok');
+          logAudit(status === 'banned' ? 'ban' : 'unban', username);
         });
     });
   }
@@ -267,6 +437,7 @@
         .then(function (r2) {
           if (r2.error) return print(dbHint(r2.error), '_err');
           print('✔ 已将 ' + oldName + ' 改名为 ' + newName, '_ok');
+          logAudit('rename', oldName + ' → ' + newName);
         });
     });
   }
@@ -309,6 +480,7 @@
           q(req).then(function (r3) {
             if (r3.error) return print(dbHint(r3.error), '_err');
             print('✔ 已写入 ' + username + ' 的快捷笔记（' + text.length + ' 字）。', '_ok');
+            logAudit('setnote', username, trunc(text, 80));
           });
         });
     });
@@ -358,7 +530,7 @@
 
   function banner(short) {
     if (short) return;
-    print('FUO Tools · System Terminal v1.0', '_ok');
+    print('FUO Tools · System Terminal v2.0', '_ok');
     printRich([{ t: '已登录：' }, { t: 'System', b: true }, { t: '（' + (me.email || '-') + '）' }]);
     if (PREVIEW) print('⚠ 预览模式：仅演示界面，数据库命令不可用。', '_warn');
     print('输入 help 查看可用命令。', '_dim');

@@ -7,10 +7,12 @@
   <meta name="description" content="Fuo Tools 设置：外观、动效、编辑器、账户，随你调。" />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../assets/js/theme.js?v=3"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=2" />
-  <link rel="stylesheet" href="assets/settings.css?v=1" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="assets/settings.css?v=2" />
 </head>
 <body data-page="settings">
   <div class="shell">
@@ -135,11 +137,15 @@
             <div><dt>邮箱</dt><dd id="st-email">—</dd></div>
             <div><dt>用户 ID</dt><dd id="st-uid">—</dd></div>
             <div><dt>注册时间</dt><dd id="st-created">—</dd></div>
+            <div><dt>简介</dt><dd id="st-bio">—</dd></div>
           </dl>
           <div class="st-account-actions">
             <button class="tbtn" id="st-edit-username" type="button">修改用户名</button>
+            <button class="tbtn" id="st-edit-bio" type="button">修改简介</button>
+            <button class="tbtn" id="st-changepw" type="button">修改密码</button>
             <button class="tbtn" id="st-logout" type="button">退出登录</button>
           </div>
+          <p class="st-bio-hint mono">简介会展示在你的公开主页：/u/?u=用户名</p>
         </section>
 
         <!-- 危险区 -->
@@ -184,12 +190,66 @@
     </div>
   </div>
 
+  <!-- ===== 修改简介弹窗 ===== -->
+  <div class="modal" id="st-bio-modal" hidden>
+    <div class="modal-mask" data-bio-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="st-bio-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="st-bio-title">修改简介</h2>
+        <button class="modal-close" type="button" data-bio-close aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub mono">≤ 120 字 · 展示在公开主页 /u/?u=用户名</p>
+      <div class="tool-body">
+        <label class="tf">
+          <span class="tf-label mono">个人简介</span>
+          <textarea id="st-bio-input" class="tf-input" rows="3" maxlength="120" placeholder="写点什么介绍自己…（留空则不展示）"></textarea>
+        </label>
+        <p class="tf-msg" id="st-bio-msg" hidden></p>
+        <div class="tbtn-row">
+          <button class="tbtn is-primary" id="st-bio-save" type="button">保存</button>
+          <button class="tbtn" type="button" data-bio-close>取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 修改密码弹窗 ===== -->
+  <div class="modal" id="st-pw-modal" hidden>
+    <div class="modal-mask" data-pw-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="st-pw-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="st-pw-title">修改密码</h2>
+        <button class="modal-close" type="button" data-pw-close aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub mono">≥ 6 位 · 修改后其它设备需重新登录</p>
+      <div class="tool-body">
+        <label class="tf">
+          <span class="tf-label mono">新密码</span>
+          <input type="password" id="st-pw-input" class="tf-input" minlength="6" maxlength="72" placeholder="至少 6 位" autocomplete="new-password" />
+        </label>
+        <label class="tf">
+          <span class="tf-label mono">确认新密码</span>
+          <input type="password" id="st-pw-input2" class="tf-input" minlength="6" maxlength="72" placeholder="再输入一次" autocomplete="new-password" />
+        </label>
+        <p class="tf-msg" id="st-pw-msg" hidden></p>
+        <div class="tbtn-row">
+          <button class="tbtn is-primary" id="st-pw-save" type="button">确认修改</button>
+          <button class="tbtn" type="button" data-pw-close>取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
   <script src="../assets/vendor/supabase.min.js"></script>
   <script src="../assets/js/config.js?v=2"></script>
   <script src="../assets/js/settings.js?v=1"></script>
   <script src="../assets/js/fx.js?v=2"></script>
-  <script src="../assets/js/sidebar.js?v=2"></script>
-  <script src="assets/settings-page.js?v=1"></script>
+  <script src="../assets/js/sidebar.js?v=3"></script>
+  <script src="assets/settings-page.js?v=2"></script>
 </body>
 </html>

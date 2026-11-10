@@ -17,6 +17,8 @@
   'use strict';
 
   var KEY = 'fu-theme';
+  var ACCENT_KEY = 'fuo-accent'; // v0.8：主题色（teal/orange/rose/violet/emerald/amber）
+  var ACCENTS = ['teal', 'orange', 'rose', 'violet', 'emerald', 'amber'];
   var root = document.documentElement;
   var DUR = 500;
 
@@ -55,6 +57,18 @@
 
   function apply(theme) {
     root.setAttribute('data-theme', theme);
+  }
+
+  /* v0.8：主题色（与主题模式独立，存 fuo-accent；teal = 默认，不设属性） */
+  function storedAccent() {
+    try {
+      var v = localStorage.getItem(ACCENT_KEY);
+      return ACCENTS.indexOf(v) !== -1 ? v : 'teal';
+    } catch (e) { return 'teal'; }
+  }
+  function applyAccent(a) {
+    if (a === 'teal') root.removeAttribute('data-accent');
+    else root.setAttribute('data-accent', a);
   }
 
   /* 扩散/收起半径：从圆心到最远角落 */
@@ -185,16 +199,27 @@
 
   // 立即应用（本脚本位于 <head>，早于首帧渲染）
   apply(get());
+  applyAccent(storedAccent());
 
   // 暴露给其他脚本（设置页等）：
-  //   get()        → 当前已解析主题（dark/light）
-  //   mode()       → 存储模式（dark/light/system）
-  //   toggle(x,y)  → 圆形扩散切换
-  //   set(mode)    → 直接设置模式（dark/light/system，无动画）
+  //   get()          → 当前已解析主题（dark/light）
+  //   mode()         → 存储模式（dark/light/system）
+  //   toggle(x,y)    → 圆形扩散切换
+  //   set(mode)      → 直接设置模式（dark/light/system，无动画）
+  //   accent()       → 当前主题色 key（v0.8）
+  //   accents        → 可选主题色列表（v0.8）
+  //   setAccent(key) → 切换主题色（v0.8，立即生效）
   window.FUO_THEME = {
     get: get,
     mode: storedMode,
     toggle: toggleAt,
+    accent: storedAccent,
+    accents: ACCENTS.slice(),
+    setAccent: function (key) {
+      var a = ACCENTS.indexOf(key) !== -1 ? key : 'teal';
+      try { localStorage.setItem(ACCENT_KEY, a); } catch (e) { /* ignore */ }
+      applyAccent(a);
+    },
     set: function (mode) {
       try { localStorage.setItem(KEY, mode); } catch (e) { /* ignore */ }
       apply(get());

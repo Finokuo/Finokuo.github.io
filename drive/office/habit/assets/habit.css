@@ -1,0 +1,95 @@
+/* =====================================================
+   Fuo Tools · 习惯打卡页样式
+   前置：office.css
+   ===================================================== */
+
+.of-content { max-width: 760px; }
+
+.hb-list { display: flex; flex-direction: column; gap: 18px; }
+
+/* ---------- 习惯卡 ---------- */
+.hb-card {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card-2);
+  padding: 15px 16px;
+}
+.hb-head {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.hb-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.hb-name { font-size: 14.5px; font-weight: 600; word-break: break-all; }
+
+.hb-check {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-2); border-radius: 999px;
+  background: transparent; color: var(--muted);
+  font-size: 12.5px; cursor: pointer;
+  transition: all 0.15s;
+}
+.hb-check:hover { border-color: var(--accent); color: var(--text); }
+.hb-check.is-done {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent-bright);
+}
+.hb-check svg { width: 13px; height: 13px; }
+
+.hb-meta { margin-left: 10px; font-size: 11px; color: var(--faint); }
+.hb-meta b { color: var(--accent-bright); font-weight: 600; }
+
+.hb-del {
+  border: none; background: transparent; color: var(--faint);
+  cursor: pointer; padding: 4px; border-radius: 6px;
+  transition: all 0.15s;
+}
+.hb-del:hover { color: var(--danger); background: rgba(244, 113, 116, 0.1); }
+.hb-del svg { width: 14px; height: 14px; display: block; }
+
+/* ---------- 热力图（GitHub 式） ---------- */
+.hb-heat {
+  margin-top: 13px;
+  display: flex; align-items: flex-start; gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.hb-heat-cols { display: flex; gap: 3px; }
+.hb-heat-col { display: flex; flex-direction: column; gap: 3px; }
+.hb-cell {
+  width: 11px; height: 11px; border-radius: 2.5px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  flex: none;
+}
+.hb-cell.is-l1 { background: color-mix(in srgb, var(--accent) 35%, var(--card)); border-color: transparent; }
+.hb-cell.is-l2 { background: color-mix(in srgb, var(--accent) 60%, var(--card)); border-color: transparent; }
+.hb-cell.is-l3 { background: color-mix(in srgb, var(--accent) 85%, var(--card)); border-color: transparent; }
+.hb-cell.is-l4 { background: var(--accent); border-color: var(--accent-bright); }
+.hb-cell.is-future { opacity: 0.25; }
+
+.hb-months {
+  display: flex; gap: 3px; margin-top: 5px;
+  font-size: 9px; color: var(--faint);
+  min-width: 100%;
+}
+.hb-months span { flex: none; }
+
+/* 兼容不支持 color-mix 的浏览器：直接用透明度层级 */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .hb-cell.is-l1 { background: var(--accent-glow); border-color: var(--border); }
+  .hb-cell.is-l2 { background: var(--accent-glow-strong); border-color: transparent; }
+  .hb-cell.is-l3 { background: var(--accent-deep); border-color: transparent; }
+  .hb-cell.is-l4 { background: var(--accent); border-color: var(--accent-bright); }
+}
+
+.hb-legend {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 8px; font-size: 10px; color: var(--faint);
+}
+.hb-legend .hb-cell { width: 10px; height: 10px; }
+
+@media (max-width: 560px) {
+  .hb-heat { margin-left: -4px; margin-right: -4px; }
+}

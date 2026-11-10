@@ -1,0 +1,71 @@
+/* =====================================================
+   Fuo Tools · 回收站页样式（recycle/index.html 专用）
+   前置：drive/assets/css/style.css
+   ===================================================== */
+
+.rc-hero { padding-bottom: 6px; }
+.rc-eyebrow {
+  font-size: 11px; letter-spacing: 0.14em;
+  color: var(--accent-bright); margin-bottom: 10px;
+}
+.rc-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.rc-hero p { margin-top: 10px; color: var(--text-dim); font-size: 14px; max-width: 560px; line-height: 1.75; }
+.rc-hero-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+.rc-danger {
+  background: rgba(244, 113, 116, 0.1);
+  border: 1px solid rgba(244, 113, 116, 0.35);
+  color: var(--danger);
+}
+.rc-danger:hover { background: rgba(244, 113, 116, 0.18); }
+
+/* ---------- 列表 ---------- */
+.rc-list {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 18px;
+}
+.rc-empty {
+  padding: 44px 20px; text-align: center;
+  color: var(--faint); font-size: 12.5px;
+}
+
+.rc-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border); border-radius: var(--radius, 14px);
+  background: var(--card);
+}
+.rc-info { flex: 1; min-width: 0; }
+.rc-title {
+  font-size: 14.5px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rc-title b { font-weight: 600; }
+.rc-sub { margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 11.5px; color: var(--faint); }
+
+/* 剩余天数进度条 */
+.rc-life { width: 150px; flex: none; }
+.rc-life-bar {
+  height: 5px; border-radius: 3px;
+  background: var(--card-2); overflow: hidden;
+}
+.rc-life-bar i {
+  display: block; height: 100%; border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+.rc-life-bar i.is-low { background: var(--danger); }
+.rc-life-bar i.is-mid { background: var(--warn); }
+.rc-life-txt { margin-top: 5px; font-size: 10.5px; color: var(--faint); }
+
+.rc-ops { display: flex; gap: 8px; flex: none; }
+
+.rc-foot { margin-top: 26px; font-size: 11.5px; opacity: 0.6; }
+.rc-foot a { color: var(--accent-bright); }
+
+@media (max-width: 640px) {
+  .rc-hero h1 { font-size: 26px; }
+  .rc-row { flex-wrap: wrap; }
+  .rc-life { width: 100%; order: 3; }
+  .rc-ops { width: 100%; justify-content: flex-end; }
+}

@@ -67,6 +67,33 @@
     });
   }
 
+  /* ---------- 主题色（v0.8：色板，FUO_THEME.setAccent 全站生效） ---------- */
+  var ACCENT_NAMES = {
+    teal: '青', orange: '橙', rose: '粉',
+    violet: '紫', emerald: '绿', amber: '金',
+  };
+  function paintAccents(cur) {
+    document.querySelectorAll('#st-accent-row .st-accent-dot').forEach(function (btn) {
+      var on = btn.getAttribute('data-accent') === cur;
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-checked', String(on));
+    });
+  }
+  function initAccents() {
+    var row = $('st-accent-row');
+    if (!row) return;
+    var cur = (window.FUO_THEME && window.FUO_THEME.accent) ? window.FUO_THEME.accent() : 'teal';
+    paintAccents(cur);
+    row.querySelectorAll('.st-accent-dot').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-accent');
+        if (window.FUO_THEME && window.FUO_THEME.setAccent) window.FUO_THEME.setAccent(key);
+        paintAccents(key);
+        showToast('主题色已切换为「' + (ACCENT_NAMES[key] || key) + '」');
+      });
+    });
+  }
+
   function labelOf(input) {
     var row = input.closest('.st-row');
     var b = row ? row.querySelector('.st-info b') : null;
@@ -315,6 +342,110 @@
       .catch(function () { fail('网络异常，请稍后再试。'); });
   }
 
+  /* ---------- 导出账号数据（v0.8：笔记/文件夹/收藏/资料 → JSON 下载） ---------- */
+  var exportBusy = false;
+  function exportAccountData() {
+    if (exportBusy || !user) return;
+    exportBusy = true;
+    var btn = $('st-export');
+    var oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '导出中…';
+
+    var c = client();
+    // v6 列（pinned/is_public/deleted_at）未建时自动降级为基础列，保证导出仍可用
+    function notesQuery(cols) {
+      return c.from('notes').select(cols).order('updated_at', { ascending: false });
+    }
+    Promise.all([
+      notesQuery('id,title,content,is_quick,pinned,is_public,folder_id,created_at,updated_at,deleted_at')
+        .then(function (r) {
+          if (r.error && (r.error.code === 'PGRST204' || r.error.code === '42703' ||
+              /could not find the column|does not exist/i.test(r.error.message || ''))) {
+            return notesQuery('id,title,content,is_quick,folder_id,created_at,updated_at');
+          }
+          return r;
+        }),
+      c.from('folders').select('id,name,created_at').order('created_at', { ascending: true }),
+      c.from('favorites').select('kind,ref,title,created_at').order('created_at', { ascending: false }),
+      c.from('profiles').select('username,bio,created_at').eq('id', user.id).maybeSingle()
+        .then(function (r) {
+          if (r.error && (r.error.code === 'PGRST204' || r.error.code === '42703' ||
+              /could not find the column|does not exist/i.test(r.error.message || ''))) {
+            return c.from('profiles').select('username,created_at').eq('id', user.id).maybeSingle();
+          }
+          return r;
+        }),
+    ]).then(function (res) {
+      exportBusy = false;
+      btn.disabled = false;
+      btn.textContent = oldText;
+
+      var errs = [];
+      res.forEach(function (r, i) {
+        if (r && r.error) errs.push(['notes', 'folders', 'favorites', 'profiles'][i] + ': ' + (r.error.message || r.error.code));
+      });
+
+      var notes = (res[0].data || []).map(function (n) {
+        var clean = {
+          id: n.id, title: n.title, content: n.content,
+          is_quick: !!n.is_quick, pinned: !!n.pinned, is_public: !!n.is_public,
+          folder_id: n.folder_id, created_at: n.created_at, updated_at: n.updated_at,
+        };
+        if (n.deleted_at) clean.deleted_at = n.deleted_at; // 回收站里的也一并导出
+        return clean;
+      });
+      var folders = (res[1].data || []).map(function (f) {
+        return { id: f.id, name: f.name, created_at: f.created_at };
+      });
+      var favorites = (res[2].data || []).map(function (f) {
+        return { kind: f.kind, ref: f.ref, title: f.title, created_at: f.created_at };
+      });
+      var me = res[3].data || {};
+
+      var payload = {
+        app: 'Fuo Tools',
+        version: '0.8.0',
+        exported_at: new Date().toISOString(),
+        account: {
+          email: user.email || '',
+          user_id: user.id || '',
+          created_at: user.created_at || '',
+          username: me.username || (user.user_metadata && user.user_metadata.username) || '',
+          bio: me.bio != null ? me.bio : '',
+        },
+        notes: notes,
+        folders: folders,
+        favorites: favorites,
+        counts: { notes: notes.length, folders: folders.length, favorites: favorites.length },
+        warnings: errs.length ? errs : undefined,
+      };
+
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var stamp = new Date().toISOString().slice(0, 10);
+      var uname = (payload.account.username || 'user').replace(/[^A-Za-z0-9_-]/g, '') || 'user';
+      a.href = url;
+      a.download = 'fuo-tools-backup-' + uname + '-' + stamp + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+
+      if (errs.length) {
+        showToast('已导出，但部分数据读取失败：' + errs[0]);
+      } else {
+        showToast('已导出 ' + notes.length + ' 篇笔记 / ' + favorites.length + ' 条收藏');
+      }
+    }).catch(function () {
+      exportBusy = false;
+      btn.disabled = false;
+      btn.textContent = oldText;
+      showToast('导出失败：网络异常，请稍后再试');
+    });
+  }
+
   /* ---------- 清除本地数据 ---------- */
   function clearLocal() {
     try {
@@ -368,9 +499,11 @@
     });
 
     $('st-clear').addEventListener('click', clearLocal);
+    $('st-export').addEventListener('click', exportAccountData);
   }
 
   initSwitches();
+  initAccents();
   bind();
   loadAccount();
 })();

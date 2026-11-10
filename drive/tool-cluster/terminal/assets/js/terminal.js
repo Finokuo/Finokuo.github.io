@@ -132,6 +132,14 @@
         });
       }
     },
+    admin: {
+      desc: '打开图形化管理台（用户 / 公告 / 日志）',
+      run: function () {
+        var url = (window.FUO_BASE || '') + '/drive/admin' + (window.FUO_SUFFIX || '/');
+        print('正在打开图形化管理台…', '_dim');
+        setTimeout(function () { window.location.href = url; }, 350);
+      }
+    },
     whoami: {
       desc: '当前登录身份',
       run: function () {

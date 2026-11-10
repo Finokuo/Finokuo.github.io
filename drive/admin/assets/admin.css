@@ -1,0 +1,165 @@
+/* =====================================================
+   Fuo Tools · 管理台样式（admin/index.html 专用，System only）
+   前置：drive/assets/css/style.css
+   ===================================================== */
+
+.ad-loading { text-align: center; padding: 80px 0; opacity: 0.6; font-size: 13px; }
+
+/* ---------- 拒绝访问 ---------- */
+.ad-denied { text-align: center; padding: 56px 30px; }
+.ad-denied-code {
+  font-size: 12px; letter-spacing: 0.3em;
+  color: var(--danger); margin-bottom: 14px;
+}
+.ad-denied h1 { font-size: 26px; margin-bottom: 10px; }
+.ad-denied p { opacity: 0.7; font-size: 13.5px; }
+.ad-denied .tbtn-row { justify-content: center; margin-top: 22px; }
+
+/* ---------- 主体 ---------- */
+.ad-hero { padding-bottom: 4px; }
+.ad-eyebrow {
+  font-size: 11px; letter-spacing: 0.14em;
+  color: var(--danger); margin-bottom: 10px;
+}
+.ad-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.ad-hero > p { margin-top: 10px; color: var(--text-dim); font-size: 14px; max-width: 620px; line-height: 1.75; }
+.ad-hero-links { margin-top: 12px; font-size: 12px; }
+.ad-hero-links a { color: var(--accent-bright); text-decoration: none; }
+.ad-hero-links a:hover { text-decoration: underline; }
+
+/* ---------- 标签页 ---------- */
+.ad-tabs {
+  display: flex; gap: 6px; margin: 20px 0 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.ad-tab {
+  padding: 9px 20px 10px;
+  border: none; background: transparent;
+  color: var(--muted); font-size: 13.5px; font-weight: 500;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.ad-tab:hover { color: var(--text); }
+.ad-tab.is-on {
+  color: var(--accent-bright);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.ad-tab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+
+/* ---------- 面板通用 ---------- */
+.ad-panel { padding: 18px 20px 16px; }
+.ad-td-empty { text-align: center; padding: 30px 10px; color: var(--faint); font-size: 12px; }
+.ad-danger-btn {
+  background: rgba(244, 113, 116, 0.12);
+  border: 1px solid rgba(244, 113, 116, 0.4);
+  color: var(--danger);
+}
+
+/* ---------- 用户表 ---------- */
+.ad-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.ad-bar .tf-input { flex: 1; max-width: 300px; }
+.ad-count { font-size: 11.5px; color: var(--faint); }
+
+.ad-table-wrap { overflow-x: auto; }
+.ad-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ad-table th {
+  text-align: left; padding: 8px 12px;
+  color: var(--faint); font-weight: 500; font-size: 11px; letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ad-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ad-table tr:last-child td { border-bottom: none; }
+.ad-table tr:hover td { background: var(--hover-soft); }
+.ad-u-name { font-weight: 600; color: var(--text); }
+.ad-u-name.is-self { color: var(--accent-bright); }
+.ad-u-name.is-system { color: var(--warn); }
+
+.ad-chip {
+  display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 10.5px; border: 1px solid var(--border-2); color: var(--muted);
+}
+.ad-chip.is-active { color: var(--accent-bright); border-color: var(--accent-glow-strong); background: var(--accent-glow); }
+.ad-chip.is-banned { color: var(--danger); border-color: rgba(244, 113, 116, 0.4); background: rgba(244, 113, 116, 0.1); }
+
+.ad-op {
+  padding: 4px 10px; margin-right: 6px;
+  border: 1px solid var(--border-2); border-radius: 8px;
+  background: transparent; color: var(--muted);
+  font-size: 11.5px; cursor: pointer;
+  transition: all 0.15s;
+}
+.ad-op:hover { color: var(--text); border-color: var(--border-strong); }
+.ad-op.is-danger { color: var(--danger); border-color: rgba(244, 113, 116, 0.4); }
+.ad-op.is-danger:hover { background: rgba(244, 113, 116, 0.12); }
+.ad-op[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+/* ---------- 分页 ---------- */
+.ad-pager {
+  display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+  margin-top: 14px; font-size: 12px; color: var(--muted);
+}
+.ad-pager .tbtn { padding: 6px 14px; font-size: 12px; }
+.ad-pager .tbtn[disabled] { opacity: 0.35; cursor: not-allowed; }
+
+/* ---------- 公告 ---------- */
+.ad-ann-editor textarea { min-height: 84px; }
+.ad-ann-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 10px; font-size: 11.5px; color: var(--faint);
+}
+.ad-ann-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.ad-ann-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card-2);
+}
+.ad-ann-item.is-current { border-color: var(--accent-glow-strong); }
+.ad-ann-item p { font-size: 13px; line-height: 1.65; color: var(--text-2); }
+.ad-ann-item .ad-ann-foot {
+  margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--faint);
+}
+
+/* ---------- 日志时间线 ---------- */
+.ad-audit-list { display: flex; flex-direction: column; gap: 0; }
+.ad-audit-item {
+  display: flex; gap: 14px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.ad-audit-item:last-child { border-bottom: none; }
+.ad-audit-dot {
+  flex: none; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); margin-top: 7px;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.ad-audit-item.is-danger .ad-audit-dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(244, 113, 116, 0.15); }
+.ad-audit-main { flex: 1; min-width: 0; }
+.ad-audit-act { font-size: 13px; font-weight: 600; }
+.ad-audit-act code {
+  font-family: inherit; color: var(--accent-bright);
+  background: var(--accent-glow); padding: 1px 7px; border-radius: 6px; margin-right: 6px;
+  font-size: 11.5px;
+}
+.ad-audit-item.is-danger .ad-audit-act code { color: var(--danger); background: rgba(244, 113, 116, 0.1); }
+.ad-audit-detail { margin-top: 3px; font-size: 12px; color: var(--muted); word-break: break-all; }
+.ad-audit-time { flex: none; font-size: 11px; color: var(--faint); margin-top: 3px; white-space: nowrap; }
+
+.ad-foot { margin-top: 24px; font-size: 11.5px; opacity: 0.6; }
+.ad-foot a { color: var(--accent-bright); }
+
+@media (max-width: 640px) {
+  .ad-hero h1 { font-size: 26px; }
+  .ad-panel { padding: 14px 12px 12px; }
+  .ad-table th, .ad-table td { padding: 8px 8px; }
+  .ad-pager { justify-content: space-between; }
+  .ad-audit-time { display: none; }
+}

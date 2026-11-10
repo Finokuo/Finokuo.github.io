@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>回收站 · Fuo Tools</title>
+  <meta name="description" content="Fuo Tools 笔记回收站：删除的笔记保留 30 天，可恢复或彻底清空。" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="../manifest.json" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../assets/js/theme.js?v=4"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
+  <link rel="stylesheet" href="assets/recycle.css?v=1" />
+</head>
+<body data-page="recycle">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="tools" data-guard="1" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="rc-hero" data-reveal>
+          <p class="rc-eyebrow mono">// RECYCLE BIN</p>
+          <h1>回收站</h1>
+          <p>删除的笔记在这里保留 <b>30 天</b>，到期自动清理。恢复后回到原来的文件夹。</p>
+          <div class="rc-hero-actions">
+            <button class="tbtn" id="rc-refresh" type="button">↻ 刷新列表</button>
+            <button class="tbtn rc-danger" id="rc-restore-all" type="button">恢复全部</button>
+            <button class="tbtn rc-danger" id="rc-clear" type="button">清空回收站</button>
+          </div>
+        </section>
+
+        <div id="rc-list" class="rc-list" aria-live="polite">
+          <p class="rc-empty mono">读取中…</p>
+        </div>
+
+        <p class="rc-foot mono">在云笔记里删除的笔记会进入这里 · <a id="rc-back" href="#">返回云笔记</a></p>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- ===== 确认弹窗 ===== -->
+  <div class="modal" id="rc-confirm" hidden>
+    <div class="modal-mask" data-rc-cancel></div>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="rc-confirm-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="rc-confirm-title">确认操作</h2>
+        <button class="modal-close" type="button" data-rc-cancel aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub" id="rc-confirm-text">确定吗？</p>
+      <div class="tbtn-row">
+        <button class="tbtn rc-danger" id="rc-confirm-ok" type="button">确定</button>
+        <button class="tbtn" type="button" data-rc-cancel>取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
+  <script src="../assets/vendor/supabase.min.js"></script>
+  <script src="../assets/js/config.js?v=3"></script>
+  <script src="../assets/js/fx.js?v=2"></script>
+  <script src="../assets/js/sidebar.js?v=4"></script>
+  <script src="assets/recycle.js?v=1"></script>
+</body>
+</html>

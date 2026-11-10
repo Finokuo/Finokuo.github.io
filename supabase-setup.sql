@@ -507,3 +507,64 @@ alter table public.profiles
 
 -- 完成！现在支持：注册登录用户名 · 云笔记多行+文件夹+收藏 · System 管理端
 --              · 回收站（软删除）· 全站公告 · Terminal 操作日志 · 公开主页简介
+
+-- ============================================
+-- 第五部分 · v0.8.0 增量（置顶 / 公开分享 / 版本历史 / 办公集）
+-- 已执行过旧版全量脚本的，直接执行 supabase-v6.sql 即可，本部分与其等价
+-- ============================================
+
+-- 1) 笔记置顶
+alter table public.notes
+  add column if not exists pinned boolean not null default false;
+
+create index if not exists notes_pinned_idx
+  on public.notes (user_id) where pinned = true;
+
+-- 2) 公开分享 + 公开读策略
+alter table public.notes
+  add column if not exists is_public boolean not null default false;
+
+drop policy if exists "notes_select_public" on public.notes;
+create policy "notes_select_public" on public.notes
+  for select using (is_public = true and deleted_at is null);
+
+-- 3) 笔记版本历史
+create table if not exists public.note_versions (
+  id         uuid primary key default gen_random_uuid(),
+  note_id    uuid not null references public.notes (id) on delete cascade,
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  title      text not null default '',
+  content    text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists note_versions_note_idx
+  on public.note_versions (note_id, created_at desc);
+
+alter table public.note_versions enable row level security;
+
+drop policy if exists "note_versions_owner_all" on public.note_versions;
+create policy "note_versions_owner_all" on public.note_versions
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- 4) 办公集数据表
+create table if not exists public.office_data (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users (id) on delete cascade,
+  kind       text not null,
+  payload    jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists office_data_uniq
+  on public.office_data (user_id, kind);
+
+alter table public.office_data enable row level security;
+
+drop policy if exists "office_data_owner_all" on public.office_data;
+create policy "office_data_owner_all" on public.office_data
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- 完成！现在支持：注册登录用户名 · 云笔记多行+文件夹+收藏 · System 管理端
+--              · 回收站（软删除）· 全站公告 · Terminal 操作日志 · 公开主页简介
+--              · 笔记置顶 · 公开分享链接 · 版本历史 · 办公集云同步

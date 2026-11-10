@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>办公集 · Fuo Tools</title>
+  <meta name="description" content="Fuo Tools 办公集：待办清单、习惯打卡、番茄钟，云端同步的轻量办公三件套。" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="../manifest.json" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../assets/js/theme.js?v=4"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
+  <link rel="stylesheet" href="assets/office.css?v=1" />
+  <style>
+    /* 目录页卡片（与 tool-cluster 目录同风格） */
+    .of-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .of-tool-card {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 20px 18px;
+      border: 1px solid var(--border); border-radius: var(--radius, 14px);
+      background: var(--card);
+      text-decoration: none; color: var(--text);
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .of-tool-card:hover {
+      border-color: var(--accent-glow-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+    .of-tool-card .t-ic { width: 38px; height: 38px; }
+    .of-tool-card b { font-size: 15px; }
+    .of-tool-card p {
+      margin: 0; font-size: 12px; color: var(--muted); line-height: 1.65;
+    }
+    .of-tool-card .tc-go {
+      margin-top: auto; font-size: 11px; color: var(--accent-bright);
+    }
+    .of-zone-note {
+      margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.75;
+      padding: 12px 16px; border: 1px dashed var(--border-2); border-radius: 10px;
+    }
+  </style>
+</head>
+<body data-page="office">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="office" data-guard="1" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="of-hero" data-reveal>
+          <p class="of-eyebrow mono">// OFFICE SUITE</p>
+          <h1>办公集</h1>
+          <p>和工具集互补的轻量办公三件套：待办、打卡、专注。数据云端同步（office_data 表），未建表时自动以「仅本机」模式运行。</p>
+        </section>
+
+        <div class="of-grid" id="of-grid" aria-label="办公工具列表">
+          <noscript><p class="of-foot">需要启用 JavaScript 才能加载列表。</p></noscript>
+        </div>
+
+        <p class="of-zone-note">
+          办公集与开发工具集相互独立、互不影响。后续版本将在这里继续扩充（记账本、迷你表格、日历日程等）。
+        </p>
+
+        <p class="of-foot mono">v0.8.0 新增 · <a id="of-back" href="#">返回工作台</a></p>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Supabase SDK：本地打包（登录守卫用），不依赖任何 CDN -->
+  <script src="../assets/vendor/supabase.min.js"></script>
+  <script src="../assets/js/config.js?v=3"></script>
+  <script src="../assets/js/fx.js?v=2"></script>
+  <script src="../assets/js/sidebar.js?v=4"></script>
+  <script>
+  (function () {
+    'use strict';
+    var TOOLS = [
+      {
+        slug: 'todo', name: '待办清单', tone: 'tone-teal',
+        desc: '添加 · 勾选 · 优先级 · 截止日 · 今日视图，云同步',
+        svg: '<path d="M5 6.5h9M5 12h9M5 17.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="m16.5 6.5 2 2 3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+      },
+      {
+        slug: 'habit', name: '习惯打卡', tone: 'tone-rose',
+        desc: '每日打卡 · GitHub 式热力图 · 连续天数统计',
+        svg: '<path d="M7.5 4v7.5M7.5 16.5v3.5M12 4v3M12 11v9M16.5 4v11M16.5 20v.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/>',
+      },
+      {
+        slug: 'pomodoro', name: '番茄钟', tone: 'tone-amber',
+        desc: '专注 25 分钟 · 休息 5 分钟 · 今日统计 · 桌面通知',
+        svg: '<circle cx="12" cy="13.5" r="7.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+      },
+    ];
+
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    var grid = document.getElementById('of-grid');
+    var url = window.FUO_OFFICE_URL || function (slug) { return slug + '/'; };
+    TOOLS.forEach(function (t, i) {
+      var a = el('a', 'of-tool-card');
+      a.href = url(t.slug);
+      a.setAttribute('aria-label', '打开' + t.name);
+      a.style.setProperty('--i', String(i));
+
+      var ic = el('i', 't-ic ' + t.tone);
+      ic.setAttribute('aria-hidden', 'true');
+      ic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">' + t.svg + '</svg>';
+
+      var b = el('b', null, t.name);
+      var p = el('p', null, t.desc);
+      var go = el('span', 'tc-go mono', '打开 →');
+
+      a.appendChild(ic);
+      a.appendChild(b);
+      a.appendChild(p);
+      a.appendChild(go);
+      grid.appendChild(a);
+    });
+
+    var back = document.getElementById('of-back');
+    if (back) back.href = (window.FUO_PATHS && window.FUO_PATHS.DRIVE) || '../';
+  })();
+  </script>
+</body>
+</html>

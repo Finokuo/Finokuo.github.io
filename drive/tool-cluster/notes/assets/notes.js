@@ -27,7 +27,7 @@
 
   var state = {
     folders: [],       // [{id, name}]
-    notes: [],         // [{id, folder_id, title, content, is_quick, updated_at}]
+    notes: [],         // [{id, folder_id, title, content, is_quick, pinned, is_public, updated_at}]
     cur: null,         // 当前选中笔记
     folder: 'all',     // 边栏过滤：'all' | folderId
     q: '',             // 搜索词（按笔记名）
@@ -36,6 +36,9 @@
     saveTimer: null,
     bin: [],           // 回收站：[{id, title, deleted_at}]
     softDel: false,    // notes.deleted_at 列是否可用（v5；旧表降级硬删除）
+    pinOk: false,      // notes.pinned 列是否可用（v6；旧表隐藏置顶/分享按钮）
+    pubOk: false,      // notes.is_public 列是否可用（v6）
+    verOk: false,      // note_versions 表是否可用（v6）
   };
 
   /* ---------- DOM ---------- */
@@ -132,22 +135,43 @@
     });
   }
 
-  /* notes 查询：v5 表带 deleted_at（本地拆分在册/回收站）；
-     旧表报 PGRST204 → 降级不带该列（回收站不可用，删除回退硬删） */
+  /* notes 查询：v5 带回收站列；v6 再带置顶/公开列（逐级降级：
+     v6 列缺失 → 去掉 v6 列重查；deleted_at 缺失 → 基础列） */
   function loadNotesQuery(c) {
     return c.from('notes')
-      .select('id,folder_id,title,content,is_quick,updated_at,deleted_at')
+      .select('id,folder_id,title,content,is_quick,updated_at,deleted_at,pinned,is_public')
       .order('updated_at', { ascending: false })
       .then(function (r) {
         if (r.error && (r.error.code === 'PGRST204' || r.error.code === '42703' || /could not find the column|does not exist/i.test(r.error.message || ''))) {
-          state.softDel = false;
-          state.bin = [];
+          state.pinOk = false;
+          state.pubOk = false;
           return c.from('notes')
-            .select('id,folder_id,title,content,is_quick,updated_at')
-            .order('updated_at', { ascending: false });
+            .select('id,folder_id,title,content,is_quick,updated_at,deleted_at')
+            .order('updated_at', { ascending: false })
+            .then(function (r2) {
+              if (r2.error && (r2.error.code === 'PGRST204' || r2.error.code === '42703' || /could not find the column|does not exist/i.test(r2.error.message || ''))) {
+                state.softDel = false;
+                state.bin = [];
+                return c.from('notes')
+                  .select('id,folder_id,title,content,is_quick,updated_at')
+                  .order('updated_at', { ascending: false });
+              }
+              if (!r2.error) {
+                state.softDel = true;
+                var bin2 = [];
+                (r2.data || []).forEach(function (n) {
+                  if (n.deleted_at) bin2.push({ id: n.id, title: n.title, deleted_at: n.deleted_at });
+                });
+                state.bin = bin2;
+                r2.data = (r2.data || []).filter(function (n) { return !n.deleted_at; });
+              }
+              return r2;
+            });
         }
         if (!r.error) {
           state.softDel = true;
+          state.pinOk = true;
+          state.pubOk = true;
           var bin = [];
           (r.data || []).forEach(function (n) {
             if (n.deleted_at) bin.push({ id: n.id, title: n.title, deleted_at: n.deleted_at });
@@ -208,7 +232,7 @@
   function renderFolders() {
     folderList.innerHTML = '';
 
-    // 「全部笔记」伪项
+    // 「全部笔记」伪项（也可作拖拽目标：移到未分类）
     var all = document.createElement('button');
     all.type = 'button';
     all.className = 'nb-item nb-folder all' + (state.folder === 'all' ? ' is-active' : '');
@@ -216,6 +240,7 @@
       '<span class="f-name">全部笔记</span>' +
       '<span class="f-count mono">' + state.notes.length + '</span>';
     all.addEventListener('click', function () { setFolder('all'); });
+    bindDrop(all, null); // v0.8：拖拽到「全部笔记」= 移到未分类
     folderList.appendChild(all);
 
     state.folders.forEach(function (f) {
@@ -229,7 +254,7 @@
       var name = document.createElement('span');
       name.className = 'f-name';
       name.textContent = f.name;
-      name.title = f.name + '（双击重命名）';
+      name.title = f.name + '（双击重命名，可拖笔记进来）';
 
       var count = document.createElement('span');
       count.className = 'f-count mono';
@@ -254,7 +279,33 @@
       row.appendChild(dot); row.appendChild(name); row.appendChild(count); row.appendChild(ops);
       row.addEventListener('click', function () { setFolder(f.id); });
       row.addEventListener('dblclick', function () { renameFolder(f); });
+      bindDrop(row, f.id); // v0.8：拖拽笔记到文件夹
       folderList.appendChild(row);
+    });
+  }
+
+  /* ---------- v0.8：拖拽笔记到文件夹 ---------- */
+  var dragNoteId = null;
+  function bindDrop(el, folderId) {
+    el.addEventListener('dragover', function (e) {
+      if (!dragNoteId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.classList.add('is-dragover');
+    });
+    el.addEventListener('dragleave', function () { el.classList.remove('is-dragover'); });
+    el.addEventListener('drop', function (e) {
+      e.preventDefault();
+      el.classList.remove('is-dragover');
+      if (!dragNoteId) return;
+      var n = null;
+      state.notes.forEach(function (x) { if (x.id === dragNoteId) n = x; });
+      dragNoteId = null;
+      if (!n || n.is_quick) return;
+      var target = folderId || null;
+      if ((n.folder_id || null) === target) return; // 位置没变
+      state.cur = n; // moveTo 作用于当前选中（拖拽的笔记即目标）
+      moveTo(target);
     });
   }
 
@@ -272,6 +323,13 @@
 
   function renderList() {
     var rows = filteredNotes().filter(function (n) { return !n.is_quick; });
+    // v0.8：置顶优先（其余保持最近更新在前）
+    rows.sort(function (a, b) {
+      var pa = state.pinOk && a.pinned ? 1 : 0;
+      var pb = state.pinOk && b.pinned ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return 0; // 稳定排序：保持原 updated_at 降序
+    });
     listEl.innerHTML = '';
     noteCount.textContent = String(rows.length);
 
@@ -292,6 +350,19 @@
       item.setAttribute('role', 'option');
       item.setAttribute('aria-selected', String(!!(state.cur && state.cur.id === n.id)));
 
+      // v0.8：可拖拽（拖到左侧文件夹即移动）
+      item.draggable = true;
+      item.addEventListener('dragstart', function (e) {
+        dragNoteId = n.id;
+        try { e.dataTransfer.setData('text/plain', n.id); } catch (err) { /* ignore */ }
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', function () {
+        dragNoteId = null;
+        var hls = folderList.querySelectorAll('.is-dragover');
+        Array.prototype.forEach.call(hls, function (x) { x.classList.remove('is-dragover'); });
+      });
+
       var row1 = document.createElement('span');
       row1.className = 'n-row';
       var title = document.createElement('span');
@@ -299,6 +370,20 @@
       title.textContent = n.title || '未命名笔记';
       title.title = n.title;
       row1.appendChild(title);
+      if (state.pinOk && n.pinned) {
+        var pin = document.createElement('span');
+        pin.className = 'n-pin'; pin.textContent = '📌';
+        pin.title = '已置顶';
+        pin.setAttribute('aria-label', '已置顶');
+        row1.appendChild(pin);
+      }
+      if (state.pubOk && n.is_public) {
+        var pub = document.createElement('span');
+        pub.className = 'n-pub'; pub.textContent = '🌐';
+        pub.title = '已公开分享';
+        pub.setAttribute('aria-label', '已公开分享');
+        row1.appendChild(pub);
+      }
       if (state.favs[n.id]) {
         var st = document.createElement('span');
         st.className = 'n-star'; st.textContent = '★';
@@ -506,6 +591,11 @@
   }
 
   /* ---------- 渲染：编辑器 ---------- */
+  var pinBtn = $('nb-pin');
+  var shareBtn = $('nb-share');
+  var histBtn = $('nb-history');
+  var exportBtn = $('nb-export');
+
   function renderEditor() {
     var n = state.cur;
     if (!n) {
@@ -518,6 +608,10 @@
       starBtn.style.display = 'none';
       moveSel.disabled = true;
       delBtn.style.display = 'none';
+      if (pinBtn) pinBtn.style.display = 'none';
+      if (shareBtn) shareBtn.style.display = 'none';
+      if (histBtn) histBtn.style.display = 'none';
+      if (exportBtn) exportBtn.style.display = 'none';
       renderMoveOptions();
       renderPreview();
       return;
@@ -528,6 +622,22 @@
     starBtn.style.display = '';
     moveSel.disabled = false;
     delBtn.style.display = n.is_quick ? 'none' : '';
+
+    // v0.8：置顶 / 分享 / 历史 / 导出按钮（列未就绪时隐藏）
+    if (pinBtn) {
+      pinBtn.style.display = (state.pinOk && !n.is_quick) ? '' : 'none';
+      pinBtn.classList.toggle('is-on', !!(state.pinOk && n.pinned));
+      pinBtn.setAttribute('aria-pressed', String(!!(state.pinOk && n.pinned)));
+      pinBtn.title = n.pinned ? '取消置顶' : '置顶这篇笔记（列表最前）';
+    }
+    if (shareBtn) {
+      shareBtn.style.display = state.pubOk ? '' : 'none';
+      shareBtn.classList.toggle('is-on', !!n.is_public);
+      shareBtn.setAttribute('aria-pressed', String(!!n.is_public));
+      shareBtn.title = n.is_public ? '已公开：点击复制链接 / 再点关闭公开' : '生成公开分享链接（任何人可读）';
+    }
+    if (histBtn) histBtn.style.display = '';
+    if (exportBtn) exportBtn.style.display = '';
 
     titleEl.textContent = n.title || '未命名笔记';
     bodyEl.value = n.content || '';
@@ -648,6 +758,7 @@
         setSaveState('is-synced', '已同步 ✓');
         updatedEl.textContent = '保存于 ' + relativeTime(n.updated_at);
         renderList();
+        maybeSnapshot(n); // v0.8：适时存一版历史（≥10 分钟一版，静默）
       });
   }
 
@@ -761,6 +872,343 @@
       if (state.folders[i].id === id) return state.folders[i].name;
     }
     return '未分类';
+  }
+
+  /* =====================================================
+   * v0.8 · 置顶 / 公开分享 / 导出（单篇 md + 全部 ZIP）/ 版本历史
+   * ===================================================== */
+  function shareUrl(id) {
+    var base = PATHS.N || (PATHS.DRIVE || '') + 'n/';
+    return base + (base.indexOf('?') === -1 ? '?' : '&') + 'id=' + encodeURIComponent(id);
+  }
+
+  function togglePin() {
+    var n = state.cur;
+    if (!n || n.is_quick) return;
+    if (PREVIEW) { showToast('预览模式：登录后即可置顶'); return; }
+    var next = !n.pinned;
+    client().from('notes').update({ pinned: next }).eq('id', n.id)
+      .then(function (_a) {
+        if (_a.error) {
+          showToast('置顶失败：' + (_a.error.message || '未知错误'));
+          return;
+        }
+        n.pinned = next;
+        renderEditor(); renderList();
+        showToast(next ? '已置顶「' + (n.title || '未命名笔记') + '」' : '已取消置顶');
+      });
+  }
+
+  function toggleShare() {
+    var n = state.cur;
+    if (!n) return;
+    if (PREVIEW) { showToast('预览模式：登录后即可分享'); return; }
+    var next = !n.is_public;
+    client().from('notes').update({ is_public: next }).eq('id', n.id)
+      .then(function (_a) {
+        if (_a.error) {
+          if (_a.error.code === 'PGRST204' || _a.error.code === '42703' ||
+              /could not find the column|does not exist/i.test(_a.error.message || '')) {
+            showToast('公开分享需要先执行 supabase-v6.sql（is_public 列）');
+          } else {
+            showToast('操作失败：' + (_a.error.message || '未知错误'));
+          }
+          return;
+        }
+        n.is_public = next;
+        renderEditor(); renderList();
+        if (next) {
+          copyText(shareUrl(n.id), function (good) {
+            showToast(good ? '链接已复制：任何人可读这篇笔记，再点可关闭公开'
+                           : '已公开，但复制失败：请手动复制地址栏');
+          });
+        } else {
+          showToast('已关闭公开，原链接立即失效');
+        }
+      });
+  }
+
+  function copyText(text, done) {
+    function ok() { done && done(true); }
+    function fail() { done && done(false); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, function () { legacy(); });
+    } else legacy();
+    function legacy() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.appendChild(ta);
+        ta.select();
+        var good = document.execCommand('copy');
+        document.body.removeChild(ta);
+        good ? ok() : fail();
+      } catch (e) { fail(); }
+    }
+  }
+
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function safeName(s) {
+    return String(s || '').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 60) || '未命名';
+  }
+
+  /* 单篇导出 .md */
+  function exportNote() {
+    var n = state.cur;
+    if (!n) return;
+    var blob = new Blob([n.content || ''], { type: 'text/markdown;charset=utf-8' });
+    downloadBlob(blob, safeName(n.title) + '.md');
+    showToast('已导出「' + safeName(n.title) + '.md」');
+  }
+
+  /* 全部导出 ZIP（零依赖自实现：STORE 存储 + CRC32 + UTF-8 文件名） */
+  var CRC_TABLE = null;
+  function crc32(bytes) {
+    if (!CRC_TABLE) {
+      CRC_TABLE = new Int32Array(256);
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        CRC_TABLE[n] = c;
+      }
+    }
+    var crc = -1;
+    for (var i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
+    return (crc ^ -1) >>> 0;
+  }
+
+  function buildZip(files) { // files: [{name, text}] → Blob
+    var enc = new TextEncoder();
+    var now = new Date();
+    var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
+    var dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+
+    var parts = [];
+    var central = [];
+    var offset = 0;
+
+    files.forEach(function (f) {
+      var nameB = enc.encode(f.name);
+      var dataB = enc.encode(f.text);
+      var crc = crc32(dataB);
+
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true);  // local file header signature
+      lh.setUint16(4, 20, true);           // version needed
+      lh.setUint16(6, 0x0800, true);       // flags: UTF-8 文件名
+      lh.setUint16(8, 0, true);            // method: STORE
+      lh.setUint16(10, dosTime, true);
+      lh.setUint16(12, dosDate, true);
+      lh.setUint32(14, crc, true);
+      lh.setUint32(18, dataB.length, true);
+      lh.setUint32(22, dataB.length, true);
+      lh.setUint16(26, nameB.length, true);
+      lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), nameB, dataB);
+
+      var cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true);   // central directory signature
+      cd.setUint16(4, 20, true);           // version made by
+      cd.setUint16(6, 20, true);           // version needed
+      cd.setUint16(8, 0x0800, true);       // flags: UTF-8
+      cd.setUint16(10, 0, true);           // method: STORE
+      cd.setUint16(12, dosTime, true);
+      cd.setUint16(14, dosDate, true);
+      cd.setUint32(16, crc, true);
+      cd.setUint32(20, dataB.length, true);
+      cd.setUint32(24, dataB.length, true);
+      cd.setUint16(28, nameB.length, true);
+      cd.setUint32(42, offset, true);       // local header 偏移
+      central.push(new Uint8Array(cd.buffer), nameB);
+
+      offset += 30 + nameB.length + dataB.length;
+    });
+
+    var cdSize = central.reduce(function (s, p) { return s + p.length; }, 0);
+    var eocd = new DataView(new ArrayBuffer(22));
+    eocd.setUint32(0, 0x06054b50, true);
+    eocd.setUint16(8, files.length, true);
+    eocd.setUint16(10, files.length, true);
+    eocd.setUint32(12, cdSize, true);
+    eocd.setUint32(16, offset, true);
+
+    return new Blob(parts.concat(central, [new Uint8Array(eocd.buffer)]), { type: 'application/zip' });
+  }
+
+  function exportAllZip() {
+    var notes = state.notes.filter(function (n) { return !n.is_quick; });
+    if (!notes.length) { showToast('还没有可导出的笔记'); return; }
+    var quick = state.notes.filter(function (n) { return n.is_quick; })[0];
+
+    var used = {};
+    function unique(name) {
+      var key = name.toLowerCase();
+      if (!used[key]) { used[key] = 1; return name; }
+      var i = 2;
+      while (used[key + '-' + i]) i++;
+      used[key + '-' + i] = 1;
+      return name + '-' + i;
+    }
+
+    var files = [];
+    notes.forEach(function (n) {
+      var path = (n.folder_id ? safeName(folderName(n.folder_id)) + '/' : '') + safeName(n.title);
+      files.push({ name: unique(path + '.md'), text: n.content || '' });
+    });
+    if (quick) files.push({ name: unique('快捷笔记.md'), text: quick.content || '' });
+    files.push({
+      name: '导出说明.txt',
+      text: 'Fuo Tools 云笔记导出\n导出时间：' + new Date().toLocaleString('zh-CN') +
+        '\n笔记总数：' + notes.length + (quick ? '（另含 1 篇快捷笔记）' : '') +
+        '\n回收站内容不在本包内；文件夹结构已按目录还原。\n',
+    });
+
+    try {
+      var blob = buildZip(files);
+      var stamp = new Date().toISOString().slice(0, 10);
+      downloadBlob(blob, 'fuo-notes-' + stamp + '.zip');
+      showToast('已打包 ' + (files.length - 1) + ' 个文件为 ZIP');
+    } catch (e) {
+      showToast('打包失败：' + (e.message || '浏览器不支持'));
+    }
+  }
+
+  /* ---------- 版本历史（note_versions，每篇滚动 20 版） ---------- */
+  var VER_GAP = 10 * 60 * 1000; // 同一篇笔记 ≥10 分钟才存一版
+  var verLast = {};             // noteId → 上次快照时间（会话内存）
+
+  function maybeSnapshot(n) {
+    if (PREVIEW || !n || !user) return;
+    var now = Date.now();
+    if (verLast[n.id] && now - verLast[n.id] < VER_GAP) return;
+    client().from('note_versions')
+      .select('id,created_at').eq('note_id', n.id).order('created_at', { ascending: false }).limit(1)
+      .then(function (_a) {
+        if (_a.error) return; // 表未建：静默（历史按钮首次点击时再提示）
+        var latest = _a.data && _a.data[0] ? new Date(_a.data[0].created_at).getTime() : 0;
+        if (now - latest < VER_GAP) { verLast[n.id] = latest; return; }
+        client().from('note_versions')
+          .insert({ note_id: n.id, user_id: user.id, title: n.title, content: n.content })
+          .then(function (_b) {
+            if (_b.error) return;
+            verLast[n.id] = now;
+            pruneVersions(n.id);
+          });
+      });
+  }
+
+  function pruneVersions(noteId) {
+    client().from('note_versions')
+      .select('id').eq('note_id', noteId).order('created_at', { ascending: false })
+      .then(function (_a) {
+        if (_a.error || !_a.data || _a.data.length <= 20) return;
+        var ids = _a.data.slice(20).map(function (r) { return r.id; });
+        client().from('note_versions').delete().in('id', ids)
+          .then(function () { /* 忽略 */ });
+      });
+  }
+
+  function openHistory() {
+    var n = state.cur;
+    if (!n) return;
+    if (PREVIEW) { showToast('预览模式：登录后可查看版本历史'); return; }
+    var list = $('nb-history-list');
+    if (!list) return;
+    list.innerHTML = '';
+    var loading = document.createElement('p');
+    loading.className = 'nb-empty-list';
+    loading.textContent = '读取历史版本中…';
+    list.appendChild(loading);
+    $('nb-history').hidden = false;
+
+    client().from('note_versions')
+      .select('id,title,content,created_at').eq('note_id', n.id)
+      .order('created_at', { ascending: false }).limit(20)
+      .then(function (_a) {
+        list.innerHTML = '';
+        if (_a.error) {
+          if (isMissingTable(_a.error)) {
+            state.verOk = false;
+            if (histBtn) histBtn.style.display = 'none';
+            $('nb-history').hidden = true;
+            showToast('版本历史尚未就绪：请先在 Supabase 执行 supabase-v6.sql');
+            return;
+          }
+          var p = document.createElement('p');
+          p.className = 'nb-empty-list';
+          p.textContent = '读取失败：' + (_a.error.message || '未知错误');
+          list.appendChild(p);
+          return;
+        }
+        if (!_a.data || !_a.data.length) {
+          var e = document.createElement('p');
+          e.className = 'nb-empty-list';
+          e.textContent = '这篇笔记还没有历史版本。连续编辑时约每 10 分钟自动存一版。';
+          list.appendChild(e);
+          return;
+        }
+        _a.data.forEach(function (v) {
+          var row = document.createElement('div');
+          row.className = 'nb-his-row';
+
+          var info = document.createElement('div');
+          info.className = 'nb-his-info';
+          var b = document.createElement('b');
+          b.textContent = new Date(v.created_at).toLocaleString('zh-CN', {
+            month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+          });
+          var small = document.createElement('small');
+          small.className = 'mono';
+          small.textContent = ((v.title || '未命名')) + ' · ' + (v.content || '').length + ' 字';
+          info.appendChild(b);
+          info.appendChild(small);
+
+          var prev = document.createElement('p');
+          prev.className = 'nb-his-prev';
+          prev.textContent = (v.content || '').replace(/\s+/g, ' ').slice(0, 80) || '（空）';
+
+          var ops = document.createElement('div');
+          ops.className = 'nb-bin-ops';
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tbtn';
+          btn.textContent = '恢复此版';
+          btn.addEventListener('click', function () { restoreVersion(v); });
+          ops.appendChild(btn);
+
+          row.appendChild(info);
+          row.appendChild(prev);
+          row.appendChild(ops);
+          list.appendChild(row);
+        });
+      });
+  }
+
+  function restoreVersion(v) {
+    var n = state.cur;
+    if (!n) return;
+    flushPendingSave();
+    n.content = v.content || '';
+    bodyEl.value = n.content;
+    countInfo.textContent = n.content.length + ' 字';
+    renderPreview();
+    $('nb-history').hidden = true;
+    state.dirty = true;
+    saveNow();
+    showToast('已恢复到 ' + new Date(v.created_at).toLocaleString('zh-CN', {
+      month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    }) + ' 的版本');
   }
 
   /* ---------- 删除笔记 ---------- */
@@ -1141,6 +1589,27 @@
       askDeleteNote();
     });
 
+    // v0.8：置顶 / 分享 / 历史 / 导出
+    if (pinBtn) pinBtn.addEventListener('click', function () {
+      if (PREVIEW) { showToast('预览模式：登录后即可置顶'); return; }
+      togglePin();
+    });
+    if (shareBtn) shareBtn.addEventListener('click', function () {
+      if (PREVIEW) { showToast('预览模式：登录后即可分享'); return; }
+      toggleShare();
+    });
+    if (histBtn) histBtn.addEventListener('click', openHistory);
+    if (exportBtn) exportBtn.addEventListener('click', exportNote);
+    var exportAllBtn = $('nb-export-all');
+    if (exportAllBtn) exportAllBtn.addEventListener('click', function () {
+      if (PREVIEW) { showToast('预览模式：登录后即可导出'); return; }
+      exportAllZip();
+    });
+    var hisModal = $('nb-history');
+    if (hisModal) hisModal.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-his-close]')) hisModal.hidden = true;
+    });
+
     // 输入弹窗
     $('nb-modal-ok').addEventListener('click', modalOk);
     $('nb-modal-input').addEventListener('keydown', function (e) {
@@ -1173,20 +1642,24 @@
         if (!$('nb-modal').hidden) { $('nb-modal').hidden = true; modalCb = null; }
         else if (!$('nb-confirm').hidden) { $('nb-confirm').hidden = true; confirmCtx = null; }
         else if (!$('nb-bin').hidden) closeBin();
+        else if ($('nb-history') && !$('nb-history').hidden) $('nb-history').hidden = true;
       }
     });
   }
 
   /* ---------- 预览模式（演示数据） ---------- */
   function bootPreview() {
+    state.pinOk = true;   // 预览模式展示完整外壳（点击时 toast 提示）
+    state.pubOk = true;
+    state.verOk = true;
     state.folders = [
       { id: 'f1', name: '工作文档' },
       { id: 'f2', name: '个人灵感' },
     ];
     state.notes = [
       { id: 'q', folder_id: null, title: '快捷笔记', content: '随手记点什么…\n这行内容可以修改，但这条笔记永远删不掉。', is_quick: true, updated_at: new Date().toISOString() },
-      { id: 'n1', folder_id: 'f1', title: '欢迎来到云笔记', content: '# 欢迎来到云笔记\n\n这是云同步的多笔记空间，**支持 Markdown**：\n\n- 左侧可以搜索、新建笔记和文件夹\n- 点标题可以改名，点「预览」看渲染效果\n- 编辑自动保存（可在设置里改为手动）\n- 星标收藏后可在「收藏」页看到\n\n> 试试右上角的「分屏」模式，边写边看。\n\n```js\n// 代码块也支持\nconsole.log("hello fuo");\n```\n\n| 功能 | 状态 |\n| --- | --- |\n| 多笔记 | ✓ |\n| 文件夹 | ✓ |\n| 回收站 | ✓ |', is_quick: false, updated_at: new Date(Date.now() - 3600000).toISOString() },
-      { id: 'n2', folder_id: 'f2', title: '待办清单', content: '## 待办\n\n1. 试用文件夹整理\n2. 把常用笔记加入收藏\n3. 在设置页调一下开关\n4. 试试 Ctrl+K 全局搜索', is_quick: false, updated_at: new Date(Date.now() - 86400000).toISOString() },
+      { id: 'n1', folder_id: 'f1', title: '欢迎来到云笔记', pinned: true, is_public: false, content: '# 欢迎来到云笔记\n\n这是云同步的多笔记空间，**支持 Markdown**：\n\n- 左侧可以搜索、新建笔记和文件夹\n- 点标题可以改名，点「预览」看渲染效果\n- 编辑自动保存（可在设置里改为手动）\n- 星标收藏后可在「收藏」页看到\n\n> 试试右上角的「分屏」模式，边写边看。\n\n```js\n// 代码块也支持\nconsole.log("hello fuo");\n```\n\n| 功能 | 状态 |\n| --- | --- |\n| 多笔记 | ✓ |\n| 文件夹 | ✓ |\n| 回收站 | ✓ |', is_quick: false, updated_at: new Date(Date.now() - 3600000).toISOString() },
+      { id: 'n2', folder_id: 'f2', title: '待办清单', pinned: false, is_public: true, content: '## 待办\n\n1. 试用文件夹整理\n2. 把常用笔记加入收藏\n3. 在设置页调一下开关\n4. 试试 Ctrl+K 全局搜索', is_quick: false, updated_at: new Date(Date.now() - 86400000).toISOString() },
     ];
     state.favs = { n1: true };
     state.softDel = true;

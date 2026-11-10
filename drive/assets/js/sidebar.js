@@ -40,7 +40,7 @@
     if (!window.__FUO_PALETTE__) {
       window.__FUO_PALETTE__ = true;
       var s = document.createElement('script');
-      s.src = SELF_BASE + 'palette.js?v=2';
+      s.src = SELF_BASE + 'palette.js?v=3';
       document.head.appendChild(s);
     }
     // PWA Service Worker（仅 https / localhost；scope = /drive/）
@@ -48,7 +48,7 @@
       if ('serviceWorker' in navigator &&
           (location.protocol === 'https:' || location.hostname === 'localhost')) {
         var root = SELF_BASE.replace(/assets\/js\/$/, '');
-        navigator.serviceWorker.register(root + 'sw.js?v=1').catch(function () { /* ignore */ });
+        navigator.serviceWorker.register(root + 'sw.js?v=2').catch(function () { /* ignore */ });
       }
     } catch (e) { /* ignore */ }
   }
@@ -82,27 +82,45 @@
     var body = document.body;
     var page = body.getAttribute('data-page') || '';
     var slug = body.getAttribute('data-tool') || '';
+    var zone = body.getAttribute('data-zone') || ''; // office 工具页专用
     var drive = PATHS.DRIVE || '../';
     var cluster = PATHS.TOOL_CLUSTER || '../tool-cluster/';
+    var office = PATHS.OFFICE || '../office/';
 
     var chain = [];
-    if (slug) {
+    if (slug && zone === 'office') {
+      // 办公集工具页：drive / office / <slug>
+      chain = [crumbLink('drive', drive), crumbSep(),
+               crumbLink('office', office), crumbSep(),
+               crumbCur(slug)];
+    } else if (slug) {
       // 工具独立页（body[data-tool]，无 data-page）
       chain = [crumbLink('drive', drive), crumbSep(),
                crumbLink('tool-cluster', cluster), crumbSep(),
                crumbCur(slug)];
     } else if (page === 'cluster') {
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('tool-cluster')];
+    } else if (page === 'office') {
+      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('office')];
     } else if (page === 'notes') {
       chain = [crumbLink('drive', drive), crumbSep(),
                crumbLink('tool-cluster', cluster), crumbSep(),
                crumbCur('notes')];
+    } else if (page === 'recycle') {
+      chain = [crumbLink('drive', drive), crumbSep(),
+               crumbLink('tool-cluster', cluster), crumbSep(),
+               crumbLink('notes', PATHS.NOTES || cluster + 'notes/'), crumbSep(),
+               crumbCur('recycle')];
     } else if (page === 'favorites') {
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('favorites')];
     } else if (page === 'settings') {
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('settings')];
     } else if (page === 'profile') {
       chain = [crumbLink('drive', drive), crumbSep(), crumbCur('u')];
+    } else if (page === 'share') {
+      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('n')];
+    } else if (page === 'admin') {
+      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('admin')];
     } else {
       el.hidden = true;
       return;
@@ -115,6 +133,7 @@
   var IC = {
     grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="13" y="4" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="4" y="13" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="13" y="13" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>',
     wrench: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4.5 4.5 0 0 0-6.09 5.9L3 17.8V21h3.2l5.6-5.61a4.5 4.5 0 0 0 5.9-6.09l-2.8 2.8-2.11-.7-.7-2.11 2.61-2.99Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>',
+    brief: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>',
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M10 12h10M17 9l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
@@ -131,6 +150,7 @@
     if (!aside) return;
     var drive = PATHS.DRIVE || '../';
     var cluster = PATHS.TOOL_CLUSTER || '../tool-cluster/';
+    var office = PATHS.OFFICE || '../office/';
     var favorites = PATHS.FAVORITES || '../favorites/';
     var settings = PATHS.SETTINGS || '../settings/';
 
@@ -143,7 +163,8 @@
       '</a>' +
       '<nav class="side-nav" aria-label="工作台导航">' +
         navItem('home', active, drive, IC.grid, '工作台', '') +
-        navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">14 款</i>') +
+        navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">17 款</i>') +
+        navItem('office', active, office, IC.brief, '办公集', '<i class="mono">3 款</i>') +
         navItem('favorites', active, favorites, IC.star, '收藏', '<i class="mono" id="sb-fav-count" hidden></i>') +
         navItem('settings', active, settings, IC.gear, '设置', '') +
       '</nav>' +
@@ -236,12 +257,8 @@
     var stateEl = document.getElementById('sb-state');
     var avatar = document.getElementById('sb-avatar');
     if (stateEl) stateEl.textContent = '在线';
-    if (nameEl) {
-      nameEl.textContent = (u.email || '').split('@')[0] || '已登录';
-      nameEl.title = u.email || '';
-    }
-    if (avatar) avatar.textContent = ((u.email || 'F')[0] || 'F').toUpperCase();
-    // 用户名异步覆盖（profiles）
+    // 修复：不再先显示邮箱再覆盖 —— 保持「…」占位，等 profiles 用户名就绪后一次性填入，
+    // 拿不到用户名时（旧表/网络失败）才回退到邮箱前缀，避免邮箱→用户名的闪烁
     sb.from('profiles').select('username,status').eq('id', u.id).maybeSingle()
       .then(function (_b) {
         var p = _b.data;
@@ -250,6 +267,12 @@
           (u.email || '').split('@')[0] || '用户';
         if (nameEl) nameEl.textContent = name;
         if (avatar) avatar.textContent = (name[0] || 'F').toUpperCase();
+      })
+      .catch(function () {
+        var fb = (u.user_metadata && u.user_metadata.username) ||
+          (u.email || '').split('@')[0] || '已登录';
+        if (nameEl) nameEl.textContent = fb;
+        if (avatar) avatar.textContent = (fb[0] || 'F').toUpperCase();
       });
   }
 

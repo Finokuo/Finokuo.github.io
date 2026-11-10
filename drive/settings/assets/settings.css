@@ -66,16 +66,42 @@
   transition: transform 0.2s ease, background 0.2s;
 }
 .st-switch input:checked + i {
-  background: rgba(45, 212, 191, 0.3);
-  border-color: rgba(45, 212, 191, 0.5);
+  background: var(--accent-glow);
+  border-color: var(--accent-glow-strong);
 }
-:root[data-theme="light"] .st-switch input:checked + i { background: rgba(13, 148, 136, 0.3); }
 .st-switch input:checked + i::after {
   transform: translateX(18px);
   background: var(--accent-bright);
-  box-shadow: 0 0 8px rgba(94, 234, 212, 0.5);
+  box-shadow: 0 0 8px var(--accent-glow-strong);
 }
 .st-switch input:focus-visible + i { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---------- 主题色色板（v0.8） ---------- */
+.st-accent {
+  display: inline-flex; align-items: center; gap: 10px;
+  flex: none; flex-wrap: wrap; justify-content: flex-end;
+  max-width: 240px;
+}
+.st-accent-dot {
+  width: 30px; height: 30px; padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--field-bg);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.st-accent-dot i {
+  display: block; width: 18px; height: 18px;
+  border-radius: 50%;
+}
+.st-accent-dot:hover { transform: scale(1.12); }
+.st-accent-dot.is-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 0 10px var(--accent-glow-strong);
+  transform: scale(1.1);
+}
+.st-accent-dot:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ---------- 账户 ---------- */
 .st-account { display: flex; flex-direction: column; gap: 9px; margin: 8px 0 4px; }
@@ -110,6 +136,7 @@
   .st-card { padding: 16px 14px 8px; }
   .st-row { flex-wrap: wrap; }
   .st-seg { order: 2; }
+  .st-accent { order: 2; justify-content: flex-start; max-width: none; }
   .st-account-actions { flex-direction: column; }
   .st-account-actions .tbtn { width: 100%; }
 }

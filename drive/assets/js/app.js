@@ -107,8 +107,9 @@
   function renderGreeting(u) {
     var h = new Date().getHours();
     var word = h < 6 ? '夜深了' : h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-    var title = u ? word + '，' + (u.email || '').split('@')[0] : word;
-    $('hello-title').textContent = title;
+    // 修复闪烁：不再先用邮箱前缀拼问候，保持纯问候词；
+    // loadProfile 就绪后 renderName() 会带上用户名一次性更新
+    $('hello-title').textContent = word;
     $('hello-sub').textContent = QUOTES[Math.floor(Date.now() / 86400000) % QUOTES.length];
     $('topbar-date').textContent = new Date().toLocaleDateString('zh-CN', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
@@ -117,12 +118,13 @@
 
   function renderUser(u) {
     var email = u.email || '未知邮箱';
-    // 用户名异步加载后再覆盖显示（loadProfile → renderName）
-    $('user-email').textContent = email;
-    $('user-email').title = email;
+    // 修复闪烁：侧栏用户名保持「…」占位，等 loadProfile → renderName 用真实用户名填入；
+    // 这里只填充不涉及姓名展示的字段（邮箱/ID/注册时间属于账号信息，本就该展示）
+    $('user-email').textContent = '…';
+    $('user-email').title = '';
     $('user-state').textContent = '在线';
-    $('user-avatar').textContent = (email[0] || 'F').toUpperCase();
-    $('acc-username').textContent = (u.user_metadata && u.user_metadata.username) || '加载中…';
+    $('user-avatar').textContent = '…';
+    $('acc-username').textContent = '加载中…';
     $('acc-email').textContent = email;
     $('acc-uid').textContent = (u.id || '').slice(0, 8) || '—';
     $('acc-created').textContent = u.created_at ? fmtDate(u.created_at) : '—';
@@ -301,16 +303,27 @@
   var TOOL_TONES = {
     json: 'tone-teal', color: 'tone-fuchsia', password: 'tone-emerald',
     textstats: 'tone-amber', timestamp: 'tone-cyan', base64: 'tone-violet',
-    uuid: 'tone-orange', diff: 'tone-rose',
+    uuid: 'tone-orange', diff: 'tone-rose', regex: 'tone-rose',
+    qrcode: 'tone-cyan', hash: 'tone-emerald', url: 'tone-amber',
+    imgcom: 'tone-orange', jwt: 'tone-violet', radix: 'tone-cyan', lorem: 'tone-amber',
+    // v0.8 办公集
+    todo: 'tone-teal', habit: 'tone-rose', pomodoro: 'tone-amber',
   };
   var TOOL_GLYPHS = {
     json: '{ }', color: '●', password: '***', textstats: 'Aa',
     timestamp: '13:37', base64: '64', uuid: 'ID', diff: '±',
+    regex: '.*', qrcode: '▣', hash: '#', url: '⇄', imgcom: '↘',
+    jwt: '⟐', radix: '⇄2', lorem: '¶',
+    todo: '☑', habit: '❤', pomodoro: '🍅',
   };
   var TOOL_NAMES = {
     json: 'JSON 格式化', color: '颜色工具', password: '密码生成器',
     textstats: '文本统计', timestamp: '时间戳转换', base64: 'Base64 编解码',
-    uuid: 'UUID 生成器', diff: '文本 Diff',
+    uuid: 'UUID 生成器', diff: '文本 Diff', regex: '正则测试器',
+    qrcode: '二维码生成', hash: '哈希计算', url: 'URL 编解码',
+    imgcom: '图片压缩', jwt: 'JWT 解码器', radix: '进制转换', lorem: 'Lorem 占位文本',
+    // v0.8 办公集
+    todo: '待办清单', habit: '习惯打卡', pomodoro: '番茄钟',
   };
 
   function recordTool(id) {
@@ -375,13 +388,26 @@
       });
     });
 
-    // 侧栏「工具集」→ 目录页；「收藏」「设置」→ 各自页面
+    // 侧栏导航：工具集 / 办公集 / 收藏 / 设置
     var navTools = $('nav-tools');
     if (navTools && PATHS.TOOL_CLUSTER) navTools.href = PATHS.TOOL_CLUSTER;
+    var navOffice = $('nav-office');
+    if (navOffice && PATHS.OFFICE) navOffice.href = PATHS.OFFICE;
+    var officeMore = $('office-more');
+    if (officeMore && PATHS.OFFICE) officeMore.href = PATHS.OFFICE;
     var navFav = $('nav-favorites');
     if (navFav && PATHS.FAVORITES) navFav.href = PATHS.FAVORITES;
     var navSettings = $('nav-settings');
     if (navSettings && PATHS.SETTINGS) navSettings.href = PATHS.SETTINGS;
+
+    // v0.8：办公集快捷入口（跳转 drive/office/<slug>/，同样计入使用记录）
+    document.querySelectorAll('[data-office-link]').forEach(function (a) {
+      var slug = a.getAttribute('data-office-link');
+      if (window.FUO_OFFICE_URL) a.href = window.FUO_OFFICE_URL(slug);
+      a.addEventListener('click', function () {
+        recordTool(slug);
+      });
+    });
 
     document.querySelectorAll('[data-soon]').forEach(function (el) {
       el.addEventListener('click', function (e) {

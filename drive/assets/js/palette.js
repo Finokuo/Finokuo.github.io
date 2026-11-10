@@ -33,14 +33,26 @@
     { slug: 'hash',      name: '哈希计算',    kw: 'hash sha256 sha1 摘要 文件' },
     { slug: 'url',       name: 'URL 编解码',  kw: 'url encode decode 链接 参数' },
     { slug: 'imgcom',    name: '图片压缩',    kw: 'image 图片 压缩 webp jpeg' },
+    { slug: 'jwt',       name: 'JWT 解码器',  kw: 'jwt token 令牌 过期 exp' },
+    { slug: 'radix',     name: '进制转换',    kw: 'radix 进制 二进制 十六进制 bigint' },
+    { slug: 'lorem',     name: 'Lorem 占位文本', kw: 'lorem 占位 假文 placeholder' },
+  ];
+
+  /* v0.8：办公集工具（drive/office/） */
+  var OFFICE_META = [
+    { slug: 'todo',     name: '待办清单', kw: 'todo 待办 任务 清单 事项' },
+    { slug: 'habit',    name: '习惯打卡', kw: 'habit 习惯 打卡 热力图 坚持' },
+    { slug: 'pomodoro', name: '番茄钟',   kw: 'pomodoro 番茄 专注 计时 25' },
   ];
 
   var PAGES = [
     { label: '工作台', hint: 'drive',   url: PATHS.DRIVE,        kw: 'home 仪表盘 欢迎回来', previewable: true },
     { label: '工具集', hint: 'tools',   url: PATHS.TOOL_CLUSTER, kw: 'tools 全部工具 目录', previewable: true },
+    { label: '办公集', hint: 'office',  url: PATHS.OFFICE,       kw: 'office 办公 待办 习惯 番茄', previewable: true },
     { label: '云笔记', hint: 'notes',   url: PATHS.NOTES,        kw: 'notes 笔记 markdown 编辑', previewable: true },
+    { label: '回收站', hint: 'recycle', url: PATHS.RECYCLE,      kw: 'recycle 回收站 恢复 删除 bin', previewable: true },
     { label: '收藏',   hint: 'favorites', url: PATHS.FAVORITES,  kw: 'favorites star 收藏夹', previewable: false },
-    { label: '设置',   hint: 'settings',  url: PATHS.SETTINGS,   kw: 'settings 设置 密码 开关', previewable: false },
+    { label: '设置',   hint: 'settings',  url: PATHS.SETTINGS,   kw: 'settings 设置 密码 开关 主题色', previewable: false },
   ];
 
   var SEARCH_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -54,6 +66,12 @@
     var base = window.FUO_TOOL_URL
       ? window.FUO_TOOL_URL(slug)
       : (PATHS.TOOL_CLUSTER || '') + slug + '/';
+    return withPreview(base);
+  }
+  function officeUrl(slug) {
+    var base = window.FUO_OFFICE_URL
+      ? window.FUO_OFFICE_URL(slug)
+      : (PATHS.OFFICE || '') + slug + '/';
     return withPreview(base);
   }
   function notesUrl(extra) {
@@ -176,7 +194,14 @@
           recent.slice(0, 5).forEach(function (r) {
             var known = null;
             TOOLS_META.forEach(function (t) { if (t.slug === r.id) known = t; });
-            if (known) pushItem(out, '最近使用', known.name, relativeTime(r.at), 'recent', function () { go(toolUrl(known.slug)); });
+            if (known) {
+              var heat = '';
+              try {
+                var hm = JSON.parse(localStorage.getItem('fuo-tool-heat') || '{}');
+                if (hm && hm[known.slug]) heat = ' ×' + hm[known.slug];
+              } catch (e) { /* ignore */ }
+              pushItem(out, '最近使用', known.name, relativeTime(r.at) + heat, 'recent', function () { go(toolUrl(known.slug)); });
+            }
           });
         }
       } catch (e) { /* ignore */ }
@@ -217,6 +242,11 @@
     TOOLS_META.forEach(function (t) {
       if (hit(t.name, t.kw + ' ' + t.slug)) {
         pushItem(out, '工具', t.name, t.slug, 'tool', function () { go(toolUrl(t.slug)); });
+      }
+    });
+    OFFICE_META.forEach(function (t) {
+      if (hit(t.name, t.kw + ' ' + t.slug)) {
+        pushItem(out, '办公', t.name, t.slug, 'act', function () { go(officeUrl(t.slug)); });
       }
     });
     if (hit('新建笔记', 'new note 创建')) {
@@ -351,29 +381,60 @@
 
   function doSearch(c, user, q, cb) {
     var seq = ++noteSeq;
-    var like = '%' + q.replace(/[%_]/g, '') + '%';
-    var base = function () {
-      var req = c.from('notes').select('id,title').ilike('title', like).limit(6);
+    var like = '%' + q.replace(/[%_"]/g, '') + '%';
+    var ql = q.toLowerCase();
+    // PostgREST or() 语法：值用双引号包裹，避免查询词里的逗号破坏解析
+    var orCond = 'title.ilike."' + like + '",content.ilike."' + like + '"';
+
+    function buildReq(cols) {
+      return c.from('notes').select(cols).limit(6);
+    }
+    function baseReq(cols) {
+      var req = buildReq(cols).or(orCond);
       if (binColOk !== false) req = req.is('deleted_at', null);
       return req;
-    };
-    base().then(function (_a) {
-      if (seq !== noteSeq) return; // 已被更新的输入取代
-      var err = _a.error;
-      if (err && (err.code === 'PGRST204' || err.code === '42703' || /could not find the column|does not exist/i.test(err.message || '')) && binColOk !== false) {
-        // 旧表没有 deleted_at 列：标记后不带该过滤重查
-        binColOk = false;
-        c.from('notes').select('id,title').ilike('title', like).limit(6)
-          .then(function (_b) {
-            if (seq !== noteSeq) return;
-            cb((_b.error || !_b.data) ? [] : _b.data);
-          });
-        return;
-      }
-      if (binColOk === null && !err) binColOk = true;
-      if (err || !_a.data) return cb([]);
-      cb(_a.data);
-    });
+    }
+
+    baseReq('id,title,content')
+      .then(function (_a) {
+        if (seq !== noteSeq) return; // 已被更新的输入取代
+        var err = _a.error;
+        if (err && (err.code === 'PGRST204' || err.code === '42703' || /could not find the column|does not exist/i.test(err.message || '')) && binColOk !== false) {
+          // 旧表没有 deleted_at 列：标记后不带该过滤重查
+          binColOk = false;
+          buildReq('id,title,content').or(orCond)
+            .then(function (_b) {
+              if (seq !== noteSeq) return;
+              cb((_b.error || !_b.data) ? [] : _b.data);
+            });
+          return;
+        }
+        if (binColOk === null && !err) binColOk = true;
+        if (err || !_a.data) return cb([]);
+
+        // v0.8：全文搜索 —— 标题命中优先，内容命中带上下文片段
+        var rows = _a.data;
+        rows.forEach(function (n) {
+          var t = (n.title || '').toLowerCase();
+          var body = (n.content || '');
+          var bl = body.toLowerCase();
+          var idx = bl.indexOf(ql);
+          if (idx === -1) {
+            n._snippet = (t.indexOf(ql) !== -1 && body) ? body.replace(/\s+/g, ' ').slice(0, 42) : '';
+          } else {
+            var start = Math.max(0, idx - 14);
+            var frag = body.slice(start, idx + ql.length + 28).replace(/\s+/g, ' ');
+            n._snippet = (start > 0 ? '…' : '') + frag + '…';
+          }
+        });
+        // 标题命中的排前面
+        rows.sort(function (a, b) {
+          var at = (a.title || '').toLowerCase().indexOf(ql) !== -1 ? 0 : 1;
+          var bt = (b.title || '').toLowerCase().indexOf(ql) !== -1 ? 0 : 1;
+          return at - bt;
+        });
+        cb(rows.slice(0, 6));
+      });
   }
 
   /* ---------- 查询入口 ---------- */
@@ -393,7 +454,7 @@
         if (!notes || !notes.length || !isOpen()) return;
         var noteRows = [];
         notes.forEach(function (n) {
-          pushItem(noteRows, '笔记', n.title || '未命名笔记', 'note', 'note', function () {
+          pushItem(noteRows, '笔记', n.title || '未命名笔记', n._snippet || 'note', 'note', function () {
             go(notesUrl('note=' + encodeURIComponent(n.id)));
           });
         });

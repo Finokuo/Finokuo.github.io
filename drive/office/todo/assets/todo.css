@@ -1,0 +1,116 @@
+/* =====================================================
+   Fuo Tools · 待办清单页样式
+   前置：office.css
+   ===================================================== */
+
+.of-content { max-width: 720px; }
+
+/* ---------- 筛选条 ---------- */
+.td-filters {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.td-filter {
+  padding: 5px 12px; border: none; border-radius: 999px;
+  background: transparent; color: var(--muted);
+  cursor: pointer; font-size: 12px;
+  transition: background 0.15s, color 0.15s;
+}
+.td-filter span { opacity: 0.55; margin-left: 3px; }
+.td-filter:hover { color: var(--text); background: var(--hover-soft); }
+.td-filter.is-on {
+  color: var(--accent-bright);
+  background: var(--accent-glow);
+}
+.td-clear {
+  margin-left: auto;
+  padding: 5px 12px; border: none; border-radius: 999px;
+  background: transparent; color: var(--faint);
+  cursor: pointer; font-size: 11.5px;
+}
+.td-clear:hover { color: var(--danger); background: rgba(244, 113, 116, 0.08); }
+
+/* ---------- 列表 ---------- */
+.td-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+.td-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--border); border-radius: 11px;
+  background: var(--card-2);
+  transition: border-color 0.15s, opacity 0.2s;
+}
+.td-item:hover { border-color: var(--border-2); }
+.td-item.is-done { opacity: 0.55; }
+.td-item.is-done .td-text { text-decoration: line-through; color: var(--faint); }
+
+/* 勾选圈 */
+.td-check {
+  flex: none; width: 21px; height: 21px;
+  border: 1.8px solid var(--border-strong); border-radius: 50%;
+  background: transparent; cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent;
+  transition: all 0.15s;
+}
+.td-check:hover { border-color: var(--accent); }
+.td-item.is-done .td-check {
+  background: var(--accent); border-color: var(--accent);
+  color: var(--brand-fg);
+}
+.td-check svg { width: 12px; height: 12px; }
+
+/* 优先级色块（点按循环：低→中→高→无） */
+.td-pri {
+  flex: none; width: 13px; height: 13px; border-radius: 4px;
+  border: 1px solid var(--border-2); background: var(--card);
+  cursor: pointer; padding: 0;
+  transition: transform 0.15s;
+}
+.td-pri:hover { transform: scale(1.2); }
+.td-pri.p2 { background: var(--warn); border-color: var(--warn); }
+.td-pri.p3 { background: var(--danger); border-color: var(--danger); }
+.td-pri.p1 { background: var(--accent); border-color: var(--accent); }
+
+.td-text {
+  flex: 1; min-width: 0;
+  font-size: 13.5px; line-height: 1.5;
+  cursor: text;
+  word-break: break-word;
+}
+.td-text-edit {
+  flex: 1; min-width: 0;
+  font-size: 13.5px;
+  background: transparent; border: none; outline: none; color: var(--text);
+  border-bottom: 1px dashed var(--border-2);
+}
+
+/* 截止日 */
+.td-due {
+  flex: none; font-size: 10.5px; color: var(--faint);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.td-due.is-overdue { color: var(--danger); }
+.td-due.is-today { color: var(--warn); }
+.td-due input {
+  border: none; background: transparent; color: inherit;
+  font-size: 10.5px; outline: none; cursor: pointer;
+  font-family: inherit;
+}
+
+.td-del {
+  flex: none; border: none; background: transparent;
+  color: var(--faint); cursor: pointer; padding: 3px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.td-del:hover { color: var(--danger); background: rgba(244, 113, 116, 0.1); }
+.td-del svg { width: 14px; height: 14px; display: block; }
+
+@media (max-width: 560px) {
+  .td-item { flex-wrap: wrap; }
+  .td-text { order: 4; width: 100%; flex-basis: 100%; }
+  .td-due { order: 3; margin-left: auto; }
+}

@@ -26,6 +26,11 @@ window.FUO_PATHS = {
   // 收藏 / 设置
   FAVORITES: window.FUO_BASE + '/drive/favorites' + window.FUO_SUFFIX,
   SETTINGS: window.FUO_BASE + '/drive/settings' + window.FUO_SUFFIX,
+  // v0.8：办公集 / 回收站 / 公开笔记页 / 公开主页
+  OFFICE: window.FUO_BASE + '/drive/office' + window.FUO_SUFFIX,
+  RECYCLE: window.FUO_BASE + '/drive/recycle' + window.FUO_SUFFIX,
+  N: window.FUO_BASE + '/drive/n' + window.FUO_SUFFIX,
+  U: window.FUO_BASE + '/drive/u' + window.FUO_SUFFIX,
 };
 
 /**
@@ -33,4 +38,11 @@ window.FUO_PATHS = {
  */
 window.FUO_TOOL_URL = function (slug) {
   return window.FUO_BASE + '/drive/tool-cluster/' + encodeURIComponent(slug) + window.FUO_SUFFIX;
+};
+
+/**
+ * v0.8：办公集内跳转：slug → /drive/office/<slug>/
+ */
+window.FUO_OFFICE_URL = function (slug) {
+  return window.FUO_BASE + '/drive/office/' + encodeURIComponent(slug) + window.FUO_SUFFIX;
 };

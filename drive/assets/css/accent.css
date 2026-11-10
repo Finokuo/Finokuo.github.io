@@ -1,0 +1,167 @@
+/* =====================================================
+   Fuo Tools · 主题色（accent）覆盖层
+   在 style.css 之后引入：默认青色（teal）由 style.css 提供，
+   这里只定义非默认主题色的变量覆盖（暗色 + 亮色两套）。
+   data-accent 由 theme.js 从 localStorage(fuo-accent) 同步设置。
+   可选：teal(默认) / orange / rose / violet / emerald / amber
+   ===================================================== */
+
+/* ---------- 橙 orange ---------- */
+:root[data-accent="orange"] {
+  --accent: #fb923c;
+  --accent-bright: #fdba74;
+  --accent-deep: #ea580c;
+  --accent-glow: rgba(251, 146, 60, 0.16);
+  --accent-glow-strong: rgba(251, 146, 60, 0.32);
+  --field-focus: rgba(253, 186, 116, 0.5);
+  --focus-ring: rgba(253, 186, 116, 0.5);
+  --selection-bg: rgba(251, 146, 60, 0.32);
+  --spot-color: rgba(251, 146, 60, 0.08);
+  --brand-grad: linear-gradient(135deg, #fafafa, #fed7aa);
+  --brand-fg: #431407;
+  --brand-glow: 0 0 18px rgba(251, 146, 60, 0.25);
+  --stat-grad: linear-gradient(180deg, #ffffff 30%, #fdba74 100%);
+}
+:root[data-theme="light"][data-accent="orange"] {
+  --accent: #ea580c;
+  --accent-bright: #c2410c;
+  --accent-deep: #9a3412;
+  --accent-glow: rgba(234, 88, 12, 0.12);
+  --accent-glow-strong: rgba(234, 88, 12, 0.24);
+  --field-focus: rgba(194, 65, 12, 0.5);
+  --focus-ring: rgba(194, 65, 12, 0.45);
+  --selection-bg: rgba(234, 88, 12, 0.18);
+  --spot-color: rgba(234, 88, 12, 0.08);
+  --brand-grad: linear-gradient(135deg, #9a3412, #f97316);
+  --brand-fg: #fff7ed;
+  --brand-glow: 0 0 16px rgba(234, 88, 12, 0.22);
+  --stat-grad: linear-gradient(180deg, #0f1a2a 20%, #ea580c 100%);
+}
+
+/* ---------- 粉 rose ---------- */
+:root[data-accent="rose"] {
+  --accent: #fb7185;
+  --accent-bright: #fda4af;
+  --accent-deep: #e11d48;
+  --accent-glow: rgba(251, 113, 133, 0.16);
+  --accent-glow-strong: rgba(251, 113, 133, 0.32);
+  --field-focus: rgba(253, 164, 175, 0.5);
+  --focus-ring: rgba(253, 164, 175, 0.5);
+  --selection-bg: rgba(251, 113, 133, 0.32);
+  --spot-color: rgba(251, 113, 133, 0.08);
+  --brand-grad: linear-gradient(135deg, #fafafa, #fecdd3);
+  --brand-fg: #4c0519;
+  --brand-glow: 0 0 18px rgba(251, 113, 133, 0.25);
+  --stat-grad: linear-gradient(180deg, #ffffff 30%, #fda4af 100%);
+}
+:root[data-theme="light"][data-accent="rose"] {
+  --accent: #e11d48;
+  --accent-bright: #be123c;
+  --accent-deep: #9f1239;
+  --accent-glow: rgba(225, 29, 72, 0.12);
+  --accent-glow-strong: rgba(225, 29, 72, 0.24);
+  --field-focus: rgba(190, 18, 60, 0.5);
+  --focus-ring: rgba(190, 18, 60, 0.45);
+  --selection-bg: rgba(225, 29, 72, 0.18);
+  --spot-color: rgba(225, 29, 72, 0.08);
+  --brand-grad: linear-gradient(135deg, #9f1239, #f43f5e);
+  --brand-fg: #fff1f2;
+  --brand-glow: 0 0 16px rgba(225, 29, 72, 0.22);
+  --stat-grad: linear-gradient(180deg, #0f1a2a 20%, #e11d48 100%);
+}
+
+/* ---------- 紫 violet ---------- */
+:root[data-accent="violet"] {
+  --accent: #c084fc;
+  --accent-bright: #d8b4fe;
+  --accent-deep: #a855f7;
+  --accent-glow: rgba(192, 132, 252, 0.16);
+  --accent-glow-strong: rgba(192, 132, 252, 0.32);
+  --field-focus: rgba(216, 180, 254, 0.5);
+  --focus-ring: rgba(216, 180, 254, 0.5);
+  --selection-bg: rgba(192, 132, 252, 0.32);
+  --spot-color: rgba(192, 132, 252, 0.08);
+  --brand-grad: linear-gradient(135deg, #fafafa, #e9d5ff);
+  --brand-fg: #3b0764;
+  --brand-glow: 0 0 18px rgba(192, 132, 252, 0.25);
+  --stat-grad: linear-gradient(180deg, #ffffff 30%, #d8b4fe 100%);
+}
+:root[data-theme="light"][data-accent="violet"] {
+  --accent: #9333ea;
+  --accent-bright: #7e22ce;
+  --accent-deep: #6b21a8;
+  --accent-glow: rgba(147, 51, 234, 0.12);
+  --accent-glow-strong: rgba(147, 51, 234, 0.24);
+  --field-focus: rgba(126, 34, 206, 0.5);
+  --focus-ring: rgba(126, 34, 206, 0.45);
+  --selection-bg: rgba(147, 51, 234, 0.18);
+  --spot-color: rgba(147, 51, 234, 0.08);
+  --brand-grad: linear-gradient(135deg, #6b21a8, #a855f7);
+  --brand-fg: #faf5ff;
+  --brand-glow: 0 0 16px rgba(147, 51, 234, 0.22);
+  --stat-grad: linear-gradient(180deg, #0f1a2a 20%, #9333ea 100%);
+}
+
+/* ---------- 绿 emerald ---------- */
+:root[data-accent="emerald"] {
+  --accent: #34d399;
+  --accent-bright: #6ee7b7;
+  --accent-deep: #10b981;
+  --accent-glow: rgba(52, 211, 153, 0.16);
+  --accent-glow-strong: rgba(52, 211, 153, 0.32);
+  --field-focus: rgba(110, 231, 183, 0.5);
+  --focus-ring: rgba(110, 231, 183, 0.5);
+  --selection-bg: rgba(52, 211, 153, 0.32);
+  --spot-color: rgba(52, 211, 153, 0.08);
+  --brand-grad: linear-gradient(135deg, #fafafa, #a7f3d0);
+  --brand-fg: #022c22;
+  --brand-glow: 0 0 18px rgba(52, 211, 153, 0.25);
+  --stat-grad: linear-gradient(180deg, #ffffff 30%, #6ee7b7 100%);
+}
+:root[data-theme="light"][data-accent="emerald"] {
+  --accent: #059669;
+  --accent-bright: #047857;
+  --accent-deep: #065f46;
+  --accent-glow: rgba(5, 150, 105, 0.12);
+  --accent-glow-strong: rgba(5, 150, 105, 0.24);
+  --field-focus: rgba(4, 120, 87, 0.5);
+  --focus-ring: rgba(4, 120, 87, 0.45);
+  --selection-bg: rgba(5, 150, 105, 0.18);
+  --spot-color: rgba(5, 150, 105, 0.08);
+  --brand-grad: linear-gradient(135deg, #065f46, #10b981);
+  --brand-fg: #ecfdf5;
+  --brand-glow: 0 0 16px rgba(5, 150, 105, 0.22);
+  --stat-grad: linear-gradient(180deg, #0f1a2a 20%, #059669 100%);
+}
+
+/* ---------- 金 amber ---------- */
+:root[data-accent="amber"] {
+  --accent: #fbbf24;
+  --accent-bright: #fcd34d;
+  --accent-deep: #f59e0b;
+  --accent-glow: rgba(251, 191, 36, 0.16);
+  --accent-glow-strong: rgba(251, 191, 36, 0.32);
+  --field-focus: rgba(252, 211, 77, 0.5);
+  --focus-ring: rgba(252, 211, 77, 0.5);
+  --selection-bg: rgba(251, 191, 36, 0.32);
+  --spot-color: rgba(251, 191, 36, 0.08);
+  --brand-grad: linear-gradient(135deg, #fafafa, #fde68a);
+  --brand-fg: #451a03;
+  --brand-glow: 0 0 18px rgba(251, 191, 36, 0.25);
+  --stat-grad: linear-gradient(180deg, #ffffff 30%, #fcd34d 100%);
+}
+:root[data-theme="light"][data-accent="amber"] {
+  --accent: #d97706;
+  --accent-bright: #b45309;
+  --accent-deep: #92400e;
+  --accent-glow: rgba(217, 119, 6, 0.12);
+  --accent-glow-strong: rgba(217, 119, 6, 0.24);
+  --field-focus: rgba(180, 83, 9, 0.5);
+  --focus-ring: rgba(180, 83, 9, 0.45);
+  --selection-bg: rgba(217, 119, 6, 0.18);
+  --spot-color: rgba(217, 119, 6, 0.08);
+  --brand-grad: linear-gradient(135deg, #92400e, #f59e0b);
+  --brand-fg: #fffbeb;
+  --brand-glow: 0 0 16px rgba(217, 119, 6, 0.22);
+  --stat-grad: linear-gradient(180deg, #0f1a2a 20%, #d97706 100%);
+}

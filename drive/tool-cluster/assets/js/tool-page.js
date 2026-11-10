@@ -116,6 +116,9 @@
     hash: '<path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
     url: '<path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
     imgcom: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+    jwt: '<path d="M9 4.5c-3 1.5-4.5 4-4.5 7.5S6 18 9 19.5M15 4.5c3 1.5 4.5 4 4.5 7.5S18 18 15 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M10.2 10.6 8.5 8.2M13.8 10.6l1.7-2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>',
+    radix: '<path d="M12 3.5v17M5 7.5l7 4 7-4M5 16.5l7-4 7 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/>',
+    lorem: '<path d="M5 6h14M5 10.5h14M5 15h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M16.5 13.3v4.4l3.5-2.2z" fill="currentColor"/>',
   };
 
   var TOOLS = {};
@@ -175,6 +178,15 @@
       picker.value = '#14b8a6';
       picker.className = 'tf-color';
 
+      /* v0.8：链接分享配置 —— ?hex=#rrggbb 打开即还原颜色 */
+      try {
+        var sp = new URLSearchParams(window.location.search);
+        var hx = sp.get('hex');
+        if (hx && /^#?[0-9a-fA-F]{6}$/.test(hx)) {
+          picker.value = hx.charAt(0) === '#' ? hx : '#' + hx;
+        }
+      } catch (e) { /* ignore */ }
+
       var preview = h('div', 'color-preview');
       preview.style.background = picker.value;
 
@@ -228,11 +240,23 @@
         update();
       });
 
+      /* v0.8：分享当前颜色（参数进 URL，复制即带配置） */
+      var bShare = makeBtn('分享这个颜色');
+      bShare.addEventListener('click', function () {
+        try {
+          var url = location.origin + location.pathname + '?hex=' + picker.value.slice(1);
+          history.replaceState(null, '', '?hex=' + picker.value.slice(1));
+          copyText(url, function (good) {
+            miniToast(good ? '链接已复制：打开即还原这个颜色' : '复制失败，请手动复制地址栏');
+          });
+        } catch (e) { miniToast('当前环境不支持链接分享'); }
+      });
+
       var top = h('div', 'color-top');
       top.appendChild(picker);
       top.appendChild(preview);
       body.appendChild(top);
-      body.appendChild(btnRow(bRand, copyBtn(function () { return rows.HEX.textContent; })));
+      body.appendChild(btnRow(bRand, bShare, copyBtn(function () { return rows.HEX.textContent; })));
       body.appendChild(rowsWrap);
       update();
       picker.addEventListener('input', update);
@@ -257,6 +281,19 @@
       var cNum = document.createElement('input'); cNum.type = 'checkbox'; cNum.checked = true;
       var cSym = document.createElement('input'); cSym.type = 'checkbox'; cSym.checked = true;
       var cAmb = document.createElement('input'); cAmb.type = 'checkbox';
+
+      /* v0.8：链接分享配置 —— ?len=20&up=1&num=1&sym=0&amb=1 打开即还原参数 */
+      try {
+        var sp = new URLSearchParams(window.location.search);
+        var pl = parseInt(sp.get('len'), 10);
+        if (pl >= 8 && pl <= 64) { len.value = String(pl); lenVal.textContent = String(pl); }
+        ['up', 'num', 'sym', 'amb'].forEach(function (k) {
+          var v = sp.get(k);
+          var box = k === 'up' ? cUp : k === 'num' ? cNum : k === 'sym' ? cSym : cAmb;
+          if (v === '1') box.checked = true;
+          else if (v === '0') box.checked = false;
+        });
+      } catch (e) { /* ignore */ }
 
       function optsRow(box, label) {
         var l = h('label', 'pw-opt');
@@ -300,6 +337,27 @@
       bGen.addEventListener('click', generate);
       var bCopy = copyBtn(function () { return out.textContent; });
 
+      /* v0.8：分享当前参数（不含密码本身，只带长度/字符集设置） */
+      var bShare = makeBtn('分享此参数');
+      function syncUrl() {
+        try {
+          var q = '?len=' + len.value +
+            '&up=' + (cUp.checked ? 1 : 0) +
+            '&num=' + (cNum.checked ? 1 : 0) +
+            '&sym=' + (cSym.checked ? 1 : 0) +
+            '&amb=' + (cAmb.checked ? 1 : 0);
+          history.replaceState(null, '', q);
+        } catch (e) { /* ignore */ }
+      }
+      bShare.addEventListener('click', function () {
+        syncUrl();
+        copyText(location.origin + location.pathname + location.search, function (good) {
+          miniToast(good ? '链接已复制：打开即还原这套参数（不含密码本身）' : '复制失败，请手动复制地址栏');
+        });
+      });
+      len.addEventListener('input', syncUrl);
+      [cUp, cNum, cSym, cAmb].forEach(function (c) { c.addEventListener('change', syncUrl); });
+
       var sw = h('div', 'pw-len');
       sw.appendChild(h('span', 'tf-label mono', '长度'));
       sw.appendChild(len);
@@ -317,7 +375,7 @@
       body.appendChild(strengthText);
       body.appendChild(sw);
       body.appendChild(checks);
-      body.appendChild(btnRow(bGen, bCopy));
+      body.appendChild(btnRow(bGen, bCopy, bShare));
       generate();
     },
   };
@@ -1150,6 +1208,297 @@
       body.appendChild(result);
     },
   };
+  /* ---------- 14. JWT 解码器（v0.8） ---------- */
+  TOOLS.jwt = {
+    name: 'JWT 解码器', tone: 'tone-violet', desc: '解码 Header / Payload · exp 过期检查 · 本地解析',
+    render: function (body) {
+      var input = makeTextarea('grow', '粘贴 JWT（形如 eyJhbGciOi....xxx.yyy）');
+      var headOut = h('pre', 'tf-out mono jwt-out', '');
+      var payOut = h('pre', 'tf-out mono jwt-out', '');
+      var status = h('p', 'tf-msg', '');
+      var err = h('p', 'tf-msg is-err', '');
+      err.hidden = true;
+
+      function b64urlToStr(s) {
+        s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+        while (s.length % 4) s += '=';
+        var bin = atob(s);
+        try {
+          return decodeURIComponent(escape(bin)); // UTF-8 安全
+        } catch (e) { return bin; }
+      }
+
+      /* 在 Payload 顶部插入可读时间注释行（仅展示用） */
+      function decorate(key, val) {
+        if (typeof val !== 'number') return '';
+        var d = new Date(val * 1000);
+        var rel = val * 1000 - Date.now();
+        var relTxt = rel > 0
+          ? '（还有 ' + Math.round(rel / 86400000) + ' 天）'
+          : '（已过去 ' + Math.round(-rel / 86400000) + ' 天）';
+        return '  "·' + key + '": ' + val + ',\n  "' + key + '_zh": "' + d.toLocaleString('zh-CN') + relTxt + '",\n';
+      }
+
+      function run() {
+        err.hidden = true; status.hidden = true;
+        headOut.textContent = ''; payOut.textContent = '';
+        var raw = input.value.trim();
+        if (!raw) return;
+        var parts = raw.split('.');
+        if (parts.length < 2 || parts.length > 5) {
+          err.textContent = '✗ 不是有效的 JWT：应用「.」分为 2-5 段，当前 ' + parts.length + ' 段';
+          err.hidden = false;
+          return;
+        }
+        try {
+          var header = JSON.parse(b64urlToStr(parts[0]));
+          var payload = JSON.parse(b64urlToStr(parts[1]));
+
+          headOut.textContent = JSON.stringify(header, null, 2);
+          var plain = JSON.stringify(payload, null, 2);
+          var inject = decorate('exp', payload.exp) + decorate('iat', payload.iat) + decorate('nbf', payload.nbf);
+          payOut.textContent = inject ? plain.replace(/^\{\n/, '{\n' + inject) : plain;
+
+          var bits = [];
+          bits.push('算法 ' + (header.alg || '未知'));
+          if (header.typ) bits.push('类型 ' + header.typ);
+          if (payload.exp != null) {
+            var left = payload.exp * 1000 - Date.now();
+            if (left <= 0) { bits.push('⛔ 已过期'); status.className = 'tf-msg is-err'; }
+            else {
+              var dd = Math.floor(left / 86400000);
+              bits.push('✓ 有效期内' + (dd > 0 ? '（剩 ' + dd + ' 天）' : '（剩 ' + Math.floor(left / 3600000) + ' 小时）'));
+              status.className = 'tf-msg';
+            }
+          } else { bits.push('无 exp 字段（永不过期或由服务端控制）'); status.className = 'tf-msg'; }
+          if (parts.length === 2) bits.push('未签名（无 Signature 段）');
+          status.textContent = '· ' + bits.join(' · ');
+          status.hidden = false;
+        } catch (e) {
+          err.textContent = '✗ 解码失败：' + (e.message || '段内容不是合法的 Base64URL / JSON');
+          err.hidden = false;
+        }
+      }
+
+      input.addEventListener('input', run);
+
+      var labH = h('p', 'tf-label mono', 'Header');
+      var labP = h('p', 'tf-label mono', 'Payload');
+      labH.style.marginTop = '10px';
+
+      body.appendChild(fieldRow('JWT 令牌', input));
+      body.appendChild(btnRow(copyBtn(function () { return payOut.textContent; })));
+      body.appendChild(labH);
+      body.appendChild(headOut);
+      body.appendChild(labP);
+      body.appendChild(payOut);
+      body.appendChild(status);
+      body.appendChild(err);
+    },
+  };
+
+  /* ---------- 15. 进制转换（v0.8，BigInt 大数） ---------- */
+  TOOLS.radix = {
+    name: '进制转换', tone: 'tone-cyan', desc: '2-36 进制互转 · BigInt 超大数 · 实时换算',
+    render: function (body) {
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'tf-input mono';
+      input.placeholder = '输入数字，例如 255 或 1e215c66274';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+
+      var fromSel = document.createElement('select');
+      fromSel.className = 'tf-input';
+      fromSel.setAttribute('aria-label', '源进制');
+      var RADIX_NAMES = { 2: '二进制 BIN', 8: '八进制 OCT', 10: '十进制 DEC', 16: '十六进制 HEX', 36: '三十六进制' };
+      [2, 8, 10, 16, 32, 36].forEach(function (b) {
+        var o = document.createElement('option');
+        o.value = String(b);
+        o.textContent = RADIX_NAMES[b] || b + ' 进制';
+        if (b === 10) o.selected = true;
+        fromSel.appendChild(o);
+      });
+
+      var err = h('p', 'tf-msg is-err', '');
+      err.hidden = true;
+      var wrap = h('div', 'radix-rows');
+
+      function alphabet(base) {
+        var s = '0123456789abcdefghijklmnopqrstuvwxyz';
+        return s.slice(0, base);
+      }
+
+      function run() {
+        err.hidden = true;
+        var raw = input.value.trim().toLowerCase().replace(/[\s_,]/g, '');
+        wrap.innerHTML = '';
+        if (!raw) return;
+        var base = parseInt(fromSel.value, 10);
+        var ab = alphabet(base);
+        for (var i = 0; i < raw.length; i++) {
+          if (ab.indexOf(raw[i]) === -1) {
+            err.textContent = '✗「' + raw[i] + '」不是合法的 ' + base + ' 进制字符';
+            err.hidden = false;
+            return;
+          }
+        }
+        var big;
+        try { big = BigInt(raw === '' ? 0 : parseInt(raw, base)); } catch (e) { big = null; }
+        // parseInt 会丢失精度 → 大数必须逐位解析
+        if (raw.length > 12 || big === null) {
+          try {
+            big = 0n;
+            for (var j = 0; j < raw.length; j++) big = big * BigInt(base) + BigInt(ab.indexOf(raw[j]));
+          } catch (e) {
+            err.textContent = '✗ 解析失败：当前浏览器不支持 BigInt 大数';
+            err.hidden = false;
+            return;
+          }
+        } else {
+          big = BigInt(parseInt(raw, base));
+        }
+
+        [2, 8, 10, 16, 32, 36].forEach(function (b) {
+          if (b === base) return;
+          var row = h('div', 'radix-row');
+          var k = h('span', 'mono radix-key', RADIX_NAMES[b] || b + ' 进制');
+          var v = h('code', 'mono radix-val', big.toString(b));
+          v.title = '点击复制';
+          row.appendChild(k);
+          row.appendChild(v);
+          row.addEventListener('click', function () {
+            copyText(v.textContent, function (good) { miniToast(good ? '已复制 ' + (RADIX_NAMES[b] || b) : '复制失败'); });
+          });
+          wrap.appendChild(row);
+        });
+      }
+
+      input.addEventListener('input', run);
+      fromSel.addEventListener('change', run);
+
+      body.appendChild(fieldRow('数字', input));
+      body.appendChild(fieldRow('源进制', fromSel));
+      body.appendChild(err);
+      body.appendChild(wrap);
+    },
+  };
+
+  /* ---------- 16. Lorem 占位文本（v0.8） ---------- */
+  TOOLS.lorem = {
+    name: 'Lorem 占位文本', tone: 'tone-amber', desc: '段落 / 句子 / 单词 · 经典词库 · 一键复制',
+    render: function (body) {
+      var WORDS = ('lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor ' +
+        'incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ' +
+        'ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit ' +
+        'voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat ' +
+        'non proident sunt culpa qui officia deserunt mollit anim id est laborum').split(' ');
+
+      var seg = h('div', 'st-like-seg');
+      seg.style.cssText = 'display:inline-flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px';
+      var mode = 'para';
+      var modes = [['para', '段落'], ['sent', '句子'], ['word', '单词']];
+      var segBtns = [];
+      modes.forEach(function (m) {
+        var b = h('button', null, m[1]);
+        b.type = 'button';
+        b.style.cssText = 'padding:7px 16px;border:none;background:transparent;color:var(--muted);font-size:12.5px;cursor:pointer';
+        b.addEventListener('click', function () {
+          mode = m[0];
+          segBtns.forEach(function (x) {
+            x.btn.style.background = x.mode === mode ? 'var(--card-2)' : 'transparent';
+            x.btn.style.color = x.mode === mode ? 'var(--accent-bright)' : 'var(--muted)';
+            x.btn.style.fontWeight = x.mode === mode ? '600' : '400';
+          });
+          run();
+        });
+        segBtns.push({ btn: b, mode: m[0] });
+        seg.appendChild(b);
+      });
+
+      var count = document.createElement('input');
+      count.type = 'number';
+      count.className = 'tf-input';
+      count.value = '3';
+      count.min = '1';
+      count.max = '50';
+      count.style.width = '110px';
+
+      var classic = document.createElement('input');
+      classic.type = 'checkbox';
+      classic.checked = true;
+      var classicLab = h('label', 'pw-opt');
+      classicLab.style.cssText = 'display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-2);cursor:pointer';
+      classicLab.appendChild(classic);
+      classicLab.appendChild(h('span', null, '以「Lorem ipsum dolor sit amet」开头'));
+
+      var out = makeTextarea('grow', '点击生成');
+      out.readOnly = true;
+      out.style.minHeight = '160px';
+
+      function randWord() { return WORDS[Math.floor(Math.random() * WORDS.length)]; }
+      function randSentence() {
+        var n = 6 + Math.floor(Math.random() * 10);
+        var ws = [];
+        for (var i = 0; i < n; i++) ws.push(randWord());
+        var s = ws.join(' ');
+        return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+      }
+
+      function run() {
+        var n = Math.max(1, Math.min(50, parseInt(count.value, 10) || 3));
+        count.value = String(n);
+        var parts = [];
+        if (mode === 'word') {
+          var ws = [];
+          if (classic.checked) ws = ['lorem', 'ipsum', 'dolor', 'sit', 'amet'].slice(0, n);
+          while (ws.length < n) ws.push(randWord());
+          parts.push(ws.join(' '));
+        } else if (mode === 'sent') {
+          for (var i = 0; i < n; i++) {
+            parts.push(i === 0 && classic.checked
+              ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+              : randSentence());
+          }
+        } else {
+          for (var p = 0; p < n; p++) {
+            var sents = [];
+            var sc = 3 + Math.floor(Math.random() * 3);
+            for (var s2 = 0; s2 < sc; s2++) {
+              sents.push(p === 0 && s2 === 0 && classic.checked
+                ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+                : randSentence());
+            }
+            parts.push(sents.join(' '));
+          }
+        }
+        out.value = parts.join('\n\n');
+      }
+
+      count.addEventListener('input', run);
+      classic.addEventListener('change', run);
+
+      var bGen = makeBtn('生成', true);
+      bGen.addEventListener('click', run);
+      var bCopy = copyBtn(function () { return out.value; });
+
+      var topRow = h('div');
+      topRow.style.cssText = 'display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px';
+      topRow.appendChild(seg);
+      var cnt = h('label', 'tf');
+      cnt.style.cssText = 'display:inline-flex;align-items:center;gap:8px;flex:none';
+      cnt.appendChild(h('span', 'tf-label mono', '数量'));
+      cnt.appendChild(count);
+      topRow.appendChild(cnt);
+      topRow.appendChild(classicLab);
+
+      body.appendChild(topRow);
+      body.appendChild(btnRow(bGen, bCopy));
+      body.appendChild(out);
+      run();
+    },
+  };
+
   function record(id) {
     if (!settingOn('toolHistory', true)) return; // 设置里关闭了使用记录
     var t = TOOLS[id];
@@ -1163,7 +1512,50 @@
 
       var count = parseInt(localStorage.getItem('fuo-tool-count') || '0', 10) || 0;
       localStorage.setItem('fuo-tool-count', String(count + 1));
+
+      // v0.8：分工具热度（目录页「常用」置顶 / 命令面板排序加权）
+      var heat = {};
+      try { heat = JSON.parse(localStorage.getItem('fuo-tool-heat') || '{}') || {}; } catch (e) { heat = {}; }
+      heat[id] = (heat[id] || 0) + 1;
+      localStorage.setItem('fuo-tool-heat', JSON.stringify(heat));
     } catch (e) { /* 隐私模式忽略 */ }
+  }
+
+  /* v0.8：热度榜 → 目录页顶部「常用」置顶区（仅本机记录，不上传） */
+  function readHeat() {
+    try {
+      var o = JSON.parse(localStorage.getItem('fuo-tool-heat') || '{}');
+      if (o && typeof o === 'object') return o;
+    } catch (e) { /* ignore */ }
+    return {};
+  }
+
+  function renderHotStrip(grid) {
+    if (!settingOn('toolHistory', true)) return;
+    var heat = readHeat();
+    var arr = Object.keys(heat)
+      .filter(function (slug) { return TOOLS[slug] && heat[slug] >= 2; })
+      .sort(function (a, b) { return heat[b] - heat[a]; })
+      .slice(0, 4);
+    if (arr.length < 2) return; // 至少用过两个工具才展示
+
+    var sec = h('section', 'tc-hot');
+    sec.setAttribute('aria-label', '常用工具');
+    var lab = h('p', 'tc-hot-label mono', '// 常用');
+    sec.appendChild(lab);
+    var row = h('div', 'tc-hot-row');
+    arr.forEach(function (slug) {
+      var t = TOOLS[slug];
+      var a = h('a', 'tc-hot-chip');
+      a.href = window.FUO_TOOL_URL ? window.FUO_TOOL_URL(slug) : slug + '/index.html';
+      a.setAttribute('aria-label', '打开' + t.name + '（用过 ' + heat[slug] + ' 次）');
+      a.innerHTML = '<i class="t-ic ' + t.tone + '" aria-hidden="true">' + svgFor(slug, 14) + '</i>' +
+        '<b>' + t.name + '</b>' +
+        '<span class="mono">×' + heat[slug] + '</span>';
+      row.appendChild(a);
+    });
+    sec.appendChild(row);
+    grid.parentNode.insertBefore(sec, grid);
   }
 
   /* =====================================================
@@ -1426,6 +1818,7 @@
   function boot() {
     setLinks();
     if (document.body.getAttribute('data-page') === 'cluster') {
+      renderHotStrip(document.getElementById('tc-grid'));
       renderCluster();
       maybeAdminCard();
       loadFavs();

@@ -10,9 +10,10 @@
   <meta name="theme-color" content="#101014" />
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
-  <script src="../assets/js/theme.js?v=3"></script>
+  <script src="../assets/js/theme.js?v=4"></script>
   <link rel="stylesheet" href="../assets/css/style.css?v=4" />
-  <link rel="stylesheet" href="assets/css/tool.css" />
+  <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
+  <link rel="stylesheet" href="assets/css/tool.css?v=4" />
 </head>
 <body data-page="cluster">
   <div class="shell">
@@ -35,7 +36,7 @@
         <section class="tc-hero" data-reveal>
           <p class="tc-eyebrow mono">// TOOL CLUSTER</p>
           <h1>工具集</h1>
-          <p>14 款小工具，全部在浏览器本地运行，输入不出本机。每个工具都有独立页面，点开即用。</p>
+          <p>17 款小工具，全部在浏览器本地运行，输入不出本机。每个工具都有独立页面，点开即用。</p>
         </section>
 
         <div class="tc-grid" id="tc-grid" aria-label="工具列表">
@@ -43,7 +44,7 @@
           <noscript><p class="tc-foot">需要启用 JavaScript 才能加载工具列表。</p></noscript>
         </div>
 
-        <p class="tc-foot mono">更多工具随版本上新 · <a id="tc-back" href="#">返回工作台</a></p>
+        <p class="tc-foot mono">更多工具随版本上新 · 去办公集看看：<a href="../office/">待办 / 打卡 / 番茄钟 →</a> · <a id="tc-back" href="#">返回工作台</a></p>
       </main>
     </div>
   </div>
@@ -52,9 +53,9 @@
 
   <!-- Supabase SDK：本地打包（登录守卫用），不依赖任何 CDN -->
   <script src="../assets/vendor/supabase.min.js"></script>
-  <script src="../assets/js/config.js?v=2"></script>
+  <script src="../assets/js/config.js?v=3"></script>
   <script src="../assets/js/fx.js?v=2"></script>
-  <script src="../assets/js/sidebar.js?v=3"></script>
-  <script src="assets/js/tool-page.js?v=3"></script>
+  <script src="../assets/js/sidebar.js?v=4"></script>
+  <script src="assets/js/tool-page.js?v=4"></script>
 </body>
 </html>

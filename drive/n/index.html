@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>公开笔记 · Fuo Tools</title>
+  <meta name="description" content="Fuo Tools 公开分享的笔记（只读）。" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="../manifest.json" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../assets/js/theme.js?v=4"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
+  <style>
+    /* ---------- 公开笔记页（/n/?id=<uuid>，匿名可读） ---------- */
+    .sn-wrap { max-width: 760px; margin: 0 auto; width: 100%; }
+    .sn-head { padding: 26px 30px 0; }
+    .sn-eyebrow { font-size: 11px; letter-spacing: 0.14em; color: var(--accent-bright); margin: 0 0 10px; }
+    .sn-title { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; line-height: 1.3; word-break: break-word; }
+    .sn-meta {
+      margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      font-size: 12.5px; color: var(--muted);
+    }
+    .sn-author {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: var(--accent-bright); text-decoration: none;
+      border-bottom: 1px dashed var(--accent-glow-strong); padding-bottom: 1px;
+    }
+    .sn-author:hover { border-bottom-style: solid; }
+    .sn-author i {
+      width: 22px; height: 22px; border-radius: 7px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; font-style: normal;
+      background: var(--accent-glow); border: 1px solid var(--accent-glow-strong);
+      color: var(--accent-bright);
+    }
+    .sn-body {
+      padding: 20px 30px 34px;
+      font-size: 14.5px; line-height: 1.85; color: var(--text-2);
+    }
+    .sn-foot {
+      margin-top: 26px; padding-top: 16px; border-top: 1px dashed var(--border-2);
+      font-size: 11.5px; opacity: 0.55;
+    }
+    .sn-miss { text-align: center; padding: 46px 30px; }
+    .sn-miss h2 { font-size: 20px; margin: 14px 0 8px; }
+    .sn-miss p { opacity: 0.65; font-size: 13px; line-height: 1.6; }
+    .sn-loading { text-align: center; padding: 60px 0; opacity: 0.6; font-size: 13px; }
+
+    /* ---------- Markdown 渲染（与云笔记预览同一套规则） ---------- */
+    .md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
+      color: var(--text); font-weight: 800; letter-spacing: -0.01em;
+      margin: 1.2em 0 0.5em; line-height: 1.35;
+    }
+    .md h1 { font-size: 23px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .md h2 { font-size: 19px; }
+    .md h3 { font-size: 16px; }
+    .md h4, .md h5, .md h6 { font-size: 14px; }
+    .md > :first-child, .md > .md-table-wrap:first-child { margin-top: 0; }
+    .md p { margin: 0.55em 0; }
+    .md a { color: var(--accent-bright); text-decoration: none; border-bottom: 1px dashed var(--accent-glow-strong); }
+    .md a:hover { border-bottom-style: solid; }
+    .md img { max-width: 100%; border-radius: 10px; margin: 8px 0; }
+    .md hr { border: none; border-top: 1px solid var(--border); margin: 1.4em 0; }
+    .md blockquote {
+      margin: 0.8em 0; padding: 6px 14px;
+      border-left: 3px solid var(--accent-deep);
+      background: var(--hover-soft); border-radius: 0 8px 8px 0;
+      color: var(--muted);
+    }
+    .md ul, .md ol { margin: 0.55em 0; padding-left: 1.5em; }
+    .md li { margin: 0.25em 0; }
+    .md code.md-code-inline {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12px; padding: 1.5px 6px; border-radius: 6px;
+      background: var(--field-bg); border: 1px solid var(--border);
+      color: var(--accent-bright);
+    }
+    .md pre.md-code {
+      position: relative; margin: 0.9em 0; padding: 30px 14px 12px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--field-bg); overflow-x: auto;
+    }
+    .md pre.md-code > code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px; line-height: 1.7; color: var(--text-2);
+      white-space: pre;
+    }
+    .md pre.md-code .md-lang {
+      position: absolute; top: 7px; left: 12px;
+      font-size: 9.5px; letter-spacing: 0.12em; color: var(--faint);
+    }
+    .md .md-table-wrap { overflow-x: auto; margin: 0.9em 0; }
+    .md table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .md th, .md td { border: 1px solid var(--border); padding: 7px 11px; text-align: left; }
+    .md th { background: var(--field-bg); color: var(--text); font-weight: 700; }
+    .md s { color: var(--faint); }
+    @media (max-width: 640px) {
+      .sn-head { padding: 20px 18px 0; }
+      .sn-body { padding: 16px 18px 26px; }
+      .sn-title { font-size: 23px; }
+    }
+  </style>
+</head>
+<body data-page="share">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充；公开页不设 data-guard） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        <div class="sn-wrap" data-reveal id="sn-root">
+          <article class="card">
+            <div class="sn-loading mono" id="sn-loading">正在载入…</div>
+          </article>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Supabase SDK：notes 公开行可读（RLS notes_select_public，需 v6） -->
+  <script src="../assets/vendor/supabase.min.js"></script>
+  <script src="../assets/js/config.js?v=3"></script>
+  <script src="../assets/js/fx.js?v=2"></script>
+  <script src="../assets/js/sidebar.js?v=4"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var CFG = window.FUO_CONFIG;
+    var PATHS = window.FUO_PATHS || {};
+    var $root = document.getElementById('sn-root');
+
+    function driveHome() { return PATHS.DRIVE || '../index.html'; }
+
+    /* ---------- Markdown 渲染（与云笔记预览同一套：先转义再白名单变换） ---------- */
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function mdInline(s) {
+      s = s.replace(/`([^`]+)`/g, function (m, c) { return '<code class="md-code-inline">' + c + '</code>'; });
+      s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<b><i>$1</i></b>');
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+      s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![\w*])/g, '$1<i>$2</i>');
+      s = s.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+      s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (m, alt, url) {
+        if (!/^https?:\/\//i.test(url)) return m;
+        return '<img src="' + url + '" alt="' + alt + '" loading="lazy" />';
+      });
+      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, txt, url) {
+        if (!/^https?:\/\//i.test(url)) return m;
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + txt + '</a>';
+      });
+      s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, function (m, pre, url) {
+        return pre + '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+      });
+      return s;
+    }
+    function md2html(src) {
+      if (!src) return '';
+      var codes = [];
+      src = String(src).replace(/```([^\n]*)\n([\s\S]*?)```/g, function (m, lang, code) {
+        codes.push({ lang: String(lang).trim(), code: code.replace(/\n$/, '') });
+        return '\u0000C' + (codes.length - 1) + '\u0000';
+      });
+
+      var lines = escapeHtml(src).split('\n');
+      var html = [];
+      var para = [];
+      var i = 0;
+
+      function flushPara() {
+        if (para.length) { html.push('<p>' + para.join('<br>') + '</p>'); para = []; }
+      }
+      function splitRow(l) {
+        var t = l.trim();
+        if (t.charAt(0) === '|') t = t.slice(1);
+        if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
+        return t.split('|').map(function (c) { return c.trim(); });
+      }
+
+      while (i < lines.length) {
+        var line = lines[i];
+        var codeM = line.match(/^\u0000C(\d+)\u0000$/);
+        if (codeM) {
+          flushPara();
+          var cb = codes[parseInt(codeM[1], 10)] || { lang: '', code: '' };
+          html.push('<pre class="md-code"><b class="md-lang mono">' + (cb.lang ? escapeHtml(cb.lang) : 'code') + '</b><code>' + escapeHtml(cb.code) + '</code></pre>');
+          i++;
+          continue;
+        }
+        var hh = line.match(/^(#{1,6})\s+(.*)$/);
+        if (hh) {
+          flushPara();
+          var lv = hh[1].length;
+          html.push('<h' + lv + '>' + mdInline(hh[2]) + '</h' + lv + '>');
+          i++;
+          continue;
+        }
+        if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { flushPara(); html.push('<hr>'); i++; continue; }
+
+        var q = line.match(/^&gt;\s?(.*)$/);
+        if (q) {
+          flushPara();
+          var qbuf = [q[1]];
+          i++;
+          while (i < lines.length) {
+            var q2 = lines[i].match(/^&gt;\s?(.*)$/);
+            if (!q2) break;
+            qbuf.push(q2[1]);
+            i++;
+          }
+          html.push('<blockquote>' + qbuf.map(mdInline).join('<br>') + '</blockquote>');
+          continue;
+        }
+
+        if (line.indexOf('|') !== -1 && i + 1 < lines.length &&
+            /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1]) && lines[i + 1].indexOf('-') !== -1) {
+          flushPara();
+          var head = splitRow(line);
+          i += 2;
+          var rows = [];
+          while (i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== '') {
+            rows.push(splitRow(lines[i]));
+            i++;
+          }
+          html.push('<div class="md-table-wrap"><table><thead><tr>' +
+            head.map(function (c) { return '<th>' + mdInline(c) + '</th>'; }).join('') +
+            '</tr></thead><tbody>' +
+            rows.map(function (r) {
+              return '<tr>' + r.map(function (c) { return '<td>' + mdInline(c) + '</td>'; }).join('') + '</tr>';
+            }).join('') + '</tbody></table></div>');
+          continue;
+        }
+
+        var li = line.match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+        if (li) {
+          flushPara();
+          var ordered2 = /\d/.test(li[2]);
+          var items = [];
+          while (i < lines.length) {
+            var m2 = lines[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
+            if (!m2) break;
+            items.push({
+              indent: Math.floor(m2[1].replace(/\t/g, '  ').length / 2),
+              text: m2[3],
+            });
+            i++;
+          }
+          var depth = 0;
+          var out = ordered2 ? '<ol>' : '<ul>';
+          items.forEach(function (it) {
+            while (it.indent > depth) { out += '<li><' + (ordered2 ? 'ol' : 'ul') + '>'; depth++; }
+            while (it.indent < depth) { out += '</' + (ordered2 ? 'ol' : 'ul') + '></li>'; depth--; }
+            out += '<li>' + mdInline(it.text) + '</li>';
+          });
+          while (depth > 0) { out += '</' + (ordered2 ? 'ol' : 'ul') + '></li>'; depth--; }
+          out += '</' + (ordered2 ? 'ol' : 'ul') + '>';
+          html.push(out);
+          continue;
+        }
+
+        if (line.trim() === '') { flushPara(); i++; continue; }
+        para.push(mdInline(line));
+        i++;
+      }
+      flushPara();
+      return html.join('\n');
+    }
+
+    /* ---------- 页面渲染 ---------- */
+    function fmtDate(iso) {
+      try {
+        return new Date(iso).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch (e) { return '—'; }
+    }
+
+    function renderMiss(title, desc, hint) {
+      document.title = '公开笔记 · Fuo Tools';
+      $root.innerHTML =
+        '<article class="card sn-miss">' +
+          '<div style="font-size:34px;opacity:.5">📄</div>' +
+          '<h2></h2><p></p>' +
+          (hint ? '<p class="mono" style="margin-top:14px;font-size:11px;opacity:.5;word-break:break-all"></p>' : '') +
+          '<p style="margin-top:20px"><a href="' + driveHome() + '">← 返回工作台</a></p>' +
+        '</article>';
+      $root.querySelector('h2').textContent = title;
+      $root.querySelector('p').textContent = desc;
+      if (hint) {
+        var m = $root.querySelectorAll('p.mono');
+        if (m.length) m[m.length - 1].textContent = hint;
+      }
+    }
+
+    function authorLink(name) {
+      var base = PATHS.U || (PATHS.DRIVE || '').replace(/drive[^/]*$/, '') + 'u/';
+      return base + (base.indexOf('?') === -1 ? '?' : '&') + 'u=' + encodeURIComponent(name);
+    }
+
+    function renderNote(note, author) {
+      var title = note.title || '未命名笔记';
+      document.title = title + ' · Fuo Tools';
+      var who = author && author.username ? author.username : null;
+
+      $root.innerHTML =
+        '<article class="card">' +
+          '<header class="sn-head">' +
+            '<p class="sn-eyebrow mono">// SHARED NOTE · 公开笔记</p>' +
+            '<h1 class="sn-title"></h1>' +
+            '<div class="sn-meta mono">' +
+              (who
+                ? '<a class="sn-author" href="' + authorLink(who) + '"><i></i><span></span></a>'
+                : '<span>匿名作者</span>') +
+              '<span>·</span>' +
+              '<span>更新于 ' + fmtDate(note.updated_at) + '</span>' +
+            '</div>' +
+          '</header>' +
+          '<div class="sn-body md" id="sn-body"></div>' +
+          '<div class="sn-foot mono" style="padding:0 30px 22px">由 Fuo Tools 云笔记分享 · 仅展示本人开启「分享」的笔记 · ' +
+            '<a href="' + driveHome() + '">创建你的笔记 →</a></div>' +
+        '</article>';
+
+      $root.querySelector('.sn-title').textContent = title;
+      if (who) {
+        var av = $root.querySelector('.sn-author i');
+        var nm = $root.querySelector('.sn-author span');
+        if (av) av.textContent = (who[0] || 'F').toUpperCase();
+        if (nm) nm.textContent = who;
+      }
+      document.getElementById('sn-body').innerHTML = md2html(note.content || '');
+    }
+
+    function load() {
+      var id = '';
+      try {
+        id = (new URLSearchParams(window.location.search).get('id') || '').trim();
+      } catch (e) {
+        var m = window.location.search.match(/[?&]id=([^&]*)/);
+        id = m ? decodeURIComponent(m[1]).trim() : '';
+      }
+      if (!id || !/^[0-9a-fA-F-]{10,40}$/.test(id)) {
+        renderMiss('链接不完整', '分享链接格式应为 /n/?id=<笔记 ID>。请从云笔记的「分享」按钮获取完整链接。', '');
+        return;
+      }
+      if (!window.supabase || !CFG || !CFG.SUPABASE_URL) {
+        renderMiss('无法加载数据', 'SDK 未就绪，请稍后刷新重试。', '');
+        return;
+      }
+      var c;
+      try { c = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY); }
+      catch (e) { renderMiss('无法加载数据', 'Supabase 客户端初始化失败。', ''); return; }
+
+      c.from('notes')
+        .select('id,title,content,updated_at,user_id,is_public,deleted_at')
+        .eq('id', id)
+        .maybeSingle()
+        .then(function (r) {
+          if (r.error) {
+            if (r.error.code === 'PGRST204' || r.error.code === '42703' ||
+                /could not find the column|does not exist/i.test(r.error.message || '')) {
+              // 旧表没有 is_public / deleted_at 列：公开分享功能尚未上线
+              return renderMiss('分享功能尚未就绪',
+                '站点数据库还没有执行 supabase-v6.sql，公开分享暂不可用。', '// need supabase-v6.sql');
+            }
+            return renderMiss('加载失败', r.error.message || '请稍后重试。', '');
+          }
+          if (!r.data || r.data.is_public !== true || r.data.deleted_at) {
+            return renderMiss('这篇笔记不可见',
+              '笔记可能已被作者取消分享、删除，或链接有误。', '// /n/?id=' + id.slice(0, 8) + '…');
+          }
+          var note = r.data;
+          // 作者信息（profiles 公开可读；查不到时优雅降级为匿名）
+          c.from('profiles')
+            .select('username')
+            .eq('id', note.user_id)
+            .maybeSingle()
+            .then(function (pr) {
+              renderNote(note, (!pr.error && pr.data) ? pr.data : null);
+            })
+            .catch(function () { renderNote(note, null); });
+        })
+        .catch(function () {
+          renderMiss('网络异常', '请检查网络后刷新重试。', '');
+        });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', load);
+    } else {
+      load();
+    }
+  })();
+  </script>
+</body>
+</html>

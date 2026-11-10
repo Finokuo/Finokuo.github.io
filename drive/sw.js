@@ -11,11 +11,12 @@
 (function () {
   'use strict';
 
-  var CACHE = 'fuo-shell-v7';
+  var CACHE = 'fuo-shell-v8';
   var SHELL = [
     '/drive/',
     '/drive/index.html',
     '/drive/assets/css/style.css',
+    '/drive/assets/css/accent.css',
     '/drive/assets/js/config.js',
     '/drive/assets/js/sidebar.js',
     '/drive/assets/js/palette.js',
@@ -23,6 +24,21 @@
     '/drive/assets/js/fx.js',
     '/drive/assets/js/app.js',
     '/drive/assets/vendor/supabase.min.js',
+    // v0.8：办公集 / 回收站 / 公开页
+    '/drive/office/',
+    '/drive/office/assets/office.css',
+    '/drive/office/assets/office-store.js',
+    '/drive/office/todo/',
+    '/drive/office/todo/assets/todo.css',
+    '/drive/office/todo/assets/todo.js',
+    '/drive/office/habit/',
+    '/drive/office/habit/assets/habit.css',
+    '/drive/office/habit/assets/habit.js',
+    '/drive/office/pomodoro/',
+    '/drive/office/pomodoro/assets/pomodoro.css',
+    '/drive/office/pomodoro/assets/pomodoro.js',
+    '/drive/recycle/',
+    '/drive/n/',
     '/drive/manifest.json'
   ];
 

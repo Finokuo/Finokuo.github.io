@@ -9,8 +9,9 @@
   <meta name="theme-color" content="#101014" />
   <link rel="manifest" href="manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
-  <script src="assets/js/theme.js?v=3"></script>
+  <script src="assets/js/theme.js?v=4"></script>
   <link rel="stylesheet" href="assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="assets/css/accent.css?v=1" />
 </head>
 <body>
   <div class="shell">
@@ -30,7 +31,11 @@
         </a>
         <a class="side-item" id="nav-tools" href="#">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4.5 4.5 0 0 0-6.09 5.9L3 17.8V21h3.2l5.6-5.61a4.5 4.5 0 0 0 5.9-6.09l-2.8 2.8-2.11-.7-.7-2.11 2.61-2.99Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
-          工具集 <i class="mono">14 款</i>
+          工具集 <i class="mono">17 款</i>
+        </a>
+        <a class="side-item" id="nav-office" href="#">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+          办公集 <i class="mono">3 款</i>
         </a>
         <a class="side-item" id="nav-favorites" href="#">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
@@ -112,7 +117,7 @@
                 <i class="head-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg></i>
                 工具快捷入口
               </h2>
-              <span class="chip chip-live mono">13 款可用</span>
+              <span class="chip chip-live mono">16 款可用</span>
             </header>
             <div class="tool-grid" id="tool-grid">
               <a class="tool" href="#" data-tool-link="json" aria-label="打开 JSON 格式化工具"><b class="t-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>JSON</span></a>
@@ -128,6 +133,25 @@
               <a class="tool" href="#" data-tool-link="hash" aria-label="打开哈希计算工具"><b class="t-ic tone-emerald" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></b><span>哈希</span></a>
               <a class="tool" href="#" data-tool-link="url" aria-label="打开 URL 编解码工具"><b class="t-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>URL</span></a>
               <a class="tool" href="#" data-tool-link="imgcom" aria-label="打开图片压缩工具"><b class="t-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>图片压缩</span></a>
+              <a class="tool" href="#" data-tool-link="jwt" aria-label="打开 JWT 解码器"><b class="t-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 4.5c-3 1.5-4.5 4-4.5 7.5S6 18 9 19.5M15 4.5c3 1.5 4.5 4 4.5 7.5S18 18 15 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></b><span>JWT</span></a>
+              <a class="tool" href="#" data-tool-link="radix" aria-label="打开进制转换工具"><b class="t-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5v17M5 7.5l7 4 7-4M5 16.5l7-4 7 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>进制转换</span></a>
+              <a class="tool" href="#" data-tool-link="lorem" aria-label="打开 Lorem 占位文本工具"><b class="t-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 10.5h14M5 15h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M16.5 13.3v4.4l3.5-2.2z" fill="currentColor"/></svg></b><span>Lorem</span></a>
+            </div>
+          </article>
+
+          <!-- 办公三件套（v0.8） -->
+          <article class="card card-tools" data-reveal>
+            <header class="card-head">
+              <h2>
+                <i class="head-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i>
+                办公三件套
+              </h2>
+              <a class="chip chip-live mono" id="office-more" href="#">全部 →</a>
+            </header>
+            <div class="tool-grid">
+              <a class="tool" href="#" data-office-link="todo" aria-label="打开待办清单"><b class="t-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6.5h9M5 12h9M5 17.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="m16.5 6.5 2 2 3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>待办清单</span></a>
+              <a class="tool" href="#" data-office-link="habit" aria-label="打开习惯打卡"><b class="t-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7.5 4v7.5M7.5 16.5v3.5M12 4v3M12 11v9M16.5 4v11M16.5 20v.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg></b><span>习惯打卡</span></a>
+              <a class="tool" href="#" data-office-link="pomodoro" aria-label="打开番茄钟"><b class="t-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></b><span>番茄钟</span></a>
             </div>
           </article>
 
@@ -200,9 +224,9 @@
 
   <!-- Supabase SDK：本地打包，不依赖任何 CDN（国内网络友好） -->
   <script src="assets/vendor/supabase.min.js"></script>
-  <script src="assets/js/config.js?v=2"></script>
+  <script src="assets/js/config.js?v=3"></script>
   <script src="assets/js/fx.js?v=2"></script>
-  <script src="assets/js/sidebar.js?v=3"></script>
-  <script src="assets/js/app.js?v=3"></script>
+  <script src="assets/js/sidebar.js?v=4"></script>
+  <script src="assets/js/app.js?v=4"></script>
 </body>
 </html>

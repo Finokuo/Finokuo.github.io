@@ -14,6 +14,14 @@
 .ad-denied h1 { font-size: 26px; margin-bottom: 10px; }
 .ad-denied p { opacity: 0.7; font-size: 13.5px; }
 .ad-denied .tbtn-row { justify-content: center; margin-top: 22px; }
+/* v0.8.1：验证出错（非 403）与身份行 */
+.ad-code-warn { color: var(--amber-bright, #f5a623); }
+.ad-denied-who {
+  margin-top: 16px; padding: 10px 14px;
+  border: 1px dashed var(--border-2); border-radius: 8px;
+  font-size: 11.5px; opacity: 0.85; word-break: break-all;
+  text-align: left; line-height: 1.7;
+}
 
 /* ---------- 主体 ---------- */
 .ad-hero { padding-bottom: 4px; }

@@ -843,3 +843,19 @@ svg { display: block; }
 .u-empty { text-align: center; color: var(--muted); padding: 40px 0 10px; }
 .u-empty b { display: block; font-size: 17px; color: var(--text); margin: 10px 0 6px; }
 .u-empty p { font-size: 13px; line-height: 1.8; margin: 0; }
+
+/* =====================================================
+   v0.8.1 · 侧栏头像可点击进入公开主页
+   ===================================================== */
+.side-user .avatar.is-link {
+  cursor: pointer; border: 1px solid transparent;
+  transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s;
+}
+.side-user .avatar.is-link:hover,
+.side-user .avatar.is-link:focus-visible {
+  border-color: var(--accent-glow-strong);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 0 16px rgba(45, 212, 191, 0.28);
+  transform: translateY(-1px);
+  outline: none;
+}
+.side-user .avatar.is-link:active { transform: translateY(0); }

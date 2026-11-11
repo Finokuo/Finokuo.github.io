@@ -11,7 +11,7 @@
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=5" />
   <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
   <link rel="stylesheet" href="assets/admin.css?v=1" />
 </head>
@@ -41,8 +41,21 @@
           <p class="mono ad-denied-code">ACCESS DENIED</p>
           <h1>403 · 仅 System 可进入</h1>
           <p>图形化管理台与 Terminal 一样，只对 System 账号开放。你当前登录的账号没有管理权限。</p>
+          <p class="ad-denied-who mono" id="ad-denied-who" hidden></p>
           <div class="tbtn-row">
             <a class="tbtn" href="#" id="ad-back-drive">← 返回工作台</a>
+          </div>
+        </section>
+
+        <!-- ===== 验证出错（v0.8.1：网络/数据库错误 ≠ 403） ===== -->
+        <section class="ad-denied card" id="ad-error" hidden>
+          <p class="mono ad-denied-code ad-code-warn">VERIFY ERROR</p>
+          <h1 id="ad-error-title">身份验证失败</h1>
+          <p id="ad-error-detail">查询用户资料时出错。</p>
+          <p class="ad-denied-who mono" id="ad-error-who" hidden></p>
+          <div class="tbtn-row">
+            <button class="tbtn is-primary" id="ad-retry" type="button">重新验证</button>
+            <a class="tbtn" href="#" id="ad-back-drive-3">← 返回工作台</a>
           </div>
         </section>
 
@@ -169,7 +182,7 @@
   <script src="../assets/vendor/supabase.min.js"></script>
   <script src="../assets/js/config.js?v=3"></script>
   <script src="../assets/js/fx.js?v=2"></script>
-  <script src="../assets/js/sidebar.js?v=4"></script>
-  <script src="assets/admin.js?v=1"></script>
+  <script src="../assets/js/sidebar.js?v=5"></script>
+  <script src="assets/admin.js?v=2"></script>
 </body>
 </html>

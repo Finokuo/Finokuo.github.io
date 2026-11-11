@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>办公集 · Fuo Tools</title>
-  <meta name="description" content="Fuo Tools 办公集：待办清单、习惯打卡、番茄钟，云端同步的轻量办公三件套。" />
+  <meta name="description" content="Fuo Tools 办公集：待办清单、习惯打卡、番茄钟、AI 管理大师，云端同步的轻量办公套件。" />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <meta name="theme-color" content="#101014" />
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=5" />
   <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
   <link rel="stylesheet" href="assets/office.css?v=1" />
   <style>
@@ -71,7 +71,7 @@
         <section class="of-hero" data-reveal>
           <p class="of-eyebrow mono">// OFFICE SUITE</p>
           <h1>办公集</h1>
-          <p>和工具集互补的轻量办公三件套：待办、打卡、专注。数据云端同步（office_data 表），未建表时自动以「仅本机」模式运行。</p>
+          <p>和工具集互补的轻量办公套件：待办、打卡、专注，以及全站最强的 AI 管理大师——一处指挥你所有的 AI。数据云端同步（office_data 表），未建表时自动以「仅本机」模式运行。</p>
         </section>
 
         <div class="of-grid" id="of-grid" aria-label="办公工具列表">
@@ -82,7 +82,7 @@
           办公集与开发工具集相互独立、互不影响。后续版本将在这里继续扩充（记账本、迷你表格、日历日程等）。
         </p>
 
-        <p class="of-foot mono">v0.8.0 新增 · <a id="of-back" href="#">返回工作台</a></p>
+        <p class="of-foot mono">v0.8.1 更新 · <a id="of-back" href="#">返回工作台</a></p>
       </main>
     </div>
   </div>
@@ -93,7 +93,7 @@
   <script src="../assets/vendor/supabase.min.js"></script>
   <script src="../assets/js/config.js?v=3"></script>
   <script src="../assets/js/fx.js?v=2"></script>
-  <script src="../assets/js/sidebar.js?v=4"></script>
+  <script src="../assets/js/sidebar.js?v=5"></script>
   <script>
   (function () {
     'use strict';
@@ -112,6 +112,11 @@
         slug: 'pomodoro', name: '番茄钟', tone: 'tone-amber',
         desc: '专注 25 分钟 · 休息 5 分钟 · 今日统计 · 桌面通知',
         svg: '<circle cx="12" cy="13.5" r="7.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+      },
+      {
+        slug: 'ai', name: 'AI 管理大师', tone: 'tone-violet',
+        desc: '扫描设备 AI · 一键派发任务 · 回复归档——一处指挥所有 AI',
+        svg: '<circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3M6.7 6.7l2.1 2.1M15.2 15.2l2.1 2.1M17.3 6.7l-2.1 2.1M8.8 15.2l-2.1 2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
       },
     ];
 

@@ -40,6 +40,7 @@
 
   /* v0.8：办公集工具（drive/office/） */
   var OFFICE_META = [
+    { slug: 'ai',       name: 'AI 管理大师', kw: 'ai 人工智能 指挥 派发 扫描 助手 大师 command' },
     { slug: 'todo',     name: '待办清单', kw: 'todo 待办 任务 清单 事项' },
     { slug: 'habit',    name: '习惯打卡', kw: 'habit 习惯 打卡 热力图 坚持' },
     { slug: 'pomodoro', name: '番茄钟',   kw: 'pomodoro 番茄 专注 计时 25' },
@@ -48,7 +49,7 @@
   var PAGES = [
     { label: '工作台', hint: 'drive',   url: PATHS.DRIVE,        kw: 'home 仪表盘 欢迎回来', previewable: true },
     { label: '工具集', hint: 'tools',   url: PATHS.TOOL_CLUSTER, kw: 'tools 全部工具 目录', previewable: true },
-    { label: '办公集', hint: 'office',  url: PATHS.OFFICE,       kw: 'office 办公 待办 习惯 番茄', previewable: true },
+    { label: '办公集', hint: 'office',  url: PATHS.OFFICE,       kw: 'office 办公 待办 习惯 番茄 ai 指挥', previewable: true },
     { label: '云笔记', hint: 'notes',   url: PATHS.NOTES,        kw: 'notes 笔记 markdown 编辑', previewable: true },
     { label: '回收站', hint: 'recycle', url: PATHS.RECYCLE,      kw: 'recycle 回收站 恢复 删除 bin', previewable: true },
     { label: '收藏',   hint: 'favorites', url: PATHS.FAVORITES,  kw: 'favorites star 收藏夹', previewable: false },

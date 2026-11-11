@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 管理大师 · Fuo Tools</title>
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <link rel="manifest" href="../../manifest.json" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../../assets/js/theme.js?v=4"></script>
+  <link rel="stylesheet" href="../../assets/css/style.css?v=5" />
+  <link rel="stylesheet" href="../../assets/css/accent.css?v=1" />
+  <link rel="stylesheet" href="../assets/office.css?v=1" />
+  <link rel="stylesheet" href="assets/ai.css?v=1" />
+</head>
+<body data-page="office-tool" data-tool="ai" data-zone="office">
+  <div class="shell">
+    <!-- ===== 侧边栏（共享组件，sidebar.js 填充） ===== -->
+    <aside class="sidebar" id="sidebar" data-active="office" data-guard="1" hidden></aside>
+
+    <!-- ===== 主区 ===== -->
+    <div class="main-wrap">
+      <header class="topbar">
+        <nav class="crumbs mono" id="tc-crumb" aria-label="页面路径"></nav>
+        <div class="topbar-actions">
+          <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+            <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content of-content">
+        <section class="of-hero" data-reveal>
+          <p class="of-eyebrow mono">// AI COMMAND CENTER</p>
+          <h1>AI 管理大师</h1>
+          <p>一处指挥你所有的 AI。先扫描设备上装了哪些 AI（WorkBuddy、AutoClaw、豆包、Kimi、DeepSeek、ChatGPT…），再把任务一键派发给它们——指令自动进剪贴板、应用自动唤起，回复回到任务台统一归档，不用再来回切换应用。</p>
+          <p style="margin-top:12px"><span class="of-sync" id="ai-sync"><i></i><span class="mono" id="ai-sync-txt">检查同步状态…</span></span></p>
+        </section>
+
+        <!-- ===== 标签页 ===== -->
+        <nav class="ai-tabs" role="tablist" aria-label="AI 管理大师分区">
+          <button class="ai-tab is-on" role="tab" aria-selected="true" data-tab="dev" type="button" id="ai-tab-btn-dev">📡 设备与 AI</button>
+          <button class="ai-tab" role="tab" aria-selected="false" data-tab="send" type="button" id="ai-tab-btn-send">🚀 派发任务</button>
+          <button class="ai-tab" role="tab" aria-selected="false" data-tab="list" type="button" id="ai-tab-btn-list">🗂 任务台 <span class="mono" id="ai-tab-count" hidden></span></button>
+        </nav>
+
+        <!-- ===== Tab 1：设备与 AI ===== -->
+        <div id="ai-panel-dev">
+          <section class="card of-card" data-reveal>
+            <h2 class="ai-h2">① 选择设备类型</h2>
+            <p class="ai-note">扫描方式因平台而异：手机通过 URL Scheme 唤起检测，PC 通过自定义协议检测（内置 AI 在 PC 上以网页版为主，无需检测）。</p>
+            <div class="ai-devices" role="group" aria-label="设备类型">
+              <button class="ai-device" data-device="pc" type="button">
+                <b aria-hidden="true">🖥</b><span>PC / 电脑</span>
+              </button>
+              <button class="ai-device" data-device="ios" type="button">
+                <b aria-hidden="true">📱</b><span>iPhone</span>
+              </button>
+              <button class="ai-device" data-device="android" type="button">
+                <b aria-hidden="true">🤖</b><span>Android</span>
+              </button>
+            </div>
+            <p class="ai-dev-hint mono" id="ai-dev-hint">尚未选择设备——扫描前请先告诉大师你在用什么设备。</p>
+          </section>
+
+          <section class="card of-card" data-reveal>
+            <h2 class="ai-h2">② 扫描设备上的 AI</h2>
+            <p class="ai-note">原理：逐个尝试唤起每个 AI 应用。若浏览器弹出「打开 xxx？」请选择<b>打开</b>；页面被切走即判定为「已安装」。检测不到的应用可稍后在清单里手动标记。扫描过程中如需停留某个 AI，随时点「停止」。</p>
+            <div class="ai-scan-bar">
+              <button class="tbtn is-primary" id="ai-scan-start" type="button">开始扫描</button>
+              <button class="tbtn" id="ai-scan-stop" type="button" hidden>■ 停止</button>
+              <span class="mono ai-scan-progress" id="ai-scan-progress" hidden></span>
+            </div>
+            <div class="ai-scan-log mono" id="ai-scan-log" hidden aria-live="polite"></div>
+          </section>
+
+          <section class="card of-card" data-reveal>
+            <h2 class="ai-h2">③ 我的 AI 清单</h2>
+            <p class="ai-note">点击状态徽标可手动切换（未测试 → 已安装 → 未安装）。<b>已安装</b>和<b>网页版</b>的 AI 可接收派发任务。</p>
+            <div id="ai-list" class="ai-list">
+              <p class="of-empty">清单加载中…</p>
+            </div>
+          </section>
+
+          <section class="card of-card" data-reveal>
+            <h2 class="ai-h2">④ 自定义 AI</h2>
+            <p class="ai-note">WorkBuddy、AutoClaw 等私人助手不在内置名单？在这里登记：名称 + 唤起协议（scheme）+ 网页版地址（可选）。登记后即可扫描与派发。</p>
+            <div class="ai-custom-form">
+              <input type="text" id="ai-c-name" class="tf-input" placeholder="名称（如 WorkBuddy）" maxlength="24" autocomplete="off" />
+              <input type="text" id="ai-c-scheme" class="tf-input mono" placeholder="URL Scheme（如 workbuddy://）" maxlength="80" autocomplete="off" spellcheck="false" />
+              <input type="text" id="ai-c-web" class="tf-input mono" placeholder="网页版地址（可选，https://…）" maxlength="120" autocomplete="off" spellcheck="false" />
+              <button class="tbtn is-primary" id="ai-c-add" type="button">+ 登记</button>
+            </div>
+            <div id="ai-custom-list" class="ai-custom-list"></div>
+          </section>
+        </div>
+
+        <!-- ===== Tab 2：派发任务 ===== -->
+        <div id="ai-panel-send" hidden>
+          <section class="card of-card" data-reveal>
+            <h2 class="ai-h2">新建任务</h2>
+            <label class="tf ai-tf">
+              <span class="tf-label mono">任务标题</span>
+              <input type="text" id="ai-t-title" class="tf-input" placeholder="一句话概括（如：写一篇周报）" maxlength="60" autocomplete="off" />
+            </label>
+            <label class="tf ai-tf">
+              <span class="tf-label mono">指令全文（将复制到剪贴板）</span>
+              <textarea id="ai-t-prompt" class="tf-area" rows="6" maxlength="4000"
+                placeholder="写给 AI 的完整指令。派发时这段文字会自动进入剪贴板，你只需在目标 AI 里粘贴发送。"></textarea>
+            </label>
+            <div class="ai-tf">
+              <span class="tf-label mono">目标 AI（可多选）</span>
+              <div id="ai-targets" class="ai-chips">
+                <p class="of-empty" style="padding:14px 8px">清单里还没有可用 AI——先到「设备与 AI」标记几个，或登记自定义 AI。</p>
+              </div>
+            </div>
+            <div class="tbtn-row" style="margin-top:18px">
+              <button class="tbtn is-primary" id="ai-send" type="button">🚀 立即派发</button>
+              <button class="tbtn" id="ai-draft" type="button">存为草稿</button>
+            </div>
+          </section>
+          <p class="ai-note ai-note-foot">
+            派发流程：指令自动<b>复制到剪贴板</b> → 依次<b>唤起</b>所选 AI（应用或网页版）→ 你在每个 AI 里粘贴发送即可。
+            受应用沙箱限制，网页无法直接读取其他 App 的回复——AI 完成后，回到「任务台」把回复要点和交付文件<b>回填归档</b>，一条任务就闭环了。
+          </p>
+        </div>
+
+        <!-- ===== Tab 3：任务台 ===== -->
+        <div id="ai-panel-list" hidden>
+          <section class="card of-card" data-reveal>
+            <div class="ai-list-bar">
+              <h2 class="ai-h2" style="margin:0">任务台</h2>
+              <div class="ai-filters mono" role="tablist" aria-label="任务筛选">
+                <button class="ai-filter is-on" data-f="all" type="button" role="tab" aria-selected="true">全部 <span id="ai-f-all">0</span></button>
+                <button class="ai-filter" data-f="sending" type="button" role="tab" aria-selected="false">派发中 <span id="ai-f-sending">0</span></button>
+                <button class="ai-filter" data-f="sent" type="button" role="tab" aria-selected="false">进行中 <span id="ai-f-sent">0</span></button>
+                <button class="ai-filter" data-f="draft" type="button" role="tab" aria-selected="false">草稿 <span id="ai-f-draft">0</span></button>
+                <button class="ai-filter" data-f="done" type="button" role="tab" aria-selected="false">已完成 <span id="ai-f-done">0</span></button>
+              </div>
+            </div>
+            <div id="ai-tasks" class="ai-tasks">
+              <p class="of-empty">还没有任务。到「派发任务」给 AI 们安排第一件事吧。</p>
+            </div>
+          </section>
+        </div>
+
+        <p class="of-foot mono">v0.8.1 新增 · <a id="ai-back" href="#">返回工作台</a></p>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- ===== 回填结果弹窗 ===== -->
+  <div class="modal" id="ai-modal-result" hidden>
+    <div class="modal-mask" data-ai-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ai-result-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="ai-result-title">回填结果</h2>
+        <button class="modal-close" type="button" data-ai-close aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub mono" id="ai-result-sub">记录 AI 的回复与交付</p>
+      <div class="tool-body">
+        <label class="tf">
+          <span class="tf-label mono">AI 回复（要点或全文）</span>
+          <textarea id="ai-r-text" class="tf-area" rows="5" maxlength="6000" placeholder="AI 给了你什么答复、结论或说明…"></textarea>
+        </label>
+        <label class="tf">
+          <span class="tf-label mono">交付文件（链接或说明，可选）</span>
+          <input type="text" id="ai-r-file" class="tf-input mono" maxlength="300" placeholder="https://… 或「本地 xxx.md」等说明" autocomplete="off" spellcheck="false" />
+        </label>
+        <div class="tbtn-row">
+          <button class="tbtn is-primary" id="ai-r-save" type="button">保存并完结任务</button>
+          <button class="tbtn" type="button" data-ai-close>取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 派发确认弹窗 ===== -->
+  <div class="modal" id="ai-modal-confirm" hidden>
+    <div class="modal-mask" data-ai-cancel></div>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="ai-confirm-title">
+      <div class="modal-head">
+        <h2 class="modal-title" id="ai-confirm-title">确认派发</h2>
+        <button class="modal-close" type="button" data-ai-cancel aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p class="modal-sub" id="ai-confirm-text">确定吗？</p>
+      <div class="tbtn-row">
+        <button class="tbtn is-primary" id="ai-confirm-ok" type="button">开始派发</button>
+        <button class="tbtn" type="button" data-ai-cancel>取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
+  <script src="../../assets/vendor/supabase.min.js"></script>
+  <script src="../../assets/js/config.js?v=3"></script>
+  <script src="../../assets/js/fx.js?v=2"></script>
+  <script src="../../assets/js/sidebar.js?v=5"></script>
+  <script src="../assets/office-store.js?v=1"></script>
+  <script src="assets/ai.js?v=1"></script>
+</body>
+</html>

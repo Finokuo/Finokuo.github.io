@@ -40,7 +40,7 @@
     if (!window.__FUO_PALETTE__) {
       window.__FUO_PALETTE__ = true;
       var s = document.createElement('script');
-      s.src = SELF_BASE + 'palette.js?v=3';
+      s.src = SELF_BASE + 'palette.js?v=4';
       document.head.appendChild(s);
     }
     // PWA Service Worker（仅 https / localhost；scope = /drive/）
@@ -164,7 +164,7 @@
       '<nav class="side-nav" aria-label="工作台导航">' +
         navItem('home', active, drive, IC.grid, '工作台', '') +
         navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">17 款</i>') +
-        navItem('office', active, office, IC.brief, '办公集', '<i class="mono">3 款</i>') +
+        navItem('office', active, office, IC.brief, '办公集', '<i class="mono">4 款</i>') +
         navItem('favorites', active, favorites, IC.star, '收藏', '<i class="mono" id="sb-fav-count" hidden></i>') +
         navItem('settings', active, settings, IC.gear, '设置', '') +
       '</nav>' +
@@ -303,6 +303,42 @@
       });
   }
 
+  /* ---------- v0.8.1：头像点击 → 我的公开主页（/u/?u=用户名） ---------- */
+  function goMyProfile() {
+    var name = '';
+    var n1 = document.getElementById('sb-name');
+    var n2 = document.getElementById('user-email'); // 工作台原生侧栏的用户名元素
+    [n1, n2].some(function (el) {
+      if (!el) return false;
+      var t = (el.textContent || '').trim();
+      if (t && t !== '…' && t !== '—' && t !== '未登录' && t !== '预览模式') { name = t; return true; }
+      return false;
+    });
+    if (!name) return;
+    var u = PATHS.U || '../../u/';
+    window.location.href = u + (u.indexOf('?') === -1 ? '?' : '&') + 'u=' + encodeURIComponent(name);
+  }
+
+  function initAvatarLink() {
+    if (PREVIEW) return;
+    ['sb-avatar', 'user-avatar'].forEach(function (id) {
+      var av = document.getElementById(id);
+      if (!av || av.__fuoAvatarLinked) return;
+      av.__fuoAvatarLinked = true;
+      av.classList.add('is-link');
+      av.title = '查看我的公开主页';
+      av.setAttribute('role', 'link');
+      av.setAttribute('tabindex', '0');
+      av.setAttribute('aria-label', '查看我的公开主页');
+      av.addEventListener('click', goMyProfile);
+      av.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault(); goMyProfile();
+        }
+      });
+    });
+  }
+
   /* ---------- 公告横幅（announcements 表，v5；未建表/无公告静默） ---------- */
   function loadAnnouncement() {
     if (!sb) return;
@@ -370,6 +406,7 @@
     initCollapse(aside);
     renderCrumb();
     loadSidecars();
+    initAvatarLink(); // v0.8.1：头像 → 公开主页（两种侧栏都生效）
     if (aside.getAttribute('data-guard') === '1') {
       loadSession(); // 守卫 + 用户信息 + 公告
       return;

@@ -405,7 +405,7 @@
 
       var payload = {
         app: 'Fuo Tools',
-        version: '0.8.0',
+        version: '0.8.1',
         exported_at: new Date().toISOString(),
         account: {
           email: user.email || '',

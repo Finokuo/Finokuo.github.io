@@ -50,6 +50,96 @@
       .then(function () { /* 忽略 */ });
   }
 
+/* =====================================================
+ * v0.8.1 修复：身份验证健壮化
+ * 旧版把「查询失败」也当成 403，导致 System 本人被误拒。
+ * 新版链路：
+ *   查询出错 → 自动重试 2 次 → 仍失败 → 错误面板（显示具体原因）
+ *              · 若注册信息（metadata）里用户名恰为 System，则放行
+ *                （真正的权限仍由数据库 RLS 保证，这里只是门禁体验层）
+ *   查询成功但无行 → 「账号缺 profile 记录」面板
+ *   查询成功且 username !== 'System' → 403（面板展示当前登录身份）
+ * ===================================================== */
+  var ADMIN_NAME = 'System';
+
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function identityText(u) {
+    if (!u) return '';
+    var meta = (u.user_metadata && u.user_metadata.username) || '';
+    return '当前登录：' + (meta || '（未设置用户名）') + (u.email ? ' · ' + u.email : '');
+  }
+
+  /* 单次查询加超时竞争：supabase-js 对网络失败有内部长重试（backoff），
+   * 不加超时会导致错误面板迟迟不出现。超时≈按错误处理，走下方重试链。 */
+  function withTimeout(p, ms) {
+    return new Promise(function (resolve) {
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        resolve({ error: { message: '请求超时（' + ms + ' ms）' } });
+      }, ms);
+      p.then(function (r) {
+        if (done) return;
+        done = true; clearTimeout(timer); resolve(r);
+      }, function (e) {
+        if (done) return;
+        done = true; clearTimeout(timer); resolve({ error: e });
+      });
+    });
+  }
+
+  /* profiles 查询：失败自动重试（网络抖动 / PostgREST 冷启动自愈） */
+  function fetchProfile(c, uid, attempt) {
+    return withTimeout(
+      c.from('profiles').select('username,status').eq('id', uid).maybeSingle(),
+      6000
+    ).then(function (r) {
+      if (r.error && attempt < 2) {
+        return delay(attempt === 0 ? 500 : 1500).then(function () {
+          return fetchProfile(c, uid, attempt + 1);
+        });
+      }
+      return r;
+    });
+  }
+
+  function showError(title, detail) {
+    $('ad-loading').hidden = true;
+    $('ad-denied').hidden = true;
+    $('ad-error-title').textContent = title;
+    $('ad-error-detail').textContent = detail || '';
+    var who = $('ad-error-who');
+    if (who) { who.textContent = identityText(user); who.hidden = false; }
+    $('ad-error').hidden = false;
+  }
+
+  /* ---------- 门禁面板链接（guard 入口就绪，无论身份可用） ---------- */
+  function initGateLinks() {
+    if (initGateLinks._done) return;
+    initGateLinks._done = true;
+    var drive = PATHS.DRIVE || '../';
+    ['ad-back-drive', 'ad-back-drive-2', 'ad-back-drive-3'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.href = drive;
+    });
+    var tUrl = (window.FUO_BASE || '') + '/drive/tool-cluster/terminal' + (window.FUO_SUFFIX || '/');
+    if (PREVIEW) tUrl += (tUrl.indexOf('?') === -1 ? '?' : '&') + 'preview=1';
+    var tl = $('ad-link-terminal');
+    if (tl) tl.href = tUrl;
+    var retry = $('ad-retry');
+    if (retry) {
+      retry.addEventListener('click', function () {
+        $('ad-error').hidden = true;
+        var loading = $('ad-loading');
+        loading.textContent = '正在重新验证管理员身份…';
+        loading.hidden = false;
+        guard(); // 完整重走守卫（含面板重置）
+      });
+    }
+  }
+
   /* ---------- 身份守卫：仅 System ---------- */
   function guard() {
     if (PREVIEW) {
@@ -58,6 +148,12 @@
       bootAll(true);
       return;
     }
+    initGateLinks(); // 面板按钮先就绪（403/错误用户也需可用）
+    // 重置三个互斥面板（重试入口复用 guard 时保证干净状态）
+    $('ad-error').hidden = true;
+    $('ad-denied').hidden = true;
+    $('ad-root').hidden = true;
+    $('ad-loading').hidden = false;
     var c = client();
     if (!c) {
       $('ad-loading').textContent = '// SDK 未就绪，请刷新重试';
@@ -70,24 +166,45 @@
         return;
       }
       user = session.user;
-      c.from('profiles').select('username,status').eq('id', user.id).maybeSingle()
-        .then(function (_b) {
-          var p = _b.data;
-          if (p && p.status === 'banned') {
-            c.auth.signOut().then(function () {
-              window.location.replace((PATHS.MAIN || '../') + '?banned=1');
-            });
-            return;
-          }
-          if (!p || p.username !== 'System') {
+      fetchProfile(c, user.id, 0).then(function (r) {
+        if (r.error) {
+          // 查询失败 ≠ 非管理员。先看注册信息是否为 System：是则放行（RLS 是真防线）
+          var metaName = (user.user_metadata && user.user_metadata.username) || '';
+          if (metaName === ADMIN_NAME) {
             $('ad-loading').hidden = true;
-            $('ad-denied').hidden = false;
+            $('ad-root').hidden = false;
+            bootAll(false);
+            showToast('网络不稳：已按注册信息放行，列表读取会自动重试');
             return;
           }
+          showError('身份验证失败', '查询用户资料时出错（已自动重试）：' +
+            ((r.error && r.error.message) || '网络错误') + '。请检查网络后重试。');
+          return;
+        }
+        var p = r.data;
+        if (!p) {
+          showError('账号缺少资料记录',
+            '你的账号在 profiles 表里还没有记录（数据库可能未初始化）。' +
+            '请在 Supabase SQL Editor 执行 supabase-setup.sql 后重试。');
+          return;
+        }
+        if (p.status === 'banned') {
+          c.auth.signOut().then(function () {
+            window.location.replace((PATHS.MAIN || '../') + '?banned=1');
+          });
+          return;
+        }
+        if (p.username !== ADMIN_NAME) {
           $('ad-loading').hidden = true;
-          $('ad-root').hidden = false;
-          bootAll(false);
-        });
+          var who = $('ad-denied-who');
+          if (who) who.textContent = identityText(user) + '；资料库用户名：「' + p.username + '」。若你确实是 System，请确认登录的是 System 对应的邮箱账号。';
+          $('ad-denied').hidden = false;
+          return;
+        }
+        $('ad-loading').hidden = true;
+        $('ad-root').hidden = false;
+        bootAll(false);
+      });
     });
   }
 
@@ -375,7 +492,7 @@
     box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
     if (PREVIEW) {
       renderAnnList([
-        { id: 'a1', content: 'Fuo Tools v0.8.0 上线：新增办公集与主题色系统。', created_at: new Date().toISOString(), isCurrent: true },
+        { id: 'a1', content: 'Fuo Tools v0.8.1 上线：新增 AI 管理大师，修复管理台身份验证。', created_at: new Date().toISOString(), isCurrent: true },
       ]);
       annLoaded = true;
       return;
@@ -478,7 +595,7 @@
     if (PREVIEW) {
       aTotal = 3;
       renderAudit([
-        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.8.0 上线…', created_at: new Date().toISOString() },
+        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.8.1 上线…', created_at: new Date().toISOString() },
         { action: 'ban', target: 'RippleTester', detail: '封禁账号（管理台）', created_at: new Date(Date.now() - 3600000).toISOString() },
         { action: 'rename', target: 'OldName', detail: '→ NewName（Terminal）', created_at: new Date(Date.now() - 86400000).toISOString() },
       ]);
@@ -605,13 +722,7 @@
 
   /* ---------- 链接 ---------- */
   function initLinks() {
-    var drive = PATHS.DRIVE || '../';
-    // Terminal 地址：tool-cluster/terminal/
-    var tUrl = (window.FUO_BASE || '') + '/drive/tool-cluster/terminal' + (window.FUO_SUFFIX || '/');
-    if (PREVIEW) tUrl += (tUrl.indexOf('?') === -1 ? '?' : '&') + 'preview=1';
-    $('ad-back-drive').href = drive;
-    $('ad-back-drive-2').href = drive;
-    $('ad-link-terminal').href = tUrl;
+    // 面板链接已由 initGateLinks 在 guard 入口处理；这里只补 Terminal 链接无需重复
   }
 
   /* ---------- 启动 ---------- */

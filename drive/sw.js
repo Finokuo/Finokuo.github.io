@@ -11,7 +11,7 @@
 (function () {
   'use strict';
 
-  var CACHE = 'fuo-shell-v8';
+  var CACHE = 'fuo-shell-v9';
   var SHELL = [
     '/drive/',
     '/drive/index.html',
@@ -28,6 +28,9 @@
     '/drive/office/',
     '/drive/office/assets/office.css',
     '/drive/office/assets/office-store.js',
+    '/drive/office/ai/',
+    '/drive/office/ai/assets/ai.css',
+    '/drive/office/ai/assets/ai.js',
     '/drive/office/todo/',
     '/drive/office/todo/assets/todo.css',
     '/drive/office/todo/assets/todo.js',

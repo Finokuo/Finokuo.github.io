@@ -16,6 +16,14 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS || {};
+  /* v0.9 兜底：旧缓存 config.js（v3）没有 FUOTOOL 路径时本地补算，
+   * 规则与 config.js 完全一致（线上无前缀 / 沙盒预览带 /fuo + /index.html） */
+  if (!PATHS.FUOTOOL) {
+    var _p = window.location.pathname;
+    var _inFuo = _p.indexOf('/fuo/') !== -1;
+    var _base = _inFuo ? _p.slice(0, _p.indexOf('/fuo/')) + '/fuo' : '';
+    PATHS.FUOTOOL = _base + '/fuotool' + (_inFuo ? '/index.html' : '/');
+  }
   var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
 
   /* 工具元数据（与 tool-page.js 注册表保持一致；独立携带避免加载顺序依赖） */
@@ -40,7 +48,7 @@
 
   /* v0.8：办公集工具（drive/office/） */
   var OFFICE_META = [
-    { slug: 'ai',       name: 'AI 管理大师', kw: 'ai 人工智能 指挥 派发 扫描 助手 大师 command' },
+    { slug: 'ai',       name: 'AI 管理大师（桌面版）', kw: 'ai 人工智能 指挥 派发 扫描 助手 大师 command 桌面 desktop exe 下载' },
     { slug: 'todo',     name: '待办清单', kw: 'todo 待办 任务 清单 事项' },
     { slug: 'habit',    name: '习惯打卡', kw: 'habit 习惯 打卡 热力图 坚持' },
     { slug: 'pomodoro', name: '番茄钟',   kw: 'pomodoro 番茄 专注 计时 25' },
@@ -50,6 +58,7 @@
     { label: '工作台', hint: 'drive',   url: PATHS.DRIVE,        kw: 'home 仪表盘 欢迎回来', previewable: true },
     { label: '工具集', hint: 'tools',   url: PATHS.TOOL_CLUSTER, kw: 'tools 全部工具 目录', previewable: true },
     { label: '办公集', hint: 'office',  url: PATHS.OFFICE,       kw: 'office 办公 待办 习惯 番茄 ai 指挥', previewable: true },
+    { label: '桌面版下载', hint: 'fuotool', url: PATHS.FUOTOOL,  kw: 'fuotool desktop 桌面 exe 下载 安装 ai 管理大师', previewable: false },
     { label: '云笔记', hint: 'notes',   url: PATHS.NOTES,        kw: 'notes 笔记 markdown 编辑', previewable: true },
     { label: '回收站', hint: 'recycle', url: PATHS.RECYCLE,      kw: 'recycle 回收站 恢复 删除 bin', previewable: true },
     { label: '收藏',   hint: 'favorites', url: PATHS.FAVORITES,  kw: 'favorites star 收藏夹', previewable: false },

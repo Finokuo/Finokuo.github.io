@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fuo Tools 桌面版 — AI 管理大师，离开浏览器</title>
+  <meta name="description" content="Fuo Tools 桌面版（EXE）下载页：全站最强的 AI 管理大师搬进原生应用——扫描本机 AI、一键派发任务、自动回收回复与文件。与网页版同账号数据互通。" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
+  <meta name="theme-color" content="#101014" />
+  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
+  <script src="../main/assets/js/theme.js?v=4"></script>
+  <link rel="stylesheet" href="../main/assets/css/style.css?v=1" />
+  <link rel="stylesheet" href="../drive/assets/css/accent.css?v=1" />
+  <link rel="stylesheet" href="assets/css/fuotool.css?v=1" />
+</head>
+<body>
+  <!-- 极光光斑（装饰） -->
+  <div class="aurora aurora-a" aria-hidden="true"></div>
+  <div class="aurora aurora-b" aria-hidden="true"></div>
+
+  <!-- ===== 顶部导航 ===== -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="./" aria-label="Fuo Tools 桌面版下载页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="18" height="18" fill="none"><path d="M11 23V9h10M11 16h8.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        </span>
+        <span class="brand-name">Fuo Tools <span class="nav-tag mono">DESKTOP</span></span>
+      </a>
+      <nav class="nav-links" aria-label="页面导航">
+        <a href="#download">下载</a>
+        <a href="#features">AI 管理大师</a>
+        <a href="#compare">版本对比</a>
+        <a href="#faq">常见问题</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
+          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+        </button>
+        <button class="btn btn-ghost" type="button" data-goto-web>进入网页版</button>
+        <a class="btn btn-primary" href="#download">获取桌面版</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="hero-badge">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="mono">FUO TOOLS DESKTOP · v0.9.0</span>
+          </span>
+          <h1 class="hero-title">
+            网页版之上，<br />
+            <span class="lit-text">桌面版来了。</span>
+          </h1>
+          <p class="hero-sub">
+            全站最强的「AI 管理大师」搬进原生应用：真正扫描本机装了哪些 AI，
+            把任务一键派发出去，回复与交付文件自动收回来。
+            你熟悉的 17 款工具与云端数据，原样随身。
+          </p>
+          <div class="hero-cta">
+            <!-- 下载按钮状态由 fuotool.js 按 DL 配置渲染（打包上传中 / 正式下载） -->
+            <span id="dl-hero-holder" aria-live="polite"></span>
+            <a class="btn btn-outline btn-lg" href="#" data-goto-web>继续使用网页版</a>
+          </div>
+          <p class="hero-trust mono">免费 · 与网页版同账号云同步 · Windows 10 / 11</p>
+        </div>
+
+        <!-- 桌面应用窗口预览模型（纯 CSS 装饰） -->
+        <div class="hero-visual" aria-hidden="true">
+          <div class="mock dsk-mock">
+            <div class="mock-bar">
+              <i class="mdot"></i><i class="mdot"></i><i class="mdot"></i>
+              <span class="mono">Fuo Tools Desktop — AI 管理大师</span>
+            </div>
+            <div class="mock-body dsk-body">
+              <div class="mock-side">
+                <span class="ms-item">工作台</span>
+                <span class="ms-item">工具集</span>
+                <span class="ms-item">办公集</span>
+                <span class="ms-item is-on">AI 管理大师</span>
+              </div>
+              <div class="dsk-main">
+                <div class="dsk-scan">
+                  <i class="dsk-scan-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3M6.7 6.7l2.1 2.1M15.2 15.2l2.1 2.1M17.3 6.7l-2.1 2.1M8.8 15.2l-2.1 2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></i>
+                  <b>扫描完成</b>
+                  <span class="mono">本机发现 6 个 AI</span>
+                </div>
+                <div class="dsk-task">
+                  <div class="dsk-task-head"><b>任务 · 写一篇周报</b><span class="mono">派发中</span></div>
+                  <div class="dsk-qa"><i class="dsk-dot is-ok" aria-hidden="true"></i><span>豆包</span><em class="mono">已派发</em></div>
+                  <div class="dsk-qa"><i class="dsk-dot is-run" aria-hidden="true"></i><span>Kimi</span><em class="mono">进行中</em></div>
+                  <div class="dsk-qa"><i class="dsk-dot is-wait" aria-hidden="true"></i><span>DeepSeek</span><em class="mono">等待结果</em></div>
+                </div>
+                <p class="dsk-note mono">回复与交付文件将自动回到任务台</p>
+              </div>
+            </div>
+          </div>
+          <div class="mock-glow"></div>
+        </div>
+      </div>
+      <div class="hero-fade" aria-hidden="true"></div>
+    </section>
+
+    <!-- ===== 下载 ===== -->
+    <section class="section" id="download">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow mono">// DOWNLOAD</p>
+          <h2>获取桌面版</h2>
+          <p class="section-sub">一个安装包，装下整个工作台</p>
+        </div>
+
+        <div class="dl-card" data-reveal>
+          <div class="dl-info">
+            <span class="dl-win-ic tone-teal" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9.5 20.5h5M12 17v3.5M12 8v5M9.8 10.7 12 8.5l2.2 2.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </span>
+            <div class="dl-meta">
+              <b>Fuo Tools 桌面版</b>
+              <dl>
+                <div><dt>版本</dt><dd class="mono" id="dl-ver">v0.9.0</dd></div>
+                <div><dt>大小</dt><dd class="mono" id="dl-size">—</dd></div>
+                <div><dt>更新</dt><dd class="mono" id="dl-date">—</dd></div>
+                <div><dt>系统</dt><dd>Windows 10 / 11（64 位）</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="dl-actions">
+            <div id="dl-main-holder" aria-live="polite"></div>
+            <p class="dl-os-hint mono" id="dl-os-hint" hidden></p>
+            <p class="dl-sha mono" id="dl-sha" hidden></p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step" data-reveal>
+            <b class="mono">01</b>
+            <h3>下载并安装</h3>
+            <p>双击 .exe 安装包，按引导一步步完成，一分钟即可。</p>
+          </div>
+          <div class="step" data-reveal>
+            <b class="mono">02</b>
+            <h3>登录同一账号</h3>
+            <p>与网页版共用账号，笔记、待办、习惯打卡原样同步。</p>
+          </div>
+          <div class="step" data-reveal>
+            <b class="mono">03</b>
+            <h3>打开 AI 管理大师</h3>
+            <p>扫描本机 AI，开始把任务派发给你的 AI 军团。</p>
+          </div>
+        </div>
+
+        <p class="dl-safe" data-reveal>
+          <b>安全说明：</b>桌面版由独立开发者发布，未购买代码签名证书——Windows 首次运行可能弹出
+          SmartScreen 提示，点击「更多信息 → 仍要运行」即可。正式发布后本页会提供安装包的
+          SHA-256 校验值，可自行核对。桌面版与网页版共用同一云端后端与行级安全策略，数据权限完全一致。
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== AI 管理大师（旗舰功能） ===== -->
+    <section class="section section-alt" id="features">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow mono">// FLAGSHIP · AI MASTER</p>
+          <h2>AI 管理大师 · 桌面完全体</h2>
+          <p class="section-sub">浏览器沙箱里做不到的事，桌面版都做到了</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M11 8v3l2 2M20.5 20.5 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
+            <h3>原生扫描</h3>
+            <p>选择设备类型（PC / iPhone / Android）后扫描，桌面引擎逐个检出已安装的 AI——WorkBuddy、AutoClaw、豆包、Kimi、DeepSeek、ChatGPT……</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3.5 11.5 3.2 3.2L13 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M20.5 5.5v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14.8 14.8a5 5 0 0 0 5.7-5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></span>
+            <h3>一键派发</h3>
+            <p>任务写一次，勾选目标 AI 点派发：指令自动送达每个应用并唤起，不再手动复制粘贴、来回切换窗口。</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 5.5 6v5.2c0 4 2.7 7.4 6.5 9.3 3.8-1.9 6.5-5.3 6.5-9.3V6L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="m9.3 12 1.9 1.9 3.5-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
+            <h3>自动回收</h3>
+            <p>AI 的回复与交付文件自动回到任务台归档。哪个 AI 交了什么活、交没交，一目了然。</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="7" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="16.5" cy="7" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="16.5" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9.3 8.9 11 14.1M14.7 8.9 13 14.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <h3>AI 军团清单</h3>
+            <p>内置主流 AI 名录，支持自定义登记。给每个 AI 标注设备与状态，你的 AI 军团由你管理。</p>
+          </article>
+        </div>
+
+        <div class="section-head dsk-subhead">
+          <p class="eyebrow mono">// MORE ON DESKTOP</p>
+          <h2>不止于 AI 大师</h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="13.5" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3.5 9h17" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 7h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <h3>独立窗口</h3>
+            <p>不占浏览器标签页。一个专注的工作台窗口，全屏、分屏都随你。</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-emerald" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5V6.8A2.3 2.3 0 0 1 8.3 4.5h7.4A2.3 2.3 0 0 1 18 6.8v2.7M4.5 9.5h15a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17v-6a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg></span>
+            <h3>系统级通知</h3>
+            <p>番茄钟到点、AI 任务状态变化，直接用系统通知提醒，不再依赖浏览器授权。</p>
+          </article>
+          <article class="feature-card" data-reveal>
+            <span class="feature-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
+            <h3>数据互通</h3>
+            <p>与网页版同一账号体系，笔记、待办、习惯打卡、工具收藏全部云同步。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 版本对比 ===== -->
+    <section class="section" id="compare">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow mono">// COMPARE</p>
+          <h2>网页版 与 桌面版</h2>
+          <p class="section-sub">不是替代，而是超集——选适合你的方式</p>
+        </div>
+        <div class="cmp-wrap" data-reveal>
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">能力</th>
+                <th scope="col">网页版</th>
+                <th scope="col" class="cmp-win">桌面版 EXE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">AI 管理大师</th>
+                <td>引导下载桌面版</td>
+                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>完全体：原生扫描 · 派发 · 自动回收</td>
+              </tr>
+              <tr>
+                <th scope="row">工具集（17 款）</th>
+                <td><i class="cmp-yes" aria-hidden="true"></i>全部可用</td>
+                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>全部可用</td>
+              </tr>
+              <tr>
+                <th scope="row">云笔记 / 云同步</th>
+                <td><i class="cmp-yes" aria-hidden="true"></i>支持</td>
+                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>同一账号，数据互通</td>
+              </tr>
+              <tr>
+                <th scope="row">离线使用</th>
+                <td>PWA 壳缓存（部分页面）</td>
+                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>完全离线可用</td>
+              </tr>
+              <tr>
+                <th scope="row">通知提醒</th>
+                <td>浏览器通知（需授权）</td>
+                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>系统级通知</td>
+              </tr>
+              <tr>
+                <th scope="row">获取更新</th>
+                <td>刷新即最新</td>
+                <td>从本页下载新版安装包</td>
+              </tr>
+              <tr>
+                <th scope="row">价格</th>
+                <td>免费</td>
+                <td class="cmp-win">免费</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FAQ ===== -->
+    <section class="section section-alt" id="faq">
+      <div class="container">
+        <div class="section-head">
+          <p class="eyebrow mono">// FAQ</p>
+          <h2>常见问题</h2>
+        </div>
+        <div class="faq-list">
+          <details class="faq-item" data-reveal>
+            <summary>网页版会被抛弃吗？</summary>
+            <p>不会。网页版与桌面版长期并行维护：网页版刷新即最新、跨平台无门槛；桌面版专注需要原生能力的场景（AI 管理大师、系统通知、离线）。两边共用同一账号与云端数据。</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary>桌面版收费吗？</summary>
+            <p>免费。Fuo Tools 全线（网页版 + 桌面版）都不收费、无广告。</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary>支持哪些操作系统？</summary>
+            <p>首批支持 Windows 10 / 11（64 位）。macOS 与 Linux 版本在路线图上，取决于首批 Windows 版的反馈。</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary>我的数据在两个版本间通用吗？</summary>
+            <p>通用。桌面版与网页版连接同一个云端后端，登录同一账号即可：笔记、待办、习惯打卡、AI 任务台全部同步，行级安全策略也完全一致。</p>
+          </details>
+          <details class="faq-item" data-reveal>
+            <summary>安装时杀毒软件 / 系统提示有风险？</summary>
+            <p>独立开发者的应用没有购买代码签名证书，Windows SmartScreen 首次运行会弹出「Windows 已保护你的电脑」，点击「更多信息 → 仍要运行」即可继续。介意的话，可在正式发布后用本页提供的 SHA-256 校验值核对安装包完整性。</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="section">
+      <div class="container">
+        <div class="cta-banner" data-reveal>
+          <h2>准备好让 AI 们为你干活了吗？</h2>
+          <p>下载桌面版，把 AI 管理大师带出浏览器。</p>
+          <span id="dl-cta-holder" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 页脚 ===== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="brand-mark sm" aria-hidden="true"><svg viewBox="0 0 32 32" width="12" height="12" fill="none"><path d="M11 23V9h10M11 16h8.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg></span>
+        <span>Fuo Tools</span>
+      </div>
+      <p class="mono">© 2025 FUO TOOLS · 桌面与网页，同一个工作台</p>
+      <nav class="footer-links" aria-label="页脚导航">
+        <a href="#" data-goto-web>网页版</a>
+        <a href="#download">下载</a>
+        <a href="#faq">常见问题</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- 页面逻辑：下载状态渲染 + 站内跳转（不依赖 Supabase，未登录可访问） -->
+  <script src="../main/assets/js/fx.js?v=2"></script>
+  <script src="assets/js/fuotool.js?v=1"></script>
+</body>
+</html>

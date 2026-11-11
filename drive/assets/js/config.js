@@ -31,6 +31,8 @@ window.FUO_PATHS = {
   RECYCLE: window.FUO_BASE + '/drive/recycle' + window.FUO_SUFFIX,
   N: window.FUO_BASE + '/drive/n' + window.FUO_SUFFIX,
   U: window.FUO_BASE + '/drive/u' + window.FUO_SUFFIX,
+  // v0.9：桌面版下载页（AI 管理大师 EXE 专属入口）
+  FUOTOOL: window.FUO_BASE + '/fuotool' + window.FUO_SUFFIX,
 };
 
 /**

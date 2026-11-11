@@ -9,7 +9,8 @@
 线上地址结构（Finokuo.github.io）
 ├── finokuo.github.io/          → 根入口：已登录跳 /drive/，未登录跳 /main/
 ├── finokuo.github.io/main/     → 主页（暗色落地页 + 登录/注册）
-└── finokuo.github.io/drive/    → 工作台（登录后可见）
+├── finokuo.github.io/drive/    → 工作台（登录后可见）
+└── finokuo.github.io/fuotool/  → 桌面版下载页（EXE 展示，公开可访问）
 ```
 
 ## 一、仓库目录结构
@@ -26,6 +27,10 @@ Finokuo.github.io/        ← GitHub 仓库名必须是这个（用户主页站�
 │       ├── css/style.css
 │       ├── js/{config.js, theme.js, fx.js, app.js}
 │       └── vendor/supabase.min.js   ← SDK 已本地打包，不依赖 CDN！
+├── fuotool/              ← v0.9 桌面版下载页（公开，无需登录）
+│   ├── index.html
+│   └── assets/{css/fuotool.css, js/fuotool.js}
+│       （未来 EXE 发布时，安装包放 fuotool/download/ 子目录）
 └── drive/
     ├── index.html
     └── assets/
@@ -87,10 +92,11 @@ git push -u origin main
 3. 下次访问根域名 → 已登录，直接进 `/drive/`；未登录 → 进 `/main/`
 4. 工作台「快捷笔记」支持**自动云同步**（防抖 900ms 保存到 Supabase）
 
-## 七、功能总览（v0.8.1）
+## 七、功能总览（v0.9.0）
 
+- **桌面时代开启（v0.9.0）**：新增 `/fuotool/` **桌面版下载页**（Hero / 下载卡 / 功能亮点 / 网页vs桌面对比表 / FAQ）；**AI 管理大师升级为桌面版（EXE）专属功能**——网页端保留入口，引导用户前往下载页获取安装包，完整功能（原生扫描/派发/回收）在桌面版中使用；主页导航与页脚新增「桌面版」入口；命令面板可搜「桌面/exe/下载」直达
 - **16 款本地工具**：JSON / 颜色 / 密码 / 文本统计 / 时间戳 / Base64 / UUID / Diff / 正则测试器 / 二维码 / 哈希 / URL / 图片压缩 / **JWT 解码器 / 进制转换（BigInt）/ Lorem 占位文本**
-- **办公集（独立工作区）**：**AI 管理大师（v0.8.1 全新）**——扫描设备上的 AI（PC / iPhone / Android 分平台探测）、任务一键派发（指令自动进剪贴板 + 依次唤起目标 AI）、结果回填归档，内置豆包/通义/Kimi/DeepSeek/ChatGPT/Claude 等 14 个条目 + 自定义 AI 登记；**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步
+- **办公集（独立工作区）**：**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步；AI 管理大师已迁往桌面版（网页端为引导页）
 - **云笔记增强**：**置顶** · **公开分享链接 `/n/?id=`**（任何人可读）· **单篇导出 .md / 全部导出 ZIP（零依赖自实现）** · **版本历史（约 10 分钟一版，滚动 20 版可恢复）** · 拖拽笔记到文件夹
 - **主题色系统**：6 种强调色（青/橙/粉/紫/绿/金）× 亮暗模式，设置页一键切换全站生效
 - **Ctrl+K 命令面板**：搜工具 / 页面 / 笔记 / 办公工具 / 操作 + **笔记全文搜索（内容命中带上下文片段）**
@@ -105,6 +111,8 @@ git push -u origin main
 
 > v0.8.0 修复：进入工作台侧栏先显示邮箱再切用户名的闪烁（现在直接展示用户名）
 > v0.8.1 修复：管理台把「查询失败」误判为 403，导致 System 本人被拒之门外的问题
+> v0.9.0 转型：AI 管理大师由「浏览器内协议探测」升级为「桌面版 EXE 原生能力」；
+>            浏览器沙箱无法真正枚举/操控本机应用，故网页端改为下载引导页
 
 ## 附：文件说明
 
@@ -112,12 +120,13 @@ git push -u origin main
 |------|------|
 | `root/index.html` | 根路径秒级分流（读 localStorage 判断登录态） |
 | `main/index.html` | 主页：Hero / 功能 / 工具一览 / 三步开始 / CTA / 登录注册弹窗 |
-| `drive/index.html` | 工作台：问候、快捷笔记（云同步）、工具入口（16+3）、办公三件套卡 |
+| `fuotool/index.html` | **v0.9** 桌面版下载页：Hero / 下载卡（就绪开关在 fuotool.js 的 DL 配置）/ 功能 / 对比表 / FAQ |
+| `drive/index.html` | 工作台：问候、快捷笔记（云同步）、工具入口（16+3）、办公三件套卡（AI 卡带「桌面版」徽标） |
 | `assets/js/config.js` | Supabase 地址 + Publishable Key + 路径配置（预览环境自动适配） |
 | `assets/js/theme.js` | 亮/暗主题 + 主题色（v0.8）切换与记忆 |
 | `assets/css/accent.css` | 6 种主题色变量覆盖层（v0.8 新增） |
 | `assets/vendor/supabase.min.js` | Supabase JS SDK（UMD 本地打包，约 220KB，无 CDN 依赖） |
-| `drive/office/` | 办公集：目录页 + 待办清单 + 习惯打卡 + 番茄钟 + 共享数据层 |
+| `drive/office/` | 办公集：目录页 + 待办清单 + 习惯打卡 + 番茄钟 + AI 管理大师门槛页（v0.9 改为下载引导） + 共享数据层 |
 | `drive/recycle/` | 独立回收站页（v0.8） |
 | `drive/n/index.html` | 公开笔记分享页（`/n/?id=<笔记ID>`，匿名可读） |
 | `drive/admin/` | 图形化管理台（System 专属，v0.8） |
@@ -128,3 +137,13 @@ git push -u origin main
 | `supabase-v6.sql` | **v0.8 增量**：笔记置顶 / 公开分享 / 版本历史 / 办公集云同步（幂等） |
 | `drive/manifest.json` + `drive/sw.js` | PWA：安装清单 + 离线缓存壳（仅 https 生效） |
 | `drive/u/index.html` | 公开用户主页（`/u/?u=用户名`，未登录可看） |
+
+## 附二：桌面版 EXE 发布指引（v0.9+）
+
+安装包就绪后只需两步，网页端无需再改版：
+
+1. 把 EXE 上传到仓库 `fuotool/download/` 目录（如 `FuoTools-Setup-0.9.0.exe`）；
+   注意 GitHub Pages 单文件上限 100MB，更大的包请用外部网盘并在 DL.url 填外链。
+2. 打开 `fuotool/assets/js/fuotool.js`，把顶部 `DL` 配置改为：
+   `ready: true`，并填好 `size` / `date` / `sha256`。
+   推送上线后，页面上三处下载按钮自动变为真实下载链接。

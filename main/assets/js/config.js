@@ -33,6 +33,8 @@ window.FUO_PATHS = {
   DRIVE: window.FUO_BASE + '/drive' + window.FUO_SUFFIX,
   // 工具集目录页：/drive/tool-cluster/（各工具在其下的独立子目录）
   TOOL_CLUSTER: window.FUO_BASE + '/drive/tool-cluster' + window.FUO_SUFFIX,
+  // v0.9：桌面版下载页（AI 管理大师 EXE 入口）
+  FUOTOOL: window.FUO_BASE + '/fuotool' + window.FUO_SUFFIX,
 };
 
 /**

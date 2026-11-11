@@ -1,0 +1,210 @@
+/* =====================================================
+ * Fuo Tools · 桌面版下载页专属样式
+ * 复用 main 的设计系统（style.css 全量变量 + 组件类），
+ * 本文件只补：导航标签 / 桌面窗口模型 / 下载卡 / 对比表 / FAQ
+ * ===================================================== */
+
+/* ---------- 导航：DESKTOP 小标 ---------- */
+.nav-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em;
+  color: var(--accent-bright);
+  border: 1px solid var(--accent-glow-strong);
+  background: var(--accent-glow);
+  padding: 2.5px 8px; border-radius: 999px;
+  margin-left: 9px; vertical-align: 2px;
+}
+
+/* ---------- Hero：桌面应用窗口模型 ---------- */
+.dsk-body { min-height: 330px; }
+.dsk-main {
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  min-width: 0; justify-content: center;
+}
+.dsk-scan {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--mock-inset-on, rgba(45, 212, 191, 0.07));
+  border: 1px solid var(--mock-inset-on-border, rgba(45, 212, 191, 0.4));
+}
+.dsk-scan b { font-size: 13px; }
+.dsk-scan .mono { font-size: 11px; color: var(--muted); }
+.dsk-scan-ic {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--ic-soft, var(--card-2));
+  border: 1px solid var(--ic-line, var(--border));
+  color: var(--ic, var(--faint));
+}
+.dsk-scan-ic svg { width: 15px; height: 15px; }
+.dsk-task {
+  border: 1px solid var(--mock-line-2, rgba(255, 255, 255, 0.07));
+  border-radius: 12px; background: var(--mock-inset, rgba(255, 255, 255, 0.015));
+  padding: 12px; display: flex; flex-direction: column; gap: 7px;
+}
+.dsk-task-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-bottom: 8px; border-bottom: 1px dashed var(--mock-line-2, rgba(255, 255, 255, 0.07));
+}
+.dsk-task-head b { font-size: 12.5px; }
+.dsk-task-head .mono { font-size: 10.5px; color: var(--accent-bright); letter-spacing: 0.08em; }
+.dsk-qa {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7.5px 10px; border-radius: 8px;
+  background: var(--mock-bg); border: 1px solid var(--mock-border);
+  font-size: 12.5px;
+}
+.dsk-qa span { flex: 1; min-width: 0; }
+.dsk-qa em { font-style: normal; font-size: 10.5px; color: var(--faint); letter-spacing: 0.05em; }
+.dsk-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; }
+.dsk-dot.is-ok { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+.dsk-dot.is-run { background: #e8b34c; box-shadow: 0 0 8px rgba(232, 179, 76, 0.5); animation: dskBlink 1.4s ease-in-out infinite; }
+.dsk-dot.is-wait { background: var(--faint); }
+@keyframes dskBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.dsk-note {
+  margin: 0; text-align: center; font-size: 10.5px;
+  color: var(--faint); letter-spacing: 0.06em;
+}
+
+/* ---------- 下载卡 ---------- */
+.dl-card {
+  display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 30px; align-items: center;
+  padding: 30px; border: 1px solid var(--border-2); border-radius: 18px;
+  background: var(--card); position: relative; overflow: hidden;
+}
+.dl-card::before {
+  content: ""; position: absolute; top: 0; left: 16%; right: 16%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-glow-strong), transparent);
+}
+.dl-info { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.dl-win-ic {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 58px; height: 58px; border-radius: 14px;
+  background: var(--ic-soft, var(--card-2));
+  border: 1px solid var(--ic-line, var(--border));
+  color: var(--ic, var(--text-dim));
+}
+.dl-win-ic svg { width: 27px; height: 27px; }
+.dl-meta b { display: block; font-size: 17px; letter-spacing: -0.01em; }
+.dl-meta dl {
+  margin: 12px 0 0; display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 22px;
+}
+.dl-meta dl > div { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.dl-meta dt { font-size: 11.5px; color: var(--faint); flex: none; }
+.dl-meta dd { margin: 0; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-actions { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dl-actions #dl-main-holder { display: block; }
+
+/* 大下载按钮（就绪态真下载 / 未就绪态呼吸提示） */
+.dl-btn {
+  width: 100%; height: 52px; border-radius: 13px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.01em;
+  text-decoration: none; cursor: pointer;
+  background: var(--btn-primary-bg); color: var(--btn-primary-fg);
+  border: 1px solid transparent; box-shadow: var(--btn-shadow);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.2s;
+}
+.dl-btn:hover { background: var(--btn-primary-bg-hover); transform: translateY(-1px); box-shadow: var(--shadow-pop); }
+.dl-btn svg { width: 17px; height: 17px; }
+.dl-btn.is-wait { background: var(--btn-primary-bg); color: var(--btn-primary-fg); }
+.dl-pulse {
+  flex: none; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-deep);
+  animation: dlPulse 1.7s ease-out infinite;
+}
+@keyframes dlPulse {
+  0% { box-shadow: 0 0 0 0 var(--accent-glow-strong); }
+  70% { box-shadow: 0 0 0 9px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.dl-os-hint { margin: 0; font-size: 11px; color: var(--faint); text-align: center; letter-spacing: 0.03em; }
+.dl-os-hint b { color: var(--accent-bright); font-weight: 600; }
+.dl-sha {
+  margin: 0; text-align: center; font-size: 10.5px; color: var(--faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dl-safe {
+  margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 1.85;
+  padding: 14px 18px; border: 1px dashed var(--border-2); border-radius: 12px;
+}
+.dl-safe b { color: var(--text); }
+
+/* ---------- 版本对比表 ---------- */
+.cmp-wrap {
+  border: 1px solid var(--border); border-radius: 16px;
+  background: var(--card); overflow-x: auto;
+}
+.cmp-table {
+  width: 100%; border-collapse: collapse; min-width: 560px;
+  font-size: 13.5px;
+}
+.cmp-table th, .cmp-table td {
+  padding: 13px 18px; text-align: left; vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+.cmp-table thead th {
+  font-size: 12px; letter-spacing: 0.06em; color: var(--faint);
+  font-weight: 600; background: var(--panel);
+}
+.cmp-table tbody tr:last-child th, .cmp-table tbody tr:last-child td { border-bottom: none; }
+.cmp-table tbody th { font-weight: 600; color: var(--text); white-space: nowrap; }
+.cmp-table tbody tr:hover { background: var(--hover-soft); }
+.cmp-table td { color: var(--muted); }
+.cmp-win { color: var(--text) !important; background: var(--accent-glow); }
+.cmp-table thead .cmp-win { color: var(--accent-bright) !important; }
+/* 对勾：纯 CSS 画的 check（非 emoji） */
+.cmp-yes {
+  display: inline-block; vertical-align: -1px;
+  width: 12px; height: 6.5px; margin-right: 9px;
+  border-left: 2.2px solid #34d399; border-bottom: 2.2px solid #34d399;
+  transform: rotate(-45deg);
+}
+:root[data-theme="light"] .cmp-yes { border-color: #059669; }
+
+/* ---------- FAQ ---------- */
+.faq-list { max-width: 720px; margin: 0 auto; }
+.faq-item {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card); margin-bottom: 10px; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.faq-item[open] { border-color: var(--border-2); }
+.faq-item summary {
+  cursor: pointer; padding: 16px 20px;
+  font-weight: 600; font-size: 14.5px; color: var(--text);
+  list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  user-select: none;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: ""; flex: none;
+  width: 11px; height: 11px; margin-right: 3px;
+  border-right: 2px solid var(--faint); border-bottom: 2px solid var(--faint);
+  transform: rotate(45deg); transition: transform 0.2s;
+}
+.faq-item[open] summary::after { transform: rotate(-135deg); }
+.faq-item summary:hover { color: var(--accent-bright); }
+.faq-item p {
+  margin: 0; padding: 0 20px 18px;
+  font-size: 13.5px; color: var(--muted); line-height: 1.8;
+}
+
+/* ---------- 其它 ---------- */
+.dsk-subhead { margin-top: 68px; }
+.hero-cta #dl-hero-holder { display: inline-flex; }
+.cta-banner #dl-cta-holder { display: block; margin-top: 22px; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 900px) {
+  .dl-card { grid-template-columns: 1fr; gap: 22px; }
+  .dsk-body { min-height: 300px; }
+}
+@media (max-width: 560px) {
+  .nav .btn-ghost { display: none; }
+  .nav-tag { display: none; }
+  .hero-cta #dl-hero-holder { width: 100%; }
+  .dl-card { padding: 22px; }
+  .dl-info { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .dsk-main { padding: 10px; }
+}

@@ -40,7 +40,7 @@
     if (!window.__FUO_PALETTE__) {
       window.__FUO_PALETTE__ = true;
       var s = document.createElement('script');
-      s.src = SELF_BASE + 'palette.js?v=4';
+      s.src = SELF_BASE + 'palette.js?v=5';
       document.head.appendChild(s);
     }
     // PWA Service Worker（仅 https / localhost；scope = /drive/）

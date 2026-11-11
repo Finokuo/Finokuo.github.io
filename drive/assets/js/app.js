@@ -306,8 +306,9 @@
     uuid: 'tone-orange', diff: 'tone-rose', regex: 'tone-rose',
     qrcode: 'tone-cyan', hash: 'tone-emerald', url: 'tone-amber',
     imgcom: 'tone-orange', jwt: 'tone-violet', radix: 'tone-cyan', lorem: 'tone-amber',
-    // v0.8 办公集
+    // v0.8 办公集（v0.9：ai 迁桌面版，仍记录使用）
     todo: 'tone-teal', habit: 'tone-rose', pomodoro: 'tone-amber',
+    ai: 'tone-violet',
   };
   var TOOL_GLYPHS = {
     json: '{ }', color: '●', password: '***', textstats: 'Aa',
@@ -315,6 +316,7 @@
     regex: '.*', qrcode: '▣', hash: '#', url: '⇄', imgcom: '↘',
     jwt: '⟐', radix: '⇄2', lorem: '¶',
     todo: '☑', habit: '❤', pomodoro: '🍅',
+    ai: 'AI',
   };
   var TOOL_NAMES = {
     json: 'JSON 格式化', color: '颜色工具', password: '密码生成器',
@@ -324,6 +326,7 @@
     imgcom: '图片压缩', jwt: 'JWT 解码器', radix: '进制转换', lorem: 'Lorem 占位文本',
     // v0.8 办公集
     todo: '待办清单', habit: '习惯打卡', pomodoro: '番茄钟',
+    ai: 'AI 管理大师（桌面版）',
   };
 
   function recordTool(id) {

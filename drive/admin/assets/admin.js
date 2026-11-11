@@ -492,7 +492,7 @@
     box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
     if (PREVIEW) {
       renderAnnList([
-        { id: 'a1', content: 'Fuo Tools v0.8.1 上线：新增 AI 管理大师，修复管理台身份验证。', created_at: new Date().toISOString(), isCurrent: true },
+        { id: 'a1', content: 'Fuo Tools v0.9.0：桌面时代开启——AI 管理大师升级为桌面版专属，新增下载页。', created_at: new Date().toISOString(), isCurrent: true },
       ]);
       annLoaded = true;
       return;
@@ -595,7 +595,7 @@
     if (PREVIEW) {
       aTotal = 3;
       renderAudit([
-        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.8.1 上线…', created_at: new Date().toISOString() },
+        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.9.0 桌面时代开启…', created_at: new Date().toISOString() },
         { action: 'ban', target: 'RippleTester', detail: '封禁账号（管理台）', created_at: new Date(Date.now() - 3600000).toISOString() },
         { action: 'rename', target: 'OldName', detail: '→ NewName（Terminal）', created_at: new Date(Date.now() - 86400000).toISOString() },
       ]);

@@ -314,6 +314,18 @@
     });
   });
 
+  // v0.9：桌面版下载页链接（nav / footer）
+  document.querySelectorAll('[data-goto-fuotool]').forEach(function (el) {
+    var ft = PATHS && PATHS.FUOTOOL;
+    if (!ft) {
+      // 兜底：与 config.js 同规则（线上无前缀 / 沙盒预览带 /fuo 前缀 + 显式 index.html）
+      var p = window.location.pathname;
+      var inFuo = p.indexOf('/fuo/') !== -1;
+      ft = (inFuo ? p.slice(0, p.indexOf('/fuo/')) + '/fuo' : '') + '/fuotool' + (inFuo ? '/index.html' : '/');
+    }
+    el.href = ft;
+  });
+
   modal.addEventListener('click', function (e) {
     // 用 closest 向上查找：点在关闭按钮内的 SVG 图标上（e.target 是 svg/path）也能命中
     if (e.target.closest && e.target.closest('[data-close]')) closeModal();

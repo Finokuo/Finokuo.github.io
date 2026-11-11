@@ -161,9 +161,11 @@ svg { display: block; }
 .main-wrap { display: flex; flex-direction: column; min-width: 0; position: relative; }
 .content { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 24px 26px 56px; position: relative; z-index: 1; }
 
-/* 主区右上角常驻微光 */
+/* 主区右上角常驻微光
+   （v0.9 修复：原 right:-80px 会让移动端多出 80px 幽灵横向滚动，
+    改为 right:0 收进容器内，模糊光晕视觉几乎无差） */
 .main-wrap::before {
-  content: ""; position: absolute; top: -60px; right: -80px;
+  content: ""; position: absolute; top: -60px; right: 0;
   width: 420px; height: 300px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(45, 212, 191, 0.08), transparent);
   filter: blur(50px); pointer-events: none;
@@ -404,6 +406,16 @@ svg { display: block; }
 }
 .t-ic svg { width: 16px; height: 16px; }
 .tool span { font-size: 11px; font-weight: 550; }
+/* v0.9：工具卡「桌面版」小徽标（AI 管理大师已迁往桌面 EXE） */
+.tool .tb-desk {
+  display: inline-block; font-style: normal; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em; line-height: 1;
+  color: var(--accent-bright);
+  border: 1px solid var(--accent-glow-strong);
+  background: var(--accent-glow);
+  border-radius: 999px; padding: 2.5px 6px;
+  margin-left: 6px; vertical-align: 1px;
+}
 .tool:hover {
   transform: translateY(-2px);
   border-color: var(--ic-line, rgba(45, 212, 191, 0.5)); background: var(--card-hover);

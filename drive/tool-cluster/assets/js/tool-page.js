@@ -1648,7 +1648,42 @@
 
   /* =====================================================
    * 登录守卫：未登录 → 送回主页；被封禁 → 登出送回主页
+   * v0.9.1：JSON / Base64 为免登录试用工具——未登录放行，
+   *         页面顶部显示「游客试用」横幅（结果仅保存在本机）
    * ===================================================== */
+  function trialOn(slug) {
+    return !!(window.FUO_TRIAL_TOOLS && window.FUO_TRIAL_TOOLS[slug]);
+  }
+
+  /* 登录后回到来源页的 next 值：工具页=tool:<slug>，目录页=tools */
+  function nextKey() {
+    var slug = document.body.getAttribute('data-tool') || '';
+    return slug ? 'tool:' + slug : 'tools';
+  }
+
+  function showTrialBar() {
+    var wrap = document.querySelector('.tc-tool-wrap');
+    if (!wrap || document.getElementById('trial-bar')) return;
+    var slug = document.body.getAttribute('data-tool') || '';
+    var loginUrl = (PATHS.MAIN || '../../') + '?next=' + encodeURIComponent('tool:' + slug);
+    var bar = h('div', 'trial-bar');
+    bar.id = 'trial-bar';
+    bar.setAttribute('role', 'note');
+
+    var txt = h('span');
+    txt.appendChild(h('b', null, '游客试用模式'));
+    txt.appendChild(document.createTextNode(' · 结果仅保存在本机，不会云同步。'));
+    var act = h('span', 'trial-actions');
+    var a = h('a', null, '登录 / 注册后同步 →');
+    a.href = loginUrl;
+    act.appendChild(a);
+    bar.appendChild(txt);
+    bar.appendChild(act);
+
+    var card = wrap.querySelector('.tc-tool-card');
+    wrap.insertBefore(bar, card || wrap.firstChild);
+  }
+
   function guard() {
     if (PREVIEW) return;
     if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return; // 无法校验时放行，由工作台兜底
@@ -1656,11 +1691,16 @@
       var client = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
       client.auth.getSession().then(function (_a) {
         var session = _a.data && _a.data.session;
-        if (!session && PATHS && PATHS.MAIN) {
-          window.location.replace(PATHS.MAIN + '?next=tools');
+        if (!session) {
+          if (trialOn(document.body.getAttribute('data-tool') || '')) {
+            showTrialBar(); // 免登录试用：放行
+            return;
+          }
+          if (PATHS && PATHS.MAIN) {
+            window.location.replace(PATHS.MAIN + '?next=' + encodeURIComponent(nextKey()));
+          }
           return;
         }
-        if (!session) return;
         // 封禁检查（status 列不存在时静默跳过，不影响工具使用）
         client.from('profiles').select('status').eq('id', session.user.id).maybeSingle()
           .then(function (_b) {

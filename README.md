@@ -9,8 +9,7 @@
 线上地址结构（Finokuo.github.io）
 ├── finokuo.github.io/          → 根入口：已登录跳 /drive/，未登录跳 /main/
 ├── finokuo.github.io/main/     → 主页（暗色落地页 + 登录/注册）
-├── finokuo.github.io/drive/    → 工作台（登录后可见）
-└── finokuo.github.io/fuotool/  → 桌面版下载页（EXE 展示，公开可访问）
+└── finokuo.github.io/drive/    → 工作台（登录后可见）
 ```
 
 ## 一、仓库目录结构
@@ -21,16 +20,19 @@
 Finokuo.github.io/        ← GitHub 仓库名必须是这个（用户主页站点）
 ├── index.html            ← 来自 main 包（root/index.html，记得移到根目录）
 ├── supabase-setup.sql    ← 数据库脚本（不用部署，仅控制台执行用）
+├── _headers              ← v0.9.1 新增：安全响应头（GitHub Pages 不解析，迁移 CF/Netlify 自动生效）
+├── robots.txt + sitemap.xml ← v0.9.1 新增：SEO 爬虫规则与站点地图
+├── assets/og-cover.png   ← v0.9.1 新增：社交分享封面图（1200×630）
 ├── main/
 │   ├── index.html
+│   ├── terms.html        ← v0.9.1 新增：服务条款
+│   ├── privacy.html      ← v0.9.1 新增：隐私政策
 │   └── assets/
 │       ├── css/style.css
 │       ├── js/{config.js, theme.js, fx.js, app.js}
 │       └── vendor/supabase.min.js   ← SDK 已本地打包，不依赖 CDN！
-├── fuotool/              ← v0.9 桌面版下载页（公开，无需登录）
-│   ├── index.html
-│   └── assets/{css/fuotool.css, js/fuotool.js}
-│       （未来 EXE 发布时，安装包放 fuotool/download/ 子目录）
+├── fuotool/              ← v0.9 新增：Fuo Tool 桌面版下载页（AI 管理大师引导）
+│   └── index.html
 └── drive/
     ├── index.html
     └── assets/
@@ -92,27 +94,43 @@ git push -u origin main
 3. 下次访问根域名 → 已登录，直接进 `/drive/`；未登录 → 进 `/main/`
 4. 工作台「快捷笔记」支持**自动云同步**（防抖 900ms 保存到 Supabase）
 
-## 七、功能总览（v0.9.0）
+## 七、功能总览（v0.10.0）
 
-- **桌面时代开启（v0.9.0）**：新增 `/fuotool/` **桌面版下载页**（Hero / 下载卡 / 功能亮点 / 网页vs桌面对比表 / FAQ）；**AI 管理大师升级为桌面版（EXE）专属功能**——网页端保留入口，引导用户前往下载页获取安装包，完整功能（原生扫描/派发/回收）在桌面版中使用；主页导航与页脚新增「桌面版」入口；命令面板可搜「桌面/exe/下载」直达
 - **16 款本地工具**：JSON / 颜色 / 密码 / 文本统计 / 时间戳 / Base64 / UUID / Diff / 正则测试器 / 二维码 / 哈希 / URL / 图片压缩 / **JWT 解码器 / 进制转换（BigInt）/ Lorem 占位文本**
-- **办公集（独立工作区）**：**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步；AI 管理大师已迁往桌面版（网页端为引导页）
+- **办公集（新工作区）**：**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步
 - **云笔记增强**：**置顶** · **公开分享链接 `/n/?id=`**（任何人可读）· **单篇导出 .md / 全部导出 ZIP（零依赖自实现）** · **版本历史（约 10 分钟一版，滚动 20 版可恢复）** · 拖拽笔记到文件夹
 - **主题色系统**：6 种强调色（青/橙/粉/紫/绿/金）× 亮暗模式，设置页一键切换全站生效
 - **Ctrl+K 命令面板**：搜工具 / 页面 / 笔记 / 办公工具 / 操作 + **笔记全文搜索（内容命中带上下文片段）**
 - **工具热度榜**：目录页「常用」置顶（仅本机记录）
 - **工具配置分享**：密码生成器 / 颜色工具参数进 URL，复制链接即还原配置
 - **独立回收站页**：剩余天数进度条 · 批量恢复 · 清空
-- **图形化管理台** `/drive/admin/`（System 专属）：用户表格（搜索/封禁/改名）· 公告编辑器 · 审计日志时间线；**v0.8.1 身份验证健壮化**——查询失败自动重试 + 超时竞争，绝不把网络故障误判成 403；错误面板显示具体原因与当前登录身份，可一键重新验证
-- **头像直达公开主页（v0.8.1）**：任意页面点击侧栏头像即进入 `/u/?u=自己`
+- **图形化管理台** `/drive/admin/`（System 专属）：用户表格（搜索/封禁/改名）· 公告编辑器 · 审计日志时间线 · **反馈列表（查看/删除，v0.10.0）**
+- **用户反馈系统（v0.10.0）**：侧栏「反馈」按钮 + 主页页脚入口，游客与登录用户均可提交（≤500 字 + 可选联系方式）；仅 System 可查看/删除（RLS）；60 秒前端频控防刷
 - **导出账号数据**：设置页一键导出全部笔记/收藏/资料为 JSON 备份
 - 公告系统 · 公开用户主页 · 修改密码/简介 · Terminal（新 `admin` 命令直达图形台）
 - **PWA 可安装** · 收藏系统 · 最近使用 · 亮暗主题 · 侧栏折叠 · System 账号封禁体系
 
 > v0.8.0 修复：进入工作台侧栏先显示邮箱再切用户名的闪烁（现在直接展示用户名）
-> v0.8.1 修复：管理台把「查询失败」误判为 403，导致 System 本人被拒之门外的问题
-> v0.9.0 转型：AI 管理大师由「浏览器内协议探测」升级为「桌面版 EXE 原生能力」；
->            浏览器沙箱无法真正枚举/操控本机应用，故网页端改为下载引导页
+>
+> **v0.10.0 新增：**
+>
+> - **用户反馈系统**：网页端侧栏「反馈」按钮（含工作台原生侧栏）+ 主页页脚入口 → Supabase feedback 表（supabase-v7.sql）；游客可匿名提交，System 在管理台第四个「反馈」标签页查看/删除；删除自动留痕 audit_log
+> - **桌面版下载页焕新**：/fuotool/ 配色从金/橙切换为与主站一致的青色极光体系（保留编辑排版布局，品牌统一）；扫描演示重写——变速进度、停顿探测、终端日志流、分批亮起 AI（更真实）
+>
+> **v0.9.1 修复与增强（依据《改进方案》17 项清单）：**
+>
+> - **P0 安全**：密码最低 8 位 + 实时强度条 + 密码≠用户名 + 连续失败 5 次锁 15 分钟；忘记密码闭环（邮件重置→自动进「设置新密码」模式）；服务条款与隐私政策页（注册强制勾选）；`_headers` 安全响应头
+> - **P1 体验**：游客免登录试用 JSON / Base64（结果仅存本机，登录后同步）；登录后精准回跳原页面（`next` 参数贯通全站）；新用户工作台三步上手引导卡；主页/侧栏/页脚工具数全部统一为「17 款」
+> - **P2 SEO**：OG/Twitter 分享卡（含 1200×630 封面图）；JSON-LD 结构化数据；sitemap.xml + robots.txt；主页关键词段落
+> - **P3 打磨**：全站 35 个页面资源版本号统一 v=5；GitHub 链接修正为 Finokuo/Finokuo.github.io；注册弹窗邮箱 label 按模式切换
+>
+> **v0.9.0 新增：**
+> - **`/fuotool/` 桌面版下载页**：暗色编辑排版设计（流体粒子背景 + 衬线大标题），含 AI 管理大师控制台自动演示、PC / iPhone / Android 设备扫描交互演示、下载卡与 FAQ；下载按钮预留 `DOWNLOAD_URL` 常量，exe 发布后填入直链即全局生效
+> - **AI 管理大师网页端入口**：办公集金色引导卡 + 工作台办公集卡入口 + Ctrl+K 面板「Fuo Tool 桌面版」页面项，均指向 `/fuotool/`（完整功能在桌面版 exe 中提供）
+>
+> **v0.9.0 修复：**
+> - 管理台 `System` 误判：原版把「档案查询出错」（如未执行 supabase-admin.sql 导致 status 列缺失）也当成「非 System」拒之门外；现拆成 查询出错 / 无档案行（回退注册名判定）/ 用户名不符（显示实际用户名）三分支，提示可自查
+> - 点击头像直达个人展示页：工作台与全部子页面侧栏头像均可点击（含键盘 Enter/Space），跳转 `/drive/u/?u=<用户名>`
 
 ## 附：文件说明
 
@@ -120,30 +138,33 @@ git push -u origin main
 |------|------|
 | `root/index.html` | 根路径秒级分流（读 localStorage 判断登录态） |
 | `main/index.html` | 主页：Hero / 功能 / 工具一览 / 三步开始 / CTA / 登录注册弹窗 |
-| `fuotool/index.html` | **v0.9** 桌面版下载页：Hero / 下载卡（就绪开关在 fuotool.js 的 DL 配置）/ 功能 / 对比表 / FAQ |
-| `drive/index.html` | 工作台：问候、快捷笔记（云同步）、工具入口（16+3）、办公三件套卡（AI 卡带「桌面版」徽标） |
+| `drive/index.html` | 工作台：问候、快捷笔记（云同步）、工具入口（16+3）、办公三件套卡 |
 | `assets/js/config.js` | Supabase 地址 + Publishable Key + 路径配置（预览环境自动适配） |
 | `assets/js/theme.js` | 亮/暗主题 + 主题色（v0.8）切换与记忆 |
 | `assets/css/accent.css` | 6 种主题色变量覆盖层（v0.8 新增） |
 | `assets/vendor/supabase.min.js` | Supabase JS SDK（UMD 本地打包，约 220KB，无 CDN 依赖） |
-| `drive/office/` | 办公集：目录页 + 待办清单 + 习惯打卡 + 番茄钟 + AI 管理大师门槛页（v0.9 改为下载引导） + 共享数据层 |
+| `drive/office/` | 办公集：目录页 + 待办清单 + 习惯打卡 + 番茄钟 + 共享数据层 |
 | `drive/recycle/` | 独立回收站页（v0.8） |
 | `drive/n/index.html` | 公开笔记分享页（`/n/?id=<笔记ID>`，匿名可读） |
 | `drive/admin/` | 图形化管理台（System 专属，v0.8） |
+| `fuotool/index.html` | **v0.9 新增**：Fuo Tool 桌面版下载页（AI 管理大师引导，单文件自包含） |
+| `main/terms.html` + `main/privacy.html` | **v0.9.1 新增**：服务条款 / 隐私政策（注册强制勾选） |
+| `_headers` / `robots.txt` / `sitemap.xml` | **v0.9.1 新增**：安全响应头 + SEO 爬虫规则 |
+| `assets/og-cover.png` | **v0.9.1 新增**：社交分享封面图（1200×630） |
 | `supabase-setup.sql` | 建表 + RLS 策略 + 触发器（全量，幂等可重复执行） |
 | `supabase-notes.sql` | 云笔记增表（notes/folders/notes collections） |
 | `supabase-admin.sql` | System 管理员增量（profiles.status + 触发器） |
 | `supabase-v5.sql` | v0.7 增量：回收站软删除 / 公告表 / 操作日志 / 用户简介（幂等） |
 | `supabase-v6.sql` | **v0.8 增量**：笔记置顶 / 公开分享 / 版本历史 / 办公集云同步（幂等） |
+| `drive/assets/js/feedback.js` | **v0.10.0 新增**：共享反馈弹窗（侧栏按钮由 sidebar.js 注入） |
+| `supabase-v7.sql` | **v0.10.0 增量**：用户反馈表 feedback（幂等） |
 | `drive/manifest.json` + `drive/sw.js` | PWA：安装清单 + 离线缓存壳（仅 https 生效） |
 | `drive/u/index.html` | 公开用户主页（`/u/?u=用户名`，未登录可看） |
 
-## 附二：桌面版 EXE 发布指引（v0.9+）
+## 八、桌面版（Fuo Tool · AI 管理大师 v1.0.0）
 
-安装包就绪后只需两步，网页端无需再改版：
-
-1. 把 EXE 上传到仓库 `fuotool/download/` 目录（如 `FuoTools-Setup-0.9.0.exe`）；
-   注意 GitHub Pages 单文件上限 100MB，更大的包请用外部网盘并在 DL.url 填外链。
-2. 打开 `fuotool/assets/js/fuotool.js`，把顶部 `DL` 配置改为：
-   `ready: true`，并填好 `size` / `date` / `sha256`。
-   推送上线后，页面上三处下载按钮自动变为真实下载链接。
+- 下载页：`https://finokuo.github.io/fuotool/`；桌面版 exe 建议放 **GitHub Releases**（仓库单文件上限 100MB，Releases 支持到 2GB）：
+  1. 仓库 → Releases → Draft a new release → Tag `v1.0.0`
+  2. 上传 zip（命名 `FuoTool-win32-x64.zip`）→ Publish
+  3. 直链即为 `https://github.com/Finokuo/Finokuo.github.io/releases/latest/download/FuoTool-win32-x64.zip`（fuotool/index.html 顶部的 `DOWNLOAD_URL` 常量已指向该地址）
+- 功能：群聊式多智能体协作（同任务/智能分配）· 单聊 · 语言增强 · 文件交付 · 本机扫描 · 后端体系（Ollama / LM Studio / 火山方舟 / DashScope / DeepSeek / 自定义）

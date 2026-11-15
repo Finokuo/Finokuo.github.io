@@ -33,8 +33,6 @@ window.FUO_PATHS = {
   DRIVE: window.FUO_BASE + '/drive' + window.FUO_SUFFIX,
   // 工具集目录页：/drive/tool-cluster/（各工具在其下的独立子目录）
   TOOL_CLUSTER: window.FUO_BASE + '/drive/tool-cluster' + window.FUO_SUFFIX,
-  // v0.9：桌面版下载页（AI 管理大师 EXE 入口）
-  FUOTOOL: window.FUO_BASE + '/fuotool' + window.FUO_SUFFIX,
 };
 
 /**
@@ -43,3 +41,9 @@ window.FUO_PATHS = {
 window.FUO_TOOL_URL = function (slug) {
   return window.FUO_BASE + '/drive/tool-cluster/' + encodeURIComponent(slug) + window.FUO_SUFFIX;
 };
+
+/**
+ * v0.9.1 免登录试用白名单：这些工具未登录也可直接使用，
+ * 结果仅保存在本机（tool-page.js / sidebar.js 守卫放行 + 试用横幅）。
+ */
+window.FUO_TRIAL_TOOLS = { json: 1, base64: 1 };

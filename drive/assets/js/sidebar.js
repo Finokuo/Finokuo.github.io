@@ -33,7 +33,7 @@
     }
   } catch (e) { /* ignore */ }
 
-  /* ---------- 全站附带：命令面板 + Service Worker ---------- */
+  /* ---------- 全站附带：命令面板 + 反馈弹窗 + Service Worker ---------- */
   function loadSidecars() {
     if (!SELF_BASE) return;
     // Ctrl+K 命令面板（palette.js 自带去重，重复注入无害）
@@ -42,6 +42,13 @@
       var s = document.createElement('script');
       s.src = SELF_BASE + 'palette.js?v=5';
       document.head.appendChild(s);
+    }
+    // 用户反馈弹窗（feedback.js 自带去重；主页由页面自己引入）
+    if (!window.__FUO_FEEDBACK_JS__) {
+      window.__FUO_FEEDBACK_JS__ = true;
+      var f = document.createElement('script');
+      f.src = SELF_BASE + 'feedback.js?v=1';
+      document.head.appendChild(f);
     }
     // PWA Service Worker（仅 https / localhost；scope = /drive/）
     try {
@@ -169,7 +176,7 @@
         navItem('settings', active, settings, IC.gear, '设置', '') +
       '</nav>' +
       '<div class="side-user">' +
-        '<span class="avatar" id="sb-avatar" aria-hidden="true">F</span>' +
+        '<span class="avatar" id="sb-avatar" title="查看我的展示页">F</span>' +
         '<span class="side-user-meta">' +
           '<b id="sb-name">…</b>' +
           '<small id="sb-state" class="mono">—</small>' +
@@ -177,6 +184,27 @@
         '<button class="side-logout" id="sb-logout" type="button" title="退出登录" aria-label="退出登录">' + IC.out + '</button>' +
       '</div>';
     aside.hidden = false;
+    initAvatarLink(aside);
+  }
+
+  /* ---------- 头像可点击：直达个人展示页 /drive/u/?u=<username> ---------- */
+  var currentUsername = '';
+  function initAvatarLink(aside) {
+    var el = aside ? aside.querySelector('#sb-avatar') : document.getElementById('sb-avatar');
+    if (!el || el.getAttribute('data-jump') === '1') return;
+    el.setAttribute('data-jump', '1');
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', '查看我的展示页');
+    el.style.cursor = 'pointer';
+    function jump() {
+      if (!currentUsername) return; // 用户名尚未就绪时不跳转
+      window.location.href = (PATHS.U || '../../u/') + '?u=' + encodeURIComponent(currentUsername);
+    }
+    el.addEventListener('click', jump);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); }
+    });
   }
 
   /* ---------- 折叠（迷你列）：状态全站同步（localStorage） ---------- */
@@ -210,6 +238,15 @@
   }
 
   /* ---------- 会话：守卫 + 用户信息 ---------- */
+  /* v0.9.1：登录后回到来源页的 next 值（交给主页 app.js 解析） */
+  function nextKey() {
+    var slug = document.body.getAttribute('data-tool') || '';
+    if (slug) return 'tool:' + slug;
+    var page = document.body.getAttribute('data-page') || '';
+    if (page === 'office') return 'office';
+    return 'tools';
+  }
+
   function loadSession() {
     if (PREVIEW) {
       var nameEl0 = document.getElementById('sb-name');
@@ -226,7 +263,16 @@
     sb.auth.getSession().then(function (_a) {
       var session = _a.data && _a.data.session;
       if (!session) {
-        window.location.replace((PATHS.MAIN || '../../') + '?next=tools');
+        // v0.9.1：免登录试用工具（JSON / Base64）不送回主页，以游客身份放行
+        var slug = document.body.getAttribute('data-tool') || '';
+        if (slug && window.FUO_TRIAL_TOOLS && window.FUO_TRIAL_TOOLS[slug]) {
+          var gName = document.getElementById('sb-name');
+          var gState = document.getElementById('sb-state');
+          if (gName) gName.textContent = '游客';
+          if (gState) gState.textContent = '试用模式';
+          return;
+        }
+        window.location.replace((PATHS.MAIN || '../../') + '?next=' + encodeURIComponent(nextKey()));
         return;
       }
       fillUser(session.user);
@@ -265,12 +311,14 @@
         var name = (p && p.username) ||
           (u.user_metadata && u.user_metadata.username) ||
           (u.email || '').split('@')[0] || '用户';
+        currentUsername = String(name);
         if (nameEl) nameEl.textContent = name;
         if (avatar) avatar.textContent = (name[0] || 'F').toUpperCase();
       })
       .catch(function () {
         var fb = (u.user_metadata && u.user_metadata.username) ||
           (u.email || '').split('@')[0] || '已登录';
+        currentUsername = String(fb);
         if (nameEl) nameEl.textContent = fb;
         if (avatar) avatar.textContent = (fb[0] || 'F').toUpperCase();
       });
@@ -301,42 +349,6 @@
           badge.hidden = true;
         }
       });
-  }
-
-  /* ---------- v0.8.1：头像点击 → 我的公开主页（/u/?u=用户名） ---------- */
-  function goMyProfile() {
-    var name = '';
-    var n1 = document.getElementById('sb-name');
-    var n2 = document.getElementById('user-email'); // 工作台原生侧栏的用户名元素
-    [n1, n2].some(function (el) {
-      if (!el) return false;
-      var t = (el.textContent || '').trim();
-      if (t && t !== '…' && t !== '—' && t !== '未登录' && t !== '预览模式') { name = t; return true; }
-      return false;
-    });
-    if (!name) return;
-    var u = PATHS.U || '../../u/';
-    window.location.href = u + (u.indexOf('?') === -1 ? '?' : '&') + 'u=' + encodeURIComponent(name);
-  }
-
-  function initAvatarLink() {
-    if (PREVIEW) return;
-    ['sb-avatar', 'user-avatar'].forEach(function (id) {
-      var av = document.getElementById(id);
-      if (!av || av.__fuoAvatarLinked) return;
-      av.__fuoAvatarLinked = true;
-      av.classList.add('is-link');
-      av.title = '查看我的公开主页';
-      av.setAttribute('role', 'link');
-      av.setAttribute('tabindex', '0');
-      av.setAttribute('aria-label', '查看我的公开主页');
-      av.addEventListener('click', goMyProfile);
-      av.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault(); goMyProfile();
-        }
-      });
-    });
   }
 
   /* ---------- 公告横幅（announcements 表，v5；未建表/无公告静默） ---------- */
@@ -397,6 +409,26 @@
     wrap.insertBefore(bar, topbar ? topbar.nextSibling : wrap.firstChild);
   }
 
+  /* ---------- 侧栏反馈按钮（v0.10.0）：注入式与工作台原生侧栏通用 ---------- */
+  function injectFeedbackButton(aside) {
+    var userRow = aside.querySelector('.side-user');
+    if (!userRow || userRow.querySelector('.sb-feedback')) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sb-feedback';
+    btn.title = '反馈';
+    btn.setAttribute('aria-label', '打开反馈');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M21 12a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.9-.36-4.1-1L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z" ' +
+      'stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    btn.addEventListener('click', function () {
+      if (window.FUO_FEEDBACK) window.FUO_FEEDBACK.open();
+    });
+    var anchor = userRow.querySelector('#sb-logout') || userRow.querySelector('.side-logout');
+    if (anchor) userRow.insertBefore(btn, anchor);
+    else userRow.appendChild(btn);
+  }
+
   /* ---------- 启动 ---------- */
   function boot() {
     var aside = document.getElementById('sidebar');
@@ -404,9 +436,9 @@
     // 空壳才注入模板；工作台原生侧栏（已有子元素）只挂折叠按钮
     if (!aside.firstChild) buildSidebar(aside.getAttribute('data-active') || 'tools');
     initCollapse(aside);
+    injectFeedbackButton(aside);
     renderCrumb();
     loadSidecars();
-    initAvatarLink(); // v0.8.1：头像 → 公开主页（两种侧栏都生效）
     if (aside.getAttribute('data-guard') === '1') {
       loadSession(); // 守卫 + 用户信息 + 公告
       return;

@@ -1,347 +1,1076 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fuo Tools 桌面版 — AI 管理大师，离开浏览器</title>
-  <meta name="description" content="Fuo Tools 桌面版（EXE）下载页：全站最强的 AI 管理大师搬进原生应用——扫描本机 AI、一键派发任务、自动回收回复与文件。与网页版同账号数据互通。" />
-  <meta name="color-scheme" content="dark light" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
-  <meta name="theme-color" content="#101014" />
-  <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
-  <script src="../main/assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../main/assets/css/style.css?v=1" />
-  <link rel="stylesheet" href="../drive/assets/css/accent.css?v=1" />
-  <link rel="stylesheet" href="assets/css/fuotool.css?v=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuo Tool 桌面版 · AI 管理大师，指挥你所有的 AI</title>
+<meta name="description" content="Fuo Tool 桌面版下载页：AI 管理大师可扫描电脑 / iPhone / Android 上已有的 AI，一句话牵动 WorkBuddy、AutoClaw、Doubao、Qwen 等智能体协同干活，消息与文件直接回传。">
+<meta name="theme-color" content="#07080a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307080a' stroke='rgba(45,212,191,.55)' stroke-width='1.4'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='%232dd4bf' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* =====================================================
+ * Fuo Tool 桌面版下载页 · 设计语言承接「网页设计」参考稿
+ * 暗色编辑排版 + 流体粒子 + 金/橙/青三强调色
+ * ===================================================== */
+:root{
+  --bg:#07080a;
+  --bg-soft:#0b0d10;
+  --panel:#0e1114;
+  --panel-2:#12161b;
+  --line:rgba(255,255,255,.08);
+  --line-strong:rgba(255,255,255,.14);
+  --text:#f2f1ed;
+  --text-dim:#a7a9b4;
+  --text-faint:#6b6d78;
+  --accent:#2dd4bf;
+  --accent-2:#5eead4;
+  --accent-3:#7fb7c4;
+  --accent-soft:rgba(45,212,191,.12);
+  --serif:'Fraunces','Noto Serif SC',Georgia,'Songti SC','SimSun',serif;
+  --sans:'Inter','Noto Sans SC',system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Consolas,'Noto Sans SC',monospace;
+  --maxw:1180px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;
+}
+::selection{background:rgba(45,212,191,.28);color:var(--text)}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ---------- 背景层：流体粒子 + 暗角 + 颗粒 ---------- */
+#fluid{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 120% at 50% 0%,transparent 55%,rgba(0,0,0,.55) 100%);}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");}
+
+/* ---------- 顶部滚动进度 ---------- */
+.progress-top{position:fixed;top:0;left:0;right:0;height:2px;z-index:90;background:transparent;}
+.progress-top i{display:block;height:100%;width:0;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+
+/* ---------- 顶栏 ---------- */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:80;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.1rem 2.4rem;transition:background .35s ease,border-color .35s ease,padding .35s ease;
+  border-bottom:1px solid transparent;}
+.topbar.is-scrolled{background:rgba(7,8,10,.72);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);border-bottom-color:var(--line);padding:.8rem 2.4rem;}
+.brand{font-family:var(--serif);font-size:1rem;letter-spacing:.02em;color:var(--text-dim);
+  text-decoration:none;white-space:nowrap;}
+.brand b{color:var(--accent);font-weight:500;}
+.top-nav{display:flex;gap:1.8rem;}
+.top-nav a{font-size:.82rem;letter-spacing:.06em;color:var(--text-dim);text-decoration:none;
+  padding:.3rem 0;position:relative;transition:color .25s ease;}
+.top-nav a::after{content:"";position:absolute;left:0;bottom:-2px;width:0;height:1px;
+  background:var(--accent);transition:width .3s ease;}
+.top-nav a:hover,.top-nav a.is-active{color:var(--text);}
+.top-nav a.is-active::after{width:100%;}
+.pill{font-size:.82rem;font-weight:500;letter-spacing:.04em;text-decoration:none;
+  color:#04211c;background:linear-gradient(135deg,var(--accent),#14b8a6);
+  padding:.55rem 1.25rem;border-radius:999px;white-space:nowrap;
+  transition:transform .25s ease,box-shadow .25s ease;}
+.pill:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(45,212,191,.28);}
+
+/* ---------- 通用排版 ---------- */
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;position:relative;z-index:2;}
+.eyebrow{font-size:.78rem;font-weight:500;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--accent);display:inline-flex;align-items:center;gap:.6em;}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--accent);opacity:.6;}
+h1.title{font-family:var(--serif);font-weight:400;line-height:1.06;letter-spacing:-.01em;}
+h1.title em,h2 em{font-style:italic;color:var(--accent);}
+.section-title{font-family:var(--serif);font-weight:400;font-size:clamp(2rem,4.4vw,3.4rem);
+  line-height:1.12;margin-top:1.1rem;}
+.lead{font-size:1.05rem;color:var(--text-dim);line-height:1.75;font-weight:300;}
+.section-sub{margin-top:1.3rem;max-width:640px;}
+
+/* 章节幽灵大数字 */
+.ghost{position:absolute;top:-1.2rem;right:-1rem;z-index:-1;user-select:none;pointer-events:none;
+  font-family:var(--serif);font-size:clamp(9rem,20vw,17rem);font-weight:300;line-height:1;
+  background:linear-gradient(180deg,rgba(45,212,191,.16),rgba(94,234,212,.03));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;z-index:2;min-height:100svh;
+  display:flex;align-items:center;padding:9rem 6vw 5rem;}
+.hero .wrap{max-width:1300px;}
+.hero .big{font-size:clamp(2.7rem,7.6vw,6.4rem);}
+.hero .lead{margin-top:2rem;max-width:660px;font-size:1.1rem;}
+.cta-row{margin-top:2.8rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:.6em;cursor:pointer;
+  font-size:1rem;font-weight:600;letter-spacing:.02em;
+  color:#04211c;background:linear-gradient(135deg,var(--accent) 0%,#14b8a6 55%,var(--accent-2) 130%);
+  border:none;border-radius:999px;padding:1rem 2.1rem;
+  position:relative;overflow:hidden;
+  transition:transform .28s ease,box-shadow .28s ease;}
+.btn-primary::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-20deg);transition:left .6s ease;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(45,212,191,.32);}
+.btn-primary:hover::after{left:130%;}
+.btn-primary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+.btn-ghost{display:inline-flex;align-items:center;gap:.6em;text-decoration:none;
+  font-size:.95rem;color:var(--text-dim);border:1px solid var(--line-strong);
+  border-radius:999px;padding:1rem 1.8rem;transition:all .28s ease;}
+.btn-ghost:hover{border-color:rgba(45,212,191,.5);color:var(--text);background:var(--accent-soft);}
+.btn-ghost:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+.hero-meta{margin-top:3rem;display:flex;gap:2.6rem;flex-wrap:wrap;}
+.hero-meta div{display:flex;flex-direction:column;gap:.35rem;}
+.hero-meta span{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text-faint);}
+.hero-meta b{font-family:var(--serif);font-weight:400;font-size:1.1rem;color:var(--text-dim);}
+.hero-rule{margin-top:2.6rem;height:1px;background:var(--line);max-width:560px;}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+  font-size:.72rem;letter-spacing:.3em;color:var(--text-faint);
+  display:flex;flex-direction:column;align-items:center;gap:.7rem;}
+.scroll-hint::after{content:"";width:1px;height:34px;
+  background:linear-gradient(180deg,var(--accent),transparent);animation:drip 2.2s ease infinite;}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}
+  55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- 数字带 ---------- */
+.stats{position:relative;z-index:2;padding:4.5rem 0;border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);background:rgba(21,23,30,.42);}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;}
+.stat .num{font-family:var(--serif);font-size:clamp(2.4rem,4.6vw,3.9rem);font-weight:300;
+  color:var(--accent);line-height:1;}
+.stat .num small{font-size:.42em;color:var(--text-faint);}
+.stat .lab{margin-top:.9rem;color:var(--text-dim);font-size:.9rem;line-height:1.55;font-weight:300;}
+
+/* ---------- 章节容器 ---------- */
+.chapter-sec{position:relative;z-index:2;padding:7.5rem 6vw;}
+.chapter-sec.alt{background:rgba(21,23,30,.5);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.chapter-sec .wrap{max-width:var(--maxw);}
+
+/* 两栏 */
+.two-col{display:grid;grid-template-columns:1fr 1.06fr;gap:3.4rem;margin-top:2.8rem;align-items:start;}
+.list-style{list-style:none;margin-top:1.7rem;}
+.list-style li{position:relative;padding-left:1.8rem;margin-bottom:1.15rem;
+  color:var(--text-dim);line-height:1.7;font-weight:300;font-size:.97rem;}
+.list-style li::before{content:"";position:absolute;left:0;top:.68em;width:8px;height:8px;
+  border-radius:50%;background:var(--accent);opacity:.7;}
+.list-style li b{color:var(--text);font-weight:500;}
+
+/* ---------- 控制台演示窗 ---------- */
+.console{background:linear-gradient(180deg,#171a22,#14161d);
+  border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);}
+.console-bar{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;
+  border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);}
+.console-bar i{width:11px;height:11px;border-radius:50%;display:inline-block;}
+.console-bar i:nth-child(1){background:#e0655a;}
+.console-bar i:nth-child(2){background:#e0b25a;}
+.console-bar i:nth-child(3){background:#7ec48a;}
+.console-bar span{margin-left:auto;font-family:var(--mono);font-size:.7rem;
+  letter-spacing:.12em;color:var(--text-faint);}
+.console-body{padding:1.3rem 1.4rem 1.5rem;font-family:var(--mono);
+  font-size:.8rem;line-height:1.9;color:var(--text-dim);
+  min-height:330px;white-space:pre-wrap;word-break:break-all;}
+.console-body .c-cmd{color:var(--text);}
+.console-body .c-ok{color:var(--accent-3);}
+.console-body .c-gold{color:var(--accent);}
+.console-body .c-warn{color:var(--accent-2);}
+.console-body .c-dim{color:var(--text-faint);}
+.caret{display:inline-block;width:.55em;height:1.05em;vertical-align:-.18em;
+  background:var(--accent);animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0}}
+
+/* 三步条 */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3rem;}
+.step{border:1px solid var(--line);border-radius:14px;padding:1.5rem 1.4rem;
+  background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.008));
+  transition:transform .35s ease,border-color .35s ease;}
+.step:hover{transform:translateY(-3px);border-color:rgba(45,212,191,.38);}
+.step .k{font-family:var(--serif);font-size:1.6rem;color:var(--accent);font-weight:300;}
+.step h3{font-family:var(--serif);font-weight:500;font-size:1.08rem;margin-top:.55rem;}
+.step p{font-size:.85rem;color:var(--text-dim);line-height:1.65;margin-top:.45rem;font-weight:300;}
+
+/* ---------- 设备扫描演示 ---------- */
+.scan-lab{margin-top:2.8rem;border:1px solid var(--line-strong);border-radius:16px;
+  background:var(--panel);overflow:hidden;}
+.scan-devices{display:flex;gap:.6rem;padding:1.1rem 1.3rem;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);}
+.scan-devices .dv{font-size:.86rem;letter-spacing:.04em;color:var(--text-dim);cursor:pointer;
+  border:1px solid var(--line);background:transparent;border-radius:999px;
+  padding:.55rem 1.25rem;transition:all .25s ease;}
+.scan-devices .dv:hover{border-color:rgba(45,212,191,.45);color:var(--text);}
+.scan-devices .dv.is-on{color:#04211c;background:linear-gradient(135deg,var(--accent),#14b8a6);
+  border-color:transparent;font-weight:600;}
+.scan-devices .dv:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.scan-main{display:grid;grid-template-columns:1fr 1.35fr;min-height:300px;}
+.scan-side{padding:1.7rem 1.6rem;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:1rem;}
+.scan-side .hint-t{font-size:.74rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text-faint);}
+.scan-side p{font-size:.88rem;color:var(--text-dim);line-height:1.75;font-weight:300;}
+.scan-progress{margin-top:auto;}
+.scan-progress .bar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;}
+.scan-progress .bar i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .12s linear;}
+.scan-progress .pct{font-family:var(--mono);font-size:.72rem;color:var(--text-faint);margin-top:.5rem;}
+.scan-list{padding:1.4rem 1.5rem;display:flex;flex-direction:column;gap:.55rem;
+  max-height:340px;overflow-y:auto;}
+.ai-row{display:flex;align-items:center;gap:.9rem;padding:.72rem .95rem;
+  border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.018);
+  opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease,border-color .3s ease;}
+.ai-row.is-in{opacity:1;transform:translateY(0);}
+.ai-row:hover{border-color:rgba(127,183,196,.45);}
+.ai-row .dot{width:34px;height:34px;border-radius:10px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:1rem;color:var(--accent);
+  background:var(--accent-soft);border:1px solid rgba(45,212,191,.25);}
+.ai-row .nm{font-size:.92rem;color:var(--text);}
+.ai-row .kd{font-family:var(--mono);font-size:.7rem;color:var(--text-faint);margin-top:.15rem;}
+.ai-row .st{margin-left:auto;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;
+  color:var(--accent-3);border:1px solid rgba(127,183,196,.35);border-radius:999px;
+  padding:.22rem .6rem;white-space:nowrap;}
+.scan-empty{margin:auto;text-align:center;color:var(--text-faint);
+  font-family:var(--mono);font-size:.8rem;line-height:2.2;}
+/* 扫描过程日志流（终端感） */
+.scan-log{display:flex;flex-direction:column;gap:.12rem;padding:.1rem .15rem .55rem;}
+.scan-logline{font-family:var(--mono);font-size:.7rem;color:var(--text-faint);line-height:1.85;
+  opacity:0;transform:translateX(-6px);animation:fuo-log-in .35s ease forwards;}
+.scan-logline.log-done{color:var(--accent);}
+@keyframes fuo-log-in{to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion:reduce){.scan-logline{animation:none;opacity:1;transform:none;}}
+.scan-btn{margin-top:.2rem;cursor:pointer;border:1px solid rgba(45,212,191,.5);
+  background:var(--accent-soft);color:var(--accent);border-radius:10px;
+  padding:.75rem 1rem;font-size:.88rem;font-weight:500;letter-spacing:.04em;
+  transition:all .25s ease;}
+.scan-btn:hover:not(:disabled){background:rgba(45,212,191,.2);}
+.scan-btn:disabled{opacity:.45;cursor:wait;}
+.scan-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ---------- 卡片行 ---------- */
+.card-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem;margin-top:2.8rem;}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01));
+  border:1px solid var(--line);border-radius:14px;padding:1.7rem 1.5rem;
+  transition:transform .38s ease,border-color .38s ease,background .38s ease;}
+.card:hover{transform:translateY(-4px);border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.03);}
+.card .ic{font-family:var(--serif);font-size:1.75rem;color:var(--accent);font-weight:400;}
+.card h3{font-family:var(--serif);font-weight:500;font-size:1.12rem;margin-top:.7rem;}
+.card p{font-size:.86rem;color:var(--text-dim);line-height:1.68;margin-top:.5rem;font-weight:300;}
+
+/* ---------- 下载区 ---------- */
+.dl-card{margin-top:2.8rem;border:1px solid rgba(45,212,191,.3);border-radius:20px;
+  padding:3rem 2.6rem;position:relative;overflow:hidden;
+  background:
+    radial-gradient(90% 130% at 85% -10%,rgba(45,212,191,.13),transparent 55%),
+    radial-gradient(70% 120% at 0% 110%,rgba(127,183,196,.08),transparent 55%),
+    var(--panel);}
+.dl-card h3{font-family:var(--serif);font-weight:400;font-size:1.9rem;}
+.dl-card .ver{font-family:var(--mono);font-size:.78rem;color:var(--text-faint);margin-top:.5rem;}
+.dl-actions{margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;}
+.dl-note{margin-top:1.6rem;display:flex;flex-wrap:wrap;gap:.5rem 1.6rem;
+  font-size:.8rem;color:var(--text-faint);}
+.dl-note span{display:inline-flex;align-items:center;gap:.45em;}
+.dl-note i{width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.65;display:inline-block;}
+.dl-os{margin-top:2.4rem;padding-top:1.6rem;border-top:1px dashed var(--line-strong);
+  display:flex;gap:2.4rem;flex-wrap:wrap;}
+.dl-os .os b{font-size:.9rem;color:var(--text-dim);font-weight:500;}
+.dl-os .os span{display:block;font-size:.74rem;color:var(--text-faint);margin-top:.25rem;}
+.web-keep{margin-top:2.2rem;font-size:.88rem;color:var(--text-dim);line-height:1.8;font-weight:300;}
+.web-keep a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(45,212,191,.35);}
+.web-keep a:hover{border-bottom-color:var(--accent);}
+
+/* ---------- FAQ ---------- */
+.faq{margin-top:2.6rem;display:flex;flex-direction:column;gap:.9rem;max-width:820px;}
+details{border:1px solid var(--line);border-radius:13px;background:var(--panel);
+  overflow:hidden;transition:border-color .3s ease;}
+details[open]{border-color:rgba(45,212,191,.35);}
+summary{cursor:pointer;list-style:none;padding:1.15rem 1.4rem;
+  font-family:var(--serif);font-size:1.05rem;font-weight:500;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+summary::-webkit-details-marker{display:none;}
+summary::after{content:"+";font-family:var(--sans);font-size:1.25rem;color:var(--accent);
+  transition:transform .3s ease;flex:none;}
+details[open] summary::after{transform:rotate(45deg);}
+details .a{padding:0 1.4rem 1.3rem;font-size:.9rem;color:var(--text-dim);
+  line-height:1.8;font-weight:300;}
+details .a b{color:var(--text);font-weight:500;}
+
+/* ---------- 页脚 ---------- */
+.foot{position:relative;z-index:2;margin-top:auto;border-top:1px solid var(--line);
+  background:rgba(14,15,19,.85);backdrop-filter:blur(10px);}
+.foot .wrap{display:flex;align-items:center;justify-content:space-between;gap:1.4rem;
+  padding:2.2rem 0;flex-wrap:wrap;}
+.foot .f-brand{font-family:var(--serif);font-size:1rem;color:var(--text-dim);}
+.foot .f-brand b{color:var(--accent);font-weight:500;}
+.foot nav{display:flex;gap:1.6rem;flex-wrap:wrap;}
+.foot nav a{font-size:.82rem;color:var(--text-dim);text-decoration:none;transition:color .25s ease;}
+.foot nav a:hover{color:var(--accent);}
+.foot .f-meta{font-family:var(--mono);font-size:.7rem;color:var(--text-faint);letter-spacing:.06em;}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translate(-50%,16px);z-index:99;
+  background:var(--panel-2);border:1px solid rgba(45,212,191,.45);border-radius:12px;
+  padding:.85rem 1.4rem;font-size:.86rem;color:var(--text);max-width:min(88vw,480px);
+  text-align:center;line-height:1.6;box-shadow:0 14px 40px rgba(0,0,0,.5);
+  opacity:0;visibility:hidden;transition:opacity .3s ease,transform .3s ease,visibility .3s;}
+.toast.is-in{opacity:1;visibility:visible;transform:translate(-50%,0);}
+
+/* ---------- 滚动揭示 ---------- */
+.reveal{opacity:0;transform:translateY(20px);
+  transition:opacity .65s ease,transform .65s ease;}
+.reveal.is-in{opacity:1;transform:translateY(0);}
+.reveal[data-d="1"]{transition-delay:.08s;}
+.reveal[data-d="2"]{transition-delay:.16s;}
+.reveal[data-d="3"]{transition-delay:.24s;}
+.reveal[data-d="4"]{transition-delay:.32s;}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:960px){
+  .two-col{grid-template-columns:1fr;gap:2.2rem;}
+  .scan-main{grid-template-columns:1fr;}
+  .scan-side{border-right:none;border-bottom:1px solid var(--line);}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:1.6rem 2rem;}
+  .steps{grid-template-columns:1fr;gap:.9rem;}
+  .ghost{font-size:clamp(7rem,22vw,10rem);top:-.6rem;right:-.4rem;}
+}
+@media (max-width:760px){
+  .topbar{padding:.9rem 1.2rem;}
+  .topbar.is-scrolled{padding:.7rem 1.2rem;}
+  .top-nav{display:none;}
+  .chapter-sec{padding:5rem 6vw;}
+  .hero{padding:7.5rem 6vw 4.5rem;}
+  .hero-meta{gap:1.6rem;}
+  .btn-primary,.btn-ghost{width:100%;justify-content:center;}
+  .console-body{font-size:.72rem;min-height:300px;}
+  .dl-card{padding:2.2rem 1.5rem;}
+  .foot .wrap{flex-direction:column;align-items:flex-start;gap:1rem;}
+  .scroll-hint{display:none;}
+}
+/* 减弱动效偏好 */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;}
+  .reveal{opacity:1;transform:none;}
+}
+</style>
 </head>
 <body>
-  <!-- 极光光斑（装饰） -->
-  <div class="aurora aurora-a" aria-hidden="true"></div>
-  <div class="aurora aurora-b" aria-hidden="true"></div>
 
-  <!-- ===== 顶部导航 ===== -->
-  <header class="nav">
-    <div class="container nav-inner">
-      <a class="brand" href="./" aria-label="Fuo Tools 桌面版下载页">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" width="18" height="18" fill="none"><path d="M11 23V9h10M11 16h8.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-        </span>
-        <span class="brand-name">Fuo Tools <span class="nav-tag mono">DESKTOP</span></span>
-      </a>
-      <nav class="nav-links" aria-label="页面导航">
-        <a href="#download">下载</a>
-        <a href="#features">AI 管理大师</a>
-        <a href="#compare">版本对比</a>
-        <a href="#faq">常见问题</a>
-      </nav>
-      <div class="nav-actions">
-        <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
-          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+<canvas id="fluid" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="progress-top" aria-hidden="true"><i id="scrollBar"></i></div>
+
+<header class="topbar" id="topbar">
+  <a class="brand" href="#top">Fuo Tool <b>·</b> Desktop</a>
+  <nav class="top-nav" aria-label="页面导航">
+    <a href="#flagship" data-sec="flagship">AI 管理大师</a>
+    <a href="#scan" data-sec="scan">设备扫描</a>
+    <a href="#trust" data-sec="trust">交付与安全</a>
+    <a href="#faq" data-sec="faq">常见问题</a>
+  </nav>
+  <a class="pill" href="#download">下载桌面版</a>
+</header>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow reveal is-in">Fuo Tool · Desktop Edition</p>
+      <h1 class="title big reveal is-in" data-d="1">让设备上的每一个 AI<br><em>听你调遣</em></h1>
+      <p class="lead reveal is-in" data-d="2">
+        全新桌面版带来旗舰功能「AI 管理大师」：扫描电脑或手机上已有的 AI，
+        一句话牵动 WorkBuddy、AutoClaw、Doubao、Qwen 等智能体协同干活——
+        消息与成果文件，直接回传到你手里。
+      </p>
+      <div class="cta-row reveal is-in" data-d="3">
+        <button class="btn-primary" type="button" data-download>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4.5 20h15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          下载 Windows 版
         </button>
-        <button class="btn btn-ghost" type="button" data-goto-web>进入网页版</button>
-        <a class="btn btn-primary" href="#download">获取桌面版</a>
+        <a class="btn-ghost" href="#flagship">了解 AI 管理大师
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M12 4v15m0 0 6-6m-6 6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <div class="hero-rule reveal is-in" data-d="4"></div>
+      <div class="hero-meta reveal is-in" data-d="4">
+        <div><span>当前版本</span><b>v1.0.0 · Windows x64</b></div>
+        <div><span>支持平台</span><b>Windows 10 及以上</b></div>
+        <div><span>安装体积</span><b>约 90 MB</b></div>
+        <div><span>价格</span><b>免费使用</b></div>
       </div>
     </div>
-  </header>
+    <div class="scroll-hint" aria-hidden="true">向下滚动</div>
+  </section>
 
-  <main>
-    <!-- ===== Hero ===== -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="hero-badge">
-            <span class="dot" aria-hidden="true"></span>
-            <span class="mono">FUO TOOLS DESKTOP · v0.9.0</span>
-          </span>
-          <h1 class="hero-title">
-            网页版之上，<br />
-            <span class="lit-text">桌面版来了。</span>
-          </h1>
-          <p class="hero-sub">
-            全站最强的「AI 管理大师」搬进原生应用：真正扫描本机装了哪些 AI，
-            把任务一键派发出去，回复与交付文件自动收回来。
-            你熟悉的 17 款工具与云端数据，原样随身。
+  <!-- ============ 数字带 ============ -->
+  <section class="stats" aria-label="核心数字">
+    <div class="wrap stat-grid">
+      <div class="stat reveal"><div class="num"><span data-count="4">0</span><small>+</small></div>
+        <div class="lab">可牵动的智能体生态：WorkBuddy、AutoClaw、Doubao、Qwen……</div></div>
+      <div class="stat reveal" data-d="1"><div class="num"><span data-count="3">0</span><small>类</small></div>
+        <div class="lab">设备扫描全覆盖：PC、iPhone、Android 逐台识别已装 AI。</div></div>
+      <div class="stat reveal" data-d="2"><div class="num"><span data-count="17">0</span><small>款</small></div>
+        <div class="lab">网页版全套工具随身携带，同一账号数据互通。</div></div>
+      <div class="stat reveal" data-d="3"><div class="num"><span data-count="100">0</span><small>%</small></div>
+        <div class="lab">扫描与调度在本机完成，不经任何第三方服务器中转。</div></div>
+    </div>
+  </section>
+
+  <!-- ============ 01 · AI 管理大师 ============ -->
+  <section class="chapter-sec" id="flagship">
+    <div class="wrap">
+      <span class="ghost" aria-hidden="true">01</span>
+      <p class="eyebrow reveal">01 / Flagship · AI 管理大师</p>
+      <h2 class="section-title reveal" data-d="1">一个对话框，<em>调度所有 AI</em></h2>
+      <div class="two-col">
+        <div class="reveal" data-d="2">
+          <p class="lead">
+            AI 管理大师是 Fuo Tool 的全站最强功能——它不替你干活，它指挥你已经拥有的每一个 AI 替你干活。
+            你只需要用一句话说出目标，大师负责拆解任务、分派智能体、盯进度、收成果。
           </p>
-          <div class="hero-cta">
-            <!-- 下载按钮状态由 fuotool.js 按 DL 配置渲染（打包上传中 / 正式下载） -->
-            <span id="dl-hero-holder" aria-live="polite"></span>
-            <a class="btn btn-outline btn-lg" href="#" data-goto-web>继续使用网页版</a>
-          </div>
-          <p class="hero-trust mono">免费 · 与网页版同账号云同步 · Windows 10 / 11</p>
+          <ul class="list-style">
+            <li><b>跨智能体指挥：</b>WorkBuddy、AutoClaw、Doubao、Qwen……扫描到的 AI 都可被牵动，能力互补、各司其职。</li>
+            <li><b>自然语言下指令：</b>「把周报整理成 PPT 大纲，英文文案交给 Doubao 润色」——大师自动拆解、分派、跟进。</li>
+            <li><b>消息回传：</b>每个智能体的回复实时汇总在同一条时间线，谁在干什么、进展到哪，一目了然。</li>
+            <li><b>文件交付：</b>产出的文档、图片、表格按日期自动归档落盘，打开即用。</li>
+          </ul>
         </div>
-
-        <!-- 桌面应用窗口预览模型（纯 CSS 装饰） -->
-        <div class="hero-visual" aria-hidden="true">
-          <div class="mock dsk-mock">
-            <div class="mock-bar">
-              <i class="mdot"></i><i class="mdot"></i><i class="mdot"></i>
-              <span class="mono">Fuo Tools Desktop — AI 管理大师</span>
-            </div>
-            <div class="mock-body dsk-body">
-              <div class="mock-side">
-                <span class="ms-item">工作台</span>
-                <span class="ms-item">工具集</span>
-                <span class="ms-item">办公集</span>
-                <span class="ms-item is-on">AI 管理大师</span>
-              </div>
-              <div class="dsk-main">
-                <div class="dsk-scan">
-                  <i class="dsk-scan-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3M6.7 6.7l2.1 2.1M15.2 15.2l2.1 2.1M17.3 6.7l-2.1 2.1M8.8 15.2l-2.1 2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></i>
-                  <b>扫描完成</b>
-                  <span class="mono">本机发现 6 个 AI</span>
-                </div>
-                <div class="dsk-task">
-                  <div class="dsk-task-head"><b>任务 · 写一篇周报</b><span class="mono">派发中</span></div>
-                  <div class="dsk-qa"><i class="dsk-dot is-ok" aria-hidden="true"></i><span>豆包</span><em class="mono">已派发</em></div>
-                  <div class="dsk-qa"><i class="dsk-dot is-run" aria-hidden="true"></i><span>Kimi</span><em class="mono">进行中</em></div>
-                  <div class="dsk-qa"><i class="dsk-dot is-wait" aria-hidden="true"></i><span>DeepSeek</span><em class="mono">等待结果</em></div>
-                </div>
-                <p class="dsk-note mono">回复与交付文件将自动回到任务台</p>
-              </div>
-            </div>
+        <div class="reveal" data-d="3">
+          <div class="console" role="img" aria-label="AI 管理大师调度演示">
+            <div class="console-bar" aria-hidden="true"><i></i><i></i><i></i><span>AI MASTER · CONSOLE</span></div>
+            <div class="console-body" id="demoBody"></div>
           </div>
-          <div class="mock-glow"></div>
         </div>
       </div>
-      <div class="hero-fade" aria-hidden="true"></div>
-    </section>
+      <div class="steps">
+        <div class="step reveal"><span class="k">①</span><h3>扫描</h3><p>选择设备类型（PC / 手机），大师扫出设备上已装好的 AI，一键全部纳入编制。</p></div>
+        <div class="step reveal" data-d="1"><span class="k">②</span><h3>指挥</h3><p>一句话下达目标，大师拆解任务并分派给最合适的智能体，并行开工。</p></div>
+        <div class="step reveal" data-d="2"><span class="k">③</span><h3>收货</h3><p>消息实时回传、文件自动归档。不满意？随时让大师返工或换「人」重做。</p></div>
+      </div>
+    </div>
+  </section>
 
-    <!-- ===== 下载 ===== -->
-    <section class="section" id="download">
-      <div class="container">
-        <div class="section-head">
-          <p class="eyebrow mono">// DOWNLOAD</p>
-          <h2>获取桌面版</h2>
-          <p class="section-sub">一个安装包，装下整个工作台</p>
+  <!-- ============ 02 · 设备扫描 ============ -->
+  <section class="chapter-sec alt" id="scan">
+    <div class="wrap">
+      <span class="ghost" aria-hidden="true">02</span>
+      <p class="eyebrow reveal">02 / Scan · 设备扫描</p>
+      <h2 class="section-title reveal" data-d="1">先看清楚，<em>你有哪些 AI</em></h2>
+      <p class="lead section-sub reveal" data-d="2">
+        扫描功能常驻大师左侧：每次扫描自选设备类型——PC、或手机（再选 iPhone / Android），
+        扫出设备上已经装好的 AI，连同可牵动的能力一并列出。下面是真实交互的演示，点「开始扫描」试试。
+      </p>
+      <div class="scan-lab reveal" data-d="3">
+        <div class="scan-devices" role="tablist" aria-label="选择设备类型">
+          <button class="dv is-on" type="button" role="tab" aria-selected="true" data-device="pc">PC</button>
+          <button class="dv" type="button" role="tab" aria-selected="false" data-device="iphone">iPhone</button>
+          <button class="dv" type="button" role="tab" aria-selected="false" data-device="android">Android</button>
         </div>
-
-        <div class="dl-card" data-reveal>
-          <div class="dl-info">
-            <span class="dl-win-ic tone-teal" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9.5 20.5h5M12 17v3.5M12 8v5M9.8 10.7 12 8.5l2.2 2.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-            </span>
-            <div class="dl-meta">
-              <b>Fuo Tools 桌面版</b>
-              <dl>
-                <div><dt>版本</dt><dd class="mono" id="dl-ver">v0.9.0</dd></div>
-                <div><dt>大小</dt><dd class="mono" id="dl-size">—</dd></div>
-                <div><dt>更新</dt><dd class="mono" id="dl-date">—</dd></div>
-                <div><dt>系统</dt><dd>Windows 10 / 11（64 位）</dd></div>
-              </dl>
+        <div class="scan-main">
+          <div class="scan-side">
+            <span class="hint-t" id="scanHint">设备扫描 · PC</span>
+            <p id="scanDesc">PC 端会枚举本机安装的桌面客户端、浏览器常驻网页版与本地模型运行时。</p>
+            <button class="scan-btn" type="button" id="scanBtn">开始扫描</button>
+            <div class="scan-progress">
+              <div class="bar"><i id="scanBar"></i></div>
+              <div class="pct" id="scanPct">idle</div>
             </div>
           </div>
-          <div class="dl-actions">
-            <div id="dl-main-holder" aria-live="polite"></div>
-            <p class="dl-os-hint mono" id="dl-os-hint" hidden></p>
-            <p class="dl-sha mono" id="dl-sha" hidden></p>
+          <div class="scan-list" id="scanList" aria-live="polite">
+            <div class="scan-empty" id="scanEmpty">// 尚未扫描<br>点击左侧「开始扫描」</div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="steps">
-          <div class="step" data-reveal>
-            <b class="mono">01</b>
-            <h3>下载并安装</h3>
-            <p>双击 .exe 安装包，按引导一步步完成，一分钟即可。</p>
-          </div>
-          <div class="step" data-reveal>
-            <b class="mono">02</b>
-            <h3>登录同一账号</h3>
-            <p>与网页版共用账号，笔记、待办、习惯打卡原样同步。</p>
-          </div>
-          <div class="step" data-reveal>
-            <b class="mono">03</b>
-            <h3>打开 AI 管理大师</h3>
-            <p>扫描本机 AI，开始把任务派发给你的 AI 军团。</p>
-          </div>
+  <!-- ============ 03 · 交付与安全 ============ -->
+  <section class="chapter-sec" id="trust">
+    <div class="wrap">
+      <span class="ghost" aria-hidden="true">03</span>
+      <p class="eyebrow reveal">03 / Trust · 交付与安全</p>
+      <h2 class="section-title reveal" data-d="1">干的活，<em>看得见摸得着</em></h2>
+      <p class="lead section-sub reveal" data-d="2">
+        大师不只回你一句话：过程可追溯、成果可验收、数据不出你的设备。这四件事，我们写进了设计里。
+      </p>
+      <div class="card-row">
+        <div class="card reveal"><div class="ic">✉</div><h3>消息回传</h3><p>所有智能体的回复汇总到统一时间线，带任务标签与状态徽标，随时翻阅核对。</p></div>
+        <div class="card reveal" data-d="1"><div class="ic">⤓</div><h3>文件交付</h3><p>文档、图片、表格自动保存到指定文件夹，按「日期 / 任务」双层归档，不再满屏找文件。</p></div>
+        <div class="card reveal" data-d="2"><div class="ic">⇄</div><h3>账号互通</h3><p>与网页版共用同一 Fuo 账号：云笔记、办公集数据无缝衔接，两端都是家。</p></div>
+        <div class="card reveal" data-d="3"><div class="ic">⬡</div><h3>本地优先</h3><p>扫描与调度全部在本机完成，不经第三方服务器中转；卸载即走，不留尾巴。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 · 下载 ============ -->
+  <section class="chapter-sec alt" id="download">
+    <div class="wrap">
+      <span class="ghost" aria-hidden="true">04</span>
+      <p class="eyebrow reveal">04 / Download · 获取桌面版</p>
+      <h2 class="section-title reveal" data-d="1">把管理大师<em>装进电脑</em></h2>
+      <div class="dl-card reveal" data-d="2">
+        <h3>Fuo Tool 桌面版 · Windows</h3>
+        <p class="ver">v1.0.0 · 免安装绿色版 · 约 90 MB · 托管于 GitHub Releases · 免费使用</p>
+        <div class="dl-actions">
+          <button class="btn-primary" type="button" data-download>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4.5 20h15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            下载 Windows 版
+          </button>
+          <span class="ver" style="margin-top:0">Windows 10 / 11 · x64</span>
         </div>
-
-        <p class="dl-safe" data-reveal>
-          <b>安全说明：</b>桌面版由独立开发者发布，未购买代码签名证书——Windows 首次运行可能弹出
-          SmartScreen 提示，点击「更多信息 → 仍要运行」即可。正式发布后本页会提供安装包的
-          SHA-256 校验值，可自行核对。桌面版与网页版共用同一云端后端与行级安全策略，数据权限完全一致。
+        <div class="dl-note">
+          <span><i></i>安装包签名校验</span>
+          <span><i></i>无需管理员权限</span>
+          <span><i></i>静默更新可选</span>
+          <span><i></i>卸载干净无残留</span>
+        </div>
+        <div class="dl-os">
+          <div class="os"><b>macOS</b><span>适配打磨中 · 敬请期待</span></div>
+          <div class="os"><b>Linux</b><span>规划中 · 敬请期待</span></div>
+          <div class="os"><b>手机端</b><span>配套扫描助手规划中</span></div>
+        </div>
+        <p class="web-keep">
+          网页版 17 款工具继续在线可用、数据互通：
+          <a href="../drive/" id="lk-drive">打开 Fuo Tools 网页版</a> ·
+          <a href="../main/" id="lk-main">登录 / 注册</a>
         </p>
       </div>
-    </section>
-
-    <!-- ===== AI 管理大师（旗舰功能） ===== -->
-    <section class="section section-alt" id="features">
-      <div class="container">
-        <div class="section-head">
-          <p class="eyebrow mono">// FLAGSHIP · AI MASTER</p>
-          <h2>AI 管理大师 · 桌面完全体</h2>
-          <p class="section-sub">浏览器沙箱里做不到的事，桌面版都做到了</p>
-        </div>
-        <div class="feature-grid">
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M11 8v3l2 2M20.5 20.5 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
-            <h3>原生扫描</h3>
-            <p>选择设备类型（PC / iPhone / Android）后扫描，桌面引擎逐个检出已安装的 AI——WorkBuddy、AutoClaw、豆包、Kimi、DeepSeek、ChatGPT……</p>
-          </article>
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3.5 11.5 3.2 3.2L13 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M20.5 5.5v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14.8 14.8a5 5 0 0 0 5.7-5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></span>
-            <h3>一键派发</h3>
-            <p>任务写一次，勾选目标 AI 点派发：指令自动送达每个应用并唤起，不再手动复制粘贴、来回切换窗口。</p>
-          </article>
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 5.5 6v5.2c0 4 2.7 7.4 6.5 9.3 3.8-1.9 6.5-5.3 6.5-9.3V6L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="m9.3 12 1.9 1.9 3.5-3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
-            <h3>自动回收</h3>
-            <p>AI 的回复与交付文件自动回到任务台归档。哪个 AI 交了什么活、交没交，一目了然。</p>
-          </article>
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="7" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="16.5" cy="7" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="16.5" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9.3 8.9 11 14.1M14.7 8.9 13 14.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-            <h3>AI 军团清单</h3>
-            <p>内置主流 AI 名录，支持自定义登记。给每个 AI 标注设备与状态，你的 AI 军团由你管理。</p>
-          </article>
-        </div>
-
-        <div class="section-head dsk-subhead">
-          <p class="eyebrow mono">// MORE ON DESKTOP</p>
-          <h2>不止于 AI 大师</h2>
-        </div>
-        <div class="feature-grid">
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="13.5" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3.5 9h17" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 7h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-            <h3>独立窗口</h3>
-            <p>不占浏览器标签页。一个专注的工作台窗口，全屏、分屏都随你。</p>
-          </article>
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-emerald" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9.5V6.8A2.3 2.3 0 0 1 8.3 4.5h7.4A2.3 2.3 0 0 1 18 6.8v2.7M4.5 9.5h15a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17v-6a1.5 1.5 0 0 1 1.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg></span>
-            <h3>系统级通知</h3>
-            <p>番茄钟到点、AI 任务状态变化，直接用系统通知提醒，不再依赖浏览器授权。</p>
-          </article>
-          <article class="feature-card" data-reveal>
-            <span class="feature-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span>
-            <h3>数据互通</h3>
-            <p>与网页版同一账号体系，笔记、待办、习惯打卡、工具收藏全部云同步。</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== 版本对比 ===== -->
-    <section class="section" id="compare">
-      <div class="container">
-        <div class="section-head">
-          <p class="eyebrow mono">// COMPARE</p>
-          <h2>网页版 与 桌面版</h2>
-          <p class="section-sub">不是替代，而是超集——选适合你的方式</p>
-        </div>
-        <div class="cmp-wrap" data-reveal>
-          <table class="cmp-table">
-            <thead>
-              <tr>
-                <th scope="col">能力</th>
-                <th scope="col">网页版</th>
-                <th scope="col" class="cmp-win">桌面版 EXE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">AI 管理大师</th>
-                <td>引导下载桌面版</td>
-                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>完全体：原生扫描 · 派发 · 自动回收</td>
-              </tr>
-              <tr>
-                <th scope="row">工具集（17 款）</th>
-                <td><i class="cmp-yes" aria-hidden="true"></i>全部可用</td>
-                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>全部可用</td>
-              </tr>
-              <tr>
-                <th scope="row">云笔记 / 云同步</th>
-                <td><i class="cmp-yes" aria-hidden="true"></i>支持</td>
-                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>同一账号，数据互通</td>
-              </tr>
-              <tr>
-                <th scope="row">离线使用</th>
-                <td>PWA 壳缓存（部分页面）</td>
-                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>完全离线可用</td>
-              </tr>
-              <tr>
-                <th scope="row">通知提醒</th>
-                <td>浏览器通知（需授权）</td>
-                <td class="cmp-win"><i class="cmp-yes" aria-hidden="true"></i>系统级通知</td>
-              </tr>
-              <tr>
-                <th scope="row">获取更新</th>
-                <td>刷新即最新</td>
-                <td>从本页下载新版安装包</td>
-              </tr>
-              <tr>
-                <th scope="row">价格</th>
-                <td>免费</td>
-                <td class="cmp-win">免费</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== FAQ ===== -->
-    <section class="section section-alt" id="faq">
-      <div class="container">
-        <div class="section-head">
-          <p class="eyebrow mono">// FAQ</p>
-          <h2>常见问题</h2>
-        </div>
-        <div class="faq-list">
-          <details class="faq-item" data-reveal>
-            <summary>网页版会被抛弃吗？</summary>
-            <p>不会。网页版与桌面版长期并行维护：网页版刷新即最新、跨平台无门槛；桌面版专注需要原生能力的场景（AI 管理大师、系统通知、离线）。两边共用同一账号与云端数据。</p>
-          </details>
-          <details class="faq-item" data-reveal>
-            <summary>桌面版收费吗？</summary>
-            <p>免费。Fuo Tools 全线（网页版 + 桌面版）都不收费、无广告。</p>
-          </details>
-          <details class="faq-item" data-reveal>
-            <summary>支持哪些操作系统？</summary>
-            <p>首批支持 Windows 10 / 11（64 位）。macOS 与 Linux 版本在路线图上，取决于首批 Windows 版的反馈。</p>
-          </details>
-          <details class="faq-item" data-reveal>
-            <summary>我的数据在两个版本间通用吗？</summary>
-            <p>通用。桌面版与网页版连接同一个云端后端，登录同一账号即可：笔记、待办、习惯打卡、AI 任务台全部同步，行级安全策略也完全一致。</p>
-          </details>
-          <details class="faq-item" data-reveal>
-            <summary>安装时杀毒软件 / 系统提示有风险？</summary>
-            <p>独立开发者的应用没有购买代码签名证书，Windows SmartScreen 首次运行会弹出「Windows 已保护你的电脑」，点击「更多信息 → 仍要运行」即可继续。介意的话，可在正式发布后用本页提供的 SHA-256 校验值核对安装包完整性。</p>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== CTA ===== -->
-    <section class="section">
-      <div class="container">
-        <div class="cta-banner" data-reveal>
-          <h2>准备好让 AI 们为你干活了吗？</h2>
-          <p>下载桌面版，把 AI 管理大师带出浏览器。</p>
-          <span id="dl-cta-holder" aria-live="polite"></span>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- ===== 页脚 ===== -->
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div class="footer-brand">
-        <span class="brand-mark sm" aria-hidden="true"><svg viewBox="0 0 32 32" width="12" height="12" fill="none"><path d="M11 23V9h10M11 16h8.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg></span>
-        <span>Fuo Tools</span>
-      </div>
-      <p class="mono">© 2025 FUO TOOLS · 桌面与网页，同一个工作台</p>
-      <nav class="footer-links" aria-label="页脚导航">
-        <a href="#" data-goto-web>网页版</a>
-        <a href="#download">下载</a>
-        <a href="#faq">常见问题</a>
-      </nav>
     </div>
-  </footer>
+  </section>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <!-- ============ FAQ ============ -->
+  <section class="chapter-sec" id="faq">
+    <div class="wrap">
+      <p class="eyebrow reveal">FAQ · 常见问题</p>
+      <h2 class="section-title reveal" data-d="1">下载之前，<em>你想知道的</em></h2>
+      <div class="faq">
+        <details class="reveal" data-d="1">
+          <summary>AI 管理大师为什么在网页上用不了？</summary>
+          <div class="a">浏览器的安全沙箱不允许网页枚举或操控你电脑、手机上安装的应用——这正是我们做桌面版的原因。
+            只有真正的本地程序才能安全地「扫描设备上的 AI」并牵动它们干活。网页端保留入口，完整体验请下载桌面版。</div>
+        </details>
+        <details class="reveal" data-d="2">
+          <summary>我的账号和数据在网页版与桌面版通用吗？</summary>
+          <div class="a">通用。桌面版与网页版共用同一 Fuo 账号体系（Supabase）：
+            云笔记、办公集待办、习惯打卡与番茄钟数据两端实时同步，登录即用，无需重复注册。</div>
+        </details>
+        <details class="reveal" data-d="3">
+          <summary>扫描手机上的 AI 是怎么做到的？</summary>
+          <div class="a">扫描手机需在「设备类型」中选择 iPhone 或 Android，并保持手机与电脑在同一网络，
+            按大师给出的指引完成一次配对授权即可。整个过程点对点进行，不经云端。</div>
+        </details>
+        <details class="reveal" data-d="4">
+          <summary>支持哪些智能体？没在列表里的怎么办？</summary>
+          <div class="a">首发支持 WorkBuddy、AutoClaw、Doubao、Qwen 等主流智能体，并内置通用适配层，
+            可牵动绝大多数提供本机接口或命令行的 AI 工具。没有适配的也欢迎反馈，排期透明。</div>
+        </details>
+      </div>
+    </div>
+  </section>
 
-  <!-- 页面逻辑：下载状态渲染 + 站内跳转（不依赖 Supabase，未登录可访问） -->
-  <script src="../main/assets/js/fx.js?v=2"></script>
-  <script src="assets/js/fuotool.js?v=1"></script>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span class="f-brand">Fuo Tools <b>·</b> 桌面版下载页</span>
+    <nav aria-label="站点链接">
+      <a href="../drive/" id="lk-drive2">网页版工作台</a>
+      <a href="../main/" id="lk-main2">登录 / 注册</a>
+      <a href="#top">回到顶部</a>
+    </nav>
+    <span class="f-meta">© 2025 Fuo Tools · web v0.10.0 · desktop v1.0.0</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================
+ * Fuo Tool 下载页交互
+ * 下载直链：GitHub Releases（仓库单文件上限 100MB，Releases 支持 2GB）
+ * 发布流程：Releases → Draft a new release → Tag v1.0.0 →
+ *           上传 FuoTool-win32-x64.zip → Publish，直链即全局生效
+ * ===================================================== */
+(function () {
+  'use strict';
+
+  var DOWNLOAD_URL = 'https://github.com/Finokuo/Finokuo.github.io/releases/latest/download/FuoTool-win32-x64.zip';
+
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (s) { return document.querySelector(s); };
+
+  /* ---------- 沙盒 / 线上路径自适应（与全站 config.js 同规则） ---------- */
+  (function fixLinks() {
+    var p = window.location.pathname;
+    var i = p.indexOf('/fuo/');
+    var base = i !== -1 ? p.slice(0, i) + '/fuo' : '';
+    var suffix = base ? '/index.html' : '/';
+    [['lk-drive', '/drive'], ['lk-main', '/main'], ['lk-drive2', '/drive'], ['lk-main2', '/main']]
+      .forEach(function (pair) {
+        var el = document.getElementById(pair[0]);
+        if (el) el.href = base + pair[1] + suffix;
+      });
+  })();
+
+  /* ---------- Toast ---------- */
+  var toastEl = $('#toast'), toastT = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-in');
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { toastEl.classList.remove('is-in'); }, 3400);
+  }
+
+  /* ---------- 下载按钮 ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-download]'), function (btn) {
+    btn.addEventListener('click', function () {
+      if (DOWNLOAD_URL) { window.open(DOWNLOAD_URL, '_blank', 'noopener'); return; }
+      toast('v1.0.0 正在最后打包：正式发布后此按钮即为官方直链，欢迎回来领取。');
+    });
+  });
+
+  /* ---------- 顶栏：滚动态 + 滚动进度 ---------- */
+  var topbar = $('#topbar'), scrollBar = $('#scrollBar'), ticking = false;
+  function onScroll() {
+    var y = window.scrollY || document.documentElement.scrollTop;
+    topbar.classList.toggle('is-scrolled', y > 40);
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    scrollBar.style.width = (max > 0 ? (y / max * 100) : 0) + '%';
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
+  }, { passive: true });
+  onScroll();
+
+  /* ---------- 导航高亮 ---------- */
+  var navLinks = document.querySelectorAll('.top-nav a');
+  var secObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      Array.prototype.forEach.call(navLinks, function (a) {
+        a.classList.toggle('is-active', a.getAttribute('data-sec') === en.target.id);
+      });
+    });
+  }, { rootMargin: '-38% 0px -55% 0px' });
+  ['flagship', 'scan', 'trust', 'faq'].forEach(function (id) {
+    var s = document.getElementById(id);
+    if (s) secObs.observe(s);
+  });
+
+  /* ---------- 滚动揭示 ---------- */
+  var revObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) { en.target.classList.add('is-in'); revObs.unobserve(en.target); }
+    });
+  }, { threshold: 0.14 });
+  Array.prototype.forEach.call(document.querySelectorAll('.reveal:not(.is-in)'), function (el) { revObs.observe(el); });
+
+  /* ---------- 数字滚动 ---------- */
+  var cntObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      cntObs.unobserve(en.target);
+      var el = en.target, target = parseInt(el.getAttribute('data-count'), 10) || 0;
+      if (REDUCED) { el.textContent = String(target); return; }
+      var t0 = null, dur = 1100;
+      function tick(ts) {
+        if (!t0) t0 = ts;
+        var k = Math.min(1, (ts - t0) / dur);
+        k = 1 - Math.pow(1 - k, 3);
+        el.textContent = String(Math.round(target * k));
+        if (k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.6 });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-count]'), function (el) { cntObs.observe(el); });
+
+  /* =====================================================
+   * 流体粒子背景（参考稿增强版：DPR 适配 / 指针避让 / 可见性暂停）
+   * ===================================================== */
+  (function fluid() {
+    var canvas = $('#fluid');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = 0, h = 0, dpr = 1, particles = [];
+    var COLORS = ['rgba(45,212,191,', 'rgba(94,234,212,', 'rgba(127,183,196,'];
+    var ptr = { x: -9999, y: -9999 };
+    var running = true;
+
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var count = Math.min(70, Math.floor(w * h / 26000));
+      particles = Array.from({ length: count }, function () {
+        return {
+          x: Math.random() * w, y: Math.random() * h,
+          vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25,
+          r: Math.random() * 1.8 + .4,
+          c: COLORS[Math.floor(Math.random() * 3)],
+          ox: 0, oy: 0
+        };
+      });
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('pointermove', function (e) { ptr.x = e.clientX; ptr.y = e.clientY; }, { passive: true });
+    document.addEventListener('visibilitychange', function () {
+      running = !document.hidden;
+      if (running) requestAnimationFrame(draw);
+    });
+
+    function draw() {
+      if (!running) return;
+      ctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+        if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        /* 指针附近轻微避让 */
+        var dx = p.x - ptr.x, dy = p.y - ptr.y;
+        var d2 = dx * dx + dy * dy;
+        if (d2 < 16900 && d2 > 0.01) {
+          var d = Math.sqrt(d2);
+          p.ox += (dx / d) * (1 - d / 130) * .6;
+          p.oy += (dy / d) * (1 - d / 130) * .6;
+        }
+        p.ox *= .92; p.oy *= .92;
+        ctx.beginPath();
+        ctx.arc(p.x + p.ox, p.y + p.oy, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.c + '0.12)';
+        ctx.fill();
+      }
+      /* 连线 */
+      for (var a = 0; a < particles.length; a++) {
+        for (var b = a + 1; b < particles.length; b++) {
+          var pa = particles[a], pb = particles[b];
+          var ddx = (pa.x + pa.ox) - (pb.x + pb.ox);
+          var ddy = (pa.y + pa.oy) - (pb.y + pb.oy);
+          var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+          if (dd < 120) {
+            ctx.beginPath();
+            ctx.moveTo(pa.x + pa.ox, pa.y + pa.oy);
+            ctx.lineTo(pb.x + pb.ox, pb.y + pb.oy);
+            ctx.strokeStyle = 'rgba(45,212,191,' + (0.06 * (1 - dd / 120)) + ')';
+            ctx.lineWidth = .6;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    if (REDUCED) {
+      /* 静态渲染一帧 */
+      running = true; draw(); running = false;
+    } else {
+      draw();
+    }
+  })();
+
+  /* =====================================================
+   * AI 管理大师 · 控制台自动演示（打字机循环）
+   * ===================================================== */
+  (function demo() {
+    var body = $('#demoBody');
+    if (!body) return;
+    var LINES = [
+      { t: '$ fuo scan --device pc', c: 'c-cmd' },
+      { t: '✓ 已发现 6 个 AI · WorkBuddy / AutoClaw / Doubao / Qwen / Claude / Kimi', c: 'c-ok' },
+      { t: ' ', c: 'c-dim' },
+      { t: '$ fuo run "把周报.docx 整理成 PPT 大纲，英文文案交给 Doubao 润色"', c: 'c-cmd' },
+      { t: '⧗ 任务拆解完成 · 3 个子任务已分派', c: 'c-warn' },
+      { t: '  ├─ WorkBuddy …… 解析文档结构', c: 'c-dim' },
+      { t: '  ├─ Qwen       …… 撰写中文大纲', c: 'c-dim' },
+      { t: '  └─ Doubao     …… 润色英文文案', c: 'c-dim' },
+      { t: '✓ WorkBuddy 完成 · outline.md（2.4 KB）', c: 'c-ok' },
+      { t: '✓ Qwen      完成 · 大纲 v1 · 3 章 12 节', c: 'c-ok' },
+      { t: '✓ Doubao    完成 · copy_en.md（1.1 KB）', c: 'c-ok' },
+      { t: '✉ 交付完成：3 个文件已归档至 ~/FuoTool/交付/今天/', c: 'c-gold' }
+    ];
+    var PAUSE_AFTER = { 1: 900, 7: 500, 11: 3200 };
+
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+    if (REDUCED) {
+      body.innerHTML = LINES.map(function (l) {
+        return '<span class="' + l.c + '">' + esc(l.t) + '</span>';
+      }).join('\n');
+      return;
+    }
+
+    var li = 0, ci = 0, cur = null;
+    function step() {
+      if (li >= LINES.length) { setTimeout(reset, 2600); return; }
+      var line = LINES[li];
+      if (!cur) {
+        if (li > 0) body.appendChild(document.createTextNode('\n'));
+        cur = document.createElement('span');
+        cur.className = line.c;
+        body.appendChild(cur);
+        var caret = document.createElement('span');
+        caret.className = 'caret';
+        body.appendChild(caret);
+        cur._caret = caret;
+      }
+      cur.textContent = line.t.slice(0, ++ci);
+      if (ci >= line.t.length) {
+        if (cur._caret) body.removeChild(cur._caret);
+        cur = null; ci = 0; li++;
+        setTimeout(step, PAUSE_AFTER[li - 1] || (line.c === 'c-cmd' ? 260 : 90));
+        return;
+      }
+      setTimeout(step, line.c === 'c-cmd' ? 26 : 12);
+    }
+    function reset() {
+      body.innerHTML = ''; li = 0; ci = 0; cur = null;
+      var caret0 = document.createElement('span');
+      caret0.className = 'caret';
+      body.appendChild(caret0);
+      setTimeout(function () { if (caret0.parentNode) body.removeChild(caret0); step(); }, 420);
+    }
+    var started = false;
+    var demoObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting && !started) { started = true; demoObs.disconnect(); step(); }
+      });
+    }, { threshold: 0.25 });
+    demoObs.observe(body);
+  })();
+
+  /* =====================================================
+   * 设备扫描演示：PC / iPhone / Android
+   * ===================================================== */
+  (function scanLab() {
+    var DEVICES = {
+      pc: {
+        hint: '设备扫描 · PC',
+        desc: 'PC 端会枚举本机安装的桌面客户端、浏览器常驻网页版与本地模型运行时。',
+        list: [
+          { n: 'WorkBuddy', k: 'desktop · 客户端' },
+          { n: 'AutoClaw', k: 'automation · 自动化助手' },
+          { n: 'Doubao', k: 'web · 网页版已登录' },
+          { n: 'Qwen', k: 'desktop · 客户端' },
+          { n: 'Claude Desktop', k: 'desktop · 客户端' },
+          { n: 'Kimi', k: 'desktop · 客户端' },
+          { n: 'Cursor', k: 'editor · AI 编辑器' },
+          { n: 'Ollama', k: 'runtime · 本地模型 ×3' }
+        ]
+      },
+      iphone: {
+        hint: '设备扫描 · iPhone',
+        desc: 'iPhone 需与电脑同一网络并完成一次配对授权，即可枚举已安装的 AI 应用。',
+        list: [
+          { n: 'Doubao', k: 'app · 豆包' },
+          { n: 'Qwen', k: 'app · 通义千问' },
+          { n: 'Kimi', k: 'app · 智能助手' },
+          { n: 'ChatGPT', k: 'app · iOS 版' },
+          { n: 'Claude', k: 'app · iOS 版' },
+          { n: '文心一言', k: 'app · iOS 版' }
+        ]
+      },
+      android: {
+        hint: '设备扫描 · Android',
+        desc: 'Android 通过本机配对通道枚举已安装 AI 应用与其暴露给系统的智能体接口。',
+        list: [
+          { n: 'Doubao', k: 'app · 豆包' },
+          { n: 'Qwen', k: 'app · 通义千问' },
+          { n: 'AutoClaw', k: 'app · 安卓版' },
+          { n: '讯飞星火', k: 'app · Spark' },
+          { n: 'ChatGPT', k: 'app · Android 版' },
+          { n: 'Gemini', k: 'app · Google' },
+          { n: '文心一言', k: 'app · Android 版' }
+        ]
+      }
+    };
+
+    var curDev = 'pc';
+    var busy = false;
+    var btn = $('#scanBtn'), list = $('#scanList'), bar = $('#scanBar'),
+      pct = $('#scanPct'), hint = $('#scanHint'), desc = $('#scanDesc');
+
+    function renderEmpty() {
+      list.innerHTML = '';
+      var empty = document.createElement('div');
+      empty.className = 'scan-empty';
+      empty.innerHTML = '// 尚未扫描<br>点击左侧「开始扫描」';
+      list.appendChild(empty);
+      bar.style.width = '0';
+      pct.textContent = 'idle';
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.scan-devices .dv'), function (tab) {
+      tab.addEventListener('click', function () {
+        if (busy || tab.getAttribute('data-device') === curDev) return;
+        curDev = tab.getAttribute('data-device');
+        Array.prototype.forEach.call(document.querySelectorAll('.scan-devices .dv'), function (t) {
+          var on = t === tab;
+          t.classList.toggle('is-on', on);
+          t.setAttribute('aria-selected', String(on));
+        });
+        var d = DEVICES[curDev];
+        hint.textContent = d.hint;
+        desc.textContent = d.desc;
+        renderEmpty();
+      });
+    });
+
+    /* ---------- 扫描脚本：日志流 + 变速进度 + 停顿时分批亮起 AI ---------- */
+    var SCRIPTS = {
+      pc: [
+        { log: '$ fuo scan --device pc', dur: 300, to: 4 },
+        { log: '› 枚举已安装应用 · 注册表 / 开始菜单…', dur: 850, to: 26, reveal: [0, 1] },
+        { log: '› 探测浏览器常驻会话…', dur: 700, to: 47, reveal: [2, 3] },
+        { log: '› 枚举桌面客户端…', dur: 600, to: 66, reveal: [4, 5] },
+        { log: '› 探测编辑器与本地运行时 :11434…', dur: 800, to: 85, reveal: [6] },
+        { log: '› ollama · 3 models · reachable', dur: 550, to: 97, reveal: [7] },
+        { log: null, dur: 320, to: 100 }
+      ],
+      iphone: [
+        { log: '$ fuo scan --device iphone', dur: 280, to: 4 },
+        { log: '› 搜索同网络设备 · bonjour…', dur: 800, to: 22 },
+        { log: '› 已配对 · “Zhao 的 iPhone” · iOS 18', dur: 640, to: 42, reveal: [0, 1] },
+        { log: '› 枚举已安装 AI 应用…', dur: 760, to: 64, reveal: [2, 3] },
+        { log: '› 检查系统智能体接口…', dur: 620, to: 88, reveal: [4] },
+        { log: '› apps · 6 · intents ok', dur: 460, to: 100, reveal: [5] }
+      ],
+      android: [
+        { log: '$ fuo scan --device android', dur: 280, to: 4 },
+        { log: '› adb devices · 1 found', dur: 700, to: 20 },
+        { log: '› 已授权 · Android 15 · USB 通道', dur: 600, to: 40, reveal: [0, 1] },
+        { log: '› 枚举 AI 应用与智能体接口…', dur: 800, to: 62, reveal: [2, 3] },
+        { log: '› 检查 Intent / 快捷方式…', dur: 660, to: 86, reveal: [4, 5] },
+        { log: '› assistant service · ok', dur: 480, to: 100, reveal: [6] }
+      ]
+    };
+    var PAUSE = 470;    /* 每批 AI 亮起后的停顿（模拟探测等待） */
+    var STAGGER = 95;   /* 同批 AI 逐个亮起的间隔 */
+
+    function easeOut(k) { return 1 - Math.pow(1 - k, 2.2); }
+    function easeInOut(k) { return k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2.2) / 2; }
+
+    function makeAiRow(ai) {
+      var row = document.createElement('div');
+      row.className = 'ai-row';
+      var dot = document.createElement('span');
+      dot.className = 'dot'; dot.textContent = ai.n[0];
+      var meta = document.createElement('div');
+      var nm = document.createElement('div');
+      nm.className = 'nm'; nm.textContent = ai.n;
+      var kd = document.createElement('div');
+      kd.className = 'kd'; kd.textContent = ai.k;
+      meta.appendChild(nm); meta.appendChild(kd);
+      var st = document.createElement('span');
+      st.className = 'st'; st.textContent = '可牵动';
+      row.appendChild(dot); row.appendChild(meta); row.appendChild(st);
+      return row;
+    }
+
+    btn.addEventListener('click', function () {
+      if (busy) return;
+      busy = true;
+      btn.disabled = true;
+      btn.textContent = '扫描中…';
+      list.innerHTML = '';
+
+      var d = DEVICES[curDev];
+      var script = SCRIPTS[curDev];
+      var t0 = performance.now();
+      var logBox = document.createElement('div');
+      logBox.className = 'scan-log';
+      list.appendChild(logBox);
+
+      function mkLog(text, cls) {
+        var el = document.createElement('div');
+        el.className = 'scan-logline' + (cls ? ' ' + cls : '');
+        el.textContent = text;
+        logBox.appendChild(el);
+      }
+
+      function reveal(indices) {
+        indices.forEach(function (idx, j) {
+          var ai = d.list[idx];
+          if (!ai) return;
+          setTimeout(function () {
+            var row = makeAiRow(ai);
+            list.appendChild(row);
+            requestAnimationFrame(function () { row.classList.add('is-in'); });
+            list.scrollTop = list.scrollHeight;
+          }, REDUCED ? 0 : j * STAGGER);
+        });
+      }
+
+      if (REDUCED) {
+        /* 动效减弱偏好：瞬时完成，不播放过程 */
+        script.forEach(function (st) {
+          if (st.log) mkLog(st.log);
+          if (st.reveal) st.reveal.forEach(function (i) {
+            if (!d.list[i]) return;
+            var row = makeAiRow(d.list[i]);
+            row.classList.add('is-in');
+            list.appendChild(row);
+          });
+        });
+        bar.style.width = '100%';
+        pct.textContent = 'done · ' + d.list.length + ' found';
+        mkLog('✓ done · ' + d.list.length + ' found', 'log-done');
+        busy = false;
+        btn.disabled = false;
+        btn.textContent = '重新扫描';
+        return;
+      }
+
+      function finish() {
+        var secs = ((performance.now() - t0) / 1000).toFixed(1);
+        bar.style.width = '100%';
+        pct.textContent = 'done · ' + d.list.length + ' found · ' + secs + 's';
+        mkLog('✓ done · ' + d.list.length + ' found · ' + secs + 's', 'log-done');
+        busy = false;
+        btn.disabled = false;
+        btn.textContent = '重新扫描';
+      }
+
+      var prog = 0, si = 0, stageStart = null, pauseUntil = 0;
+      function frame(ts) {
+        if (ts < pauseUntil) { requestAnimationFrame(frame); return; } /* 停顿：进度冻结 */
+        var stage = script[si];
+        if (!stage) { finish(); return; }
+        if (stageStart === null) {
+          stageStart = ts;
+          if (stage.log) mkLog(stage.log);
+        }
+        var k = Math.min(1, (ts - stageStart) / stage.dur);
+        /* 奇偶阶段交替缓动：先快后慢 / 缓入缓出，营造真实扫描的节奏 */
+        var e = (si % 2 === 0) ? easeOut(k) : easeInOut(k);
+        var p = prog + (stage.to - prog) * e;
+        bar.style.width = p + '%';
+        pct.textContent = 'scanning · ' + Math.round(p) + '%';
+        if (k >= 1) {
+          prog = stage.to;
+          if (stage.reveal) {
+            reveal(stage.reveal);
+            pauseUntil = ts + PAUSE;
+          }
+          si++;
+          stageStart = null;
+          if (si >= script.length) { finish(); return; }
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  })();
+})();
+</script>
 </body>
 </html>

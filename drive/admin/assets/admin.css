@@ -14,14 +14,6 @@
 .ad-denied h1 { font-size: 26px; margin-bottom: 10px; }
 .ad-denied p { opacity: 0.7; font-size: 13.5px; }
 .ad-denied .tbtn-row { justify-content: center; margin-top: 22px; }
-/* v0.8.1：验证出错（非 403）与身份行 */
-.ad-code-warn { color: var(--amber-bright, #f5a623); }
-.ad-denied-who {
-  margin-top: 16px; padding: 10px 14px;
-  border: 1px dashed var(--border-2); border-radius: 8px;
-  font-size: 11.5px; opacity: 0.85; word-break: break-all;
-  text-align: left; line-height: 1.7;
-}
 
 /* ---------- 主体 ---------- */
 .ad-hero { padding-bottom: 4px; }
@@ -171,3 +163,24 @@
   .ad-pager { justify-content: space-between; }
   .ad-audit-time { display: none; }
 }
+
+/* ---------- 反馈面板（v0.10.0） ---------- */
+.ad-fb-hint { font-size: 11px; color: var(--faint); }
+.ad-fb-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 460px; overflow-y: auto; padding-right: 2px;
+}
+.ad-fb-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card-2);
+}
+.ad-fb-item p {
+  font-size: 13px; line-height: 1.65; color: var(--text-2);
+  white-space: pre-wrap; word-break: break-word;
+}
+.ad-fb-foot {
+  margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; font-size: 11px; color: var(--faint);
+}
+.ad-fb-foot .mono { font-size: 11px; color: var(--faint); margin-right: auto; }

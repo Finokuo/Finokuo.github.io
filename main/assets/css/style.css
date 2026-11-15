@@ -775,3 +775,66 @@ button.tool-chip { cursor: pointer; }
   mix-blend-mode: normal;
 }
 :root[data-theme="dark"]::view-transition-old(root) { z-index: 100; }
+
+/* =====================================================
+ * v0.9.1 改进方案：认证弹窗增强 + 无障碍 + SEO 段落
+ * ===================================================== */
+
+/* skip-link：仅键盘聚焦时可见 */
+.skip-link {
+  position: absolute; left: -9999px; top: 10px; z-index: 300;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border-2); border-radius: 10px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600;
+}
+.skip-link:focus { left: 10px; }
+
+/* 工具集 SEO 关键词段落 */
+.tools-seo {
+  margin: 10px auto 0; max-width: 760px;
+  text-align: center; font-size: 12px; line-height: 1.9;
+  color: var(--faint);
+}
+
+/* 密码强度条 */
+.pw-meter { display: flex; align-items: center; gap: 5px; margin-top: 9px; }
+.pw-meter[hidden] { display: none; }
+.pw-meter i {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: var(--border-2); opacity: 0.55;
+  transition: background 0.25s, opacity 0.25s;
+}
+.pw-meter i.on { opacity: 1; background: var(--accent-bright); }
+.pw-meter[data-lv="weak"] i.on { background: var(--danger); }
+.pw-meter[data-lv="mid"] i.on { background: #f0b45c; }
+.pw-meter .pw-hint {
+  flex: none; margin-left: 9px; font-style: normal;
+  font-size: 11px; color: var(--muted); white-space: nowrap;
+}
+
+/* 忘记密码行 */
+.auth-row { display: flex; justify-content: flex-end; margin: -4px 0 14px; }
+.auth-row[hidden] { display: none; }
+.link-btn {
+  border: 0; background: none; padding: 2px 0; cursor: pointer;
+  font-size: 12.5px; color: var(--muted);
+  transition: color 0.15s;
+}
+.link-btn:hover { color: var(--accent-bright); text-decoration: underline; }
+
+/* 条款勾选（注册） */
+.agree {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin-bottom: 14px; cursor: pointer;
+  font-size: 12.5px; line-height: 1.6; color: var(--muted);
+}
+.agree[hidden] { display: none; }
+.agree input {
+  flex: none; width: 15px; height: 15px; margin-top: 2px;
+  accent-color: var(--accent-bright); cursor: pointer;
+}
+.agree a { color: var(--accent-bright); }
+.agree a:hover { text-decoration: underline; }
+
+.auth-foot a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.auth-foot a:hover { color: var(--accent-bright); }

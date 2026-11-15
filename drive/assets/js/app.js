@@ -77,6 +77,7 @@
     renderRecent();
     renderGreeting(null);
     bindCommon();
+    renderOnboarding(); // 预览模式同样展示首访引导（须在 bindCommon 之后）
   }
 
   /* ---------- 未配置 Supabase ---------- */
@@ -306,9 +307,8 @@
     uuid: 'tone-orange', diff: 'tone-rose', regex: 'tone-rose',
     qrcode: 'tone-cyan', hash: 'tone-emerald', url: 'tone-amber',
     imgcom: 'tone-orange', jwt: 'tone-violet', radix: 'tone-cyan', lorem: 'tone-amber',
-    // v0.8 办公集（v0.9：ai 迁桌面版，仍记录使用）
+    // v0.8 办公集
     todo: 'tone-teal', habit: 'tone-rose', pomodoro: 'tone-amber',
-    ai: 'tone-violet',
   };
   var TOOL_GLYPHS = {
     json: '{ }', color: '●', password: '***', textstats: 'Aa',
@@ -316,7 +316,6 @@
     regex: '.*', qrcode: '▣', hash: '#', url: '⇄', imgcom: '↘',
     jwt: '⟐', radix: '⇄2', lorem: '¶',
     todo: '☑', habit: '❤', pomodoro: '🍅',
-    ai: 'AI',
   };
   var TOOL_NAMES = {
     json: 'JSON 格式化', color: '颜色工具', password: '密码生成器',
@@ -326,7 +325,6 @@
     imgcom: '图片压缩', jwt: 'JWT 解码器', radix: '进制转换', lorem: 'Lorem 占位文本',
     // v0.8 办公集
     todo: '待办清单', habit: '习惯打卡', pomodoro: '番茄钟',
-    ai: 'AI 管理大师（桌面版）',
   };
 
   function recordTool(id) {
@@ -380,6 +378,76 @@
     $('stat-tools').textContent = toolTotal();
   }
 
+  /* v0.9.1：首次进入工作台的引导卡片（改进方案 P1 空状态引导）
+   * 三张快捷入口卡 + 「知道了」；点过、或已是熟手（用过工具）则静默记忆不再打扰 */
+  function renderOnboarding() {
+    var widgets = document.querySelector('.widgets');
+    if (!widgets) return;
+    var flag = '0';
+    try { flag = localStorage.getItem('fuo-onboarded') || '0'; } catch (e) { /* ignore */ }
+    if (flag === '1' || toolTotal() > 0) {
+      try { localStorage.setItem('fuo-onboarded', '1'); } catch (e) { /* ignore */ }
+      return;
+    }
+    if (document.getElementById('onboard-card')) return;
+
+    var card = document.createElement('section');
+    card.className = 'card onboard';
+    card.id = 'onboard-card';
+    card.setAttribute('aria-label', '新手引导');
+
+    var head = document.createElement('header');
+    head.className = 'card-head';
+    var h2 = document.createElement('h2');
+    var ic = document.createElement('i');
+    ic.className = 'head-ic tone-amber';
+    ic.setAttribute('aria-hidden', 'true');
+    ic.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3.5 14.1 9l5.9.3-4.6 3.7 1.6 5.7L12 15.4l-5 3.3 1.6-5.7L4 9.3 9.9 9 12 3.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" fill="none"/></svg>';
+    h2.appendChild(ic);
+    h2.appendChild(document.createTextNode('第一次来？三步上手'));
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'chip mono onboard-close';
+    close.textContent = '知道了';
+    close.setAttribute('aria-label', '关闭新手引导');
+    head.appendChild(h2);
+    head.appendChild(close);
+
+    var grid = document.createElement('div');
+    grid.className = 'onboard-grid';
+    var items = [
+      { no: '01', title: '试试免登录工具', desc: 'JSON 格式化：粘贴 JSON 一键排版校验，无需注册。', href: window.FUO_TOOL_URL ? window.FUO_TOOL_URL('json') : PATHS.DRIVE, tool: 'json' },
+      { no: '02', title: '记下第一条笔记', desc: '云笔记多端自动同步，换设备也不丢。', href: PATHS.NOTES || PATHS.TOOL_CLUSTER, tool: '' },
+      { no: '03', title: '保持专注', desc: '番茄钟 + 待办 + 习惯打卡，办公集一站备齐。', href: PATHS.OFFICE || PATHS.DRIVE, tool: '' },
+    ];
+    items.forEach(function (it) {
+      var a = document.createElement('a');
+      a.className = 'onboard-item';
+      a.href = it.href;
+      if (it.tool) a.setAttribute('data-tool-link', it.tool); // 复用使用记录绑定
+      var b = document.createElement('b');
+      var no = document.createElement('span');
+      no.className = 'onboard-no mono';
+      no.textContent = it.no;
+      b.appendChild(no);
+      b.appendChild(document.createTextNode(it.title));
+      var p = document.createElement('p');
+      p.textContent = it.desc;
+      a.appendChild(b);
+      a.appendChild(p);
+      grid.appendChild(a);
+    });
+
+    close.addEventListener('click', function () {
+      try { localStorage.setItem('fuo-onboarded', '1'); } catch (e) { /* ignore */ }
+      card.remove();
+    });
+
+    card.appendChild(head);
+    card.appendChild(grid);
+    widgets.insertBefore(card, widgets.firstChild);
+  }
+
   /* ---------- 公共交互 ---------- */
   function bindCommon() {
     // 工具跳转入口：记录使用 → 跳到 /drive/tool-cluster/<slug>/
@@ -411,6 +479,29 @@
         recordTool(slug);
       });
     });
+
+    // v0.9：AI 管理大师 → /fuotool/ 桌面版下载页（网页端只做下载引导）
+    document.querySelectorAll('[data-fuotool-link]').forEach(function (a) {
+      if (PATHS.FUOTOOL) a.href = PATHS.FUOTOOL;
+    });
+
+    // v0.9：点头像直达个人展示页 /drive/u/?u=<username>
+    var avatarEl = $('user-avatar');
+    if (avatarEl) {
+      avatarEl.title = '查看我的展示页';
+      avatarEl.setAttribute('role', 'button');
+      avatarEl.setAttribute('tabindex', '0');
+      avatarEl.setAttribute('aria-label', '查看我的展示页');
+      function jumpProfile() {
+        var name = displayName();
+        if (!name) return;
+        window.location.href = (PATHS.U || 'u/') + '?u=' + encodeURIComponent(name);
+      }
+      avatarEl.addEventListener('click', jumpProfile);
+      avatarEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jumpProfile(); }
+      });
+    }
 
     document.querySelectorAll('[data-soon]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -464,6 +555,7 @@
     });
 
     bindCommon();
+    renderOnboarding(); // 首访引导（在 bindCommon 之后，引导卡里的 data-tool-link 才能绑上）
 
     // 修改用户名弹窗
     $('btn-edit-username').addEventListener('click', openUsernameModal);

@@ -11,9 +11,9 @@
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=6" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
   <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
-  <link rel="stylesheet" href="assets/admin.css?v=1" />
+  <link rel="stylesheet" href="assets/admin.css?v=2" />
 </head>
 <body data-page="admin">
   <div class="shell">
@@ -36,26 +36,13 @@
         <!-- ===== 身份检查中 ===== -->
         <div id="ad-loading" class="ad-loading mono">正在验证管理员身份…</div>
 
-        <!-- ===== 拒绝访问 ===== -->
+        <!-- ===== 拒绝访问（原因由 admin.js 动态注入，便于自查） ===== -->
         <section class="ad-denied card" id="ad-denied" hidden>
           <p class="mono ad-denied-code">ACCESS DENIED</p>
           <h1>403 · 仅 System 可进入</h1>
-          <p>图形化管理台与 Terminal 一样，只对 System 账号开放。你当前登录的账号没有管理权限。</p>
-          <p class="ad-denied-who mono" id="ad-denied-who" hidden></p>
+          <p id="ad-denied-reason">图形化管理台与 Terminal 一样，只对 System 账号开放。你当前登录的账号没有管理权限。</p>
           <div class="tbtn-row">
             <a class="tbtn" href="#" id="ad-back-drive">← 返回工作台</a>
-          </div>
-        </section>
-
-        <!-- ===== 验证出错（v0.8.1：网络/数据库错误 ≠ 403） ===== -->
-        <section class="ad-denied card" id="ad-error" hidden>
-          <p class="mono ad-denied-code ad-code-warn">VERIFY ERROR</p>
-          <h1 id="ad-error-title">身份验证失败</h1>
-          <p id="ad-error-detail">查询用户资料时出错。</p>
-          <p class="ad-denied-who mono" id="ad-error-who" hidden></p>
-          <div class="tbtn-row">
-            <button class="tbtn is-primary" id="ad-retry" type="button">重新验证</button>
-            <a class="tbtn" href="#" id="ad-back-drive-3">← 返回工作台</a>
           </div>
         </section>
 
@@ -75,6 +62,7 @@
             <button class="ad-tab is-on" role="tab" aria-selected="true" data-tab="users" type="button" id="ad-tab-users">用户</button>
             <button class="ad-tab" role="tab" aria-selected="false" data-tab="ann" type="button" id="ad-tab-ann">公告</button>
             <button class="ad-tab" role="tab" aria-selected="false" data-tab="audit" type="button" id="ad-tab-audit">日志</button>
+            <button class="ad-tab" role="tab" aria-selected="false" data-tab="fb" type="button" id="ad-tab-fb">反馈</button>
           </nav>
 
           <!-- ===== 用户 ===== -->
@@ -124,6 +112,17 @@
               <button class="tbtn" id="ad-audit-prev" type="button">← 上一页</button>
               <span id="ad-audit-page">1 / 1</span>
               <button class="tbtn" id="ad-audit-next" type="button">下一页 →</button>
+            </div>
+          </section>
+
+          <!-- ===== 反馈（v0.10.0） ===== -->
+          <section class="ad-panel card" id="ad-panel-fb" role="tabpanel" aria-labelledby="ad-tab-fb" hidden>
+            <div class="ad-bar">
+              <span class="mono ad-count" id="ad-fb-total">–</span>
+              <span class="mono ad-fb-hint">最新 50 条 · 按时间倒序</span>
+            </div>
+            <div id="ad-fb-list" class="ad-fb-list">
+              <p class="ad-td-empty mono">读取中…</p>
             </div>
           </section>
 
@@ -180,7 +179,7 @@
 
   <!-- Supabase SDK：本地打包，不依赖任何 CDN -->
   <script src="../assets/vendor/supabase.min.js"></script>
-  <script src="../assets/js/config.js?v=4"></script>
+  <script src="../assets/js/config.js?v=5"></script>
   <script src="../assets/js/fx.js?v=2"></script>
   <script src="../assets/js/sidebar.js?v=6"></script>
   <script src="assets/admin.js?v=2"></script>

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>办公集 · Fuo Tools</title>
-  <meta name="description" content="Fuo Tools 办公集：待办清单、习惯打卡、番茄钟，以及桌面版专属的 AI 管理大师。云端同步的轻量办公套件。" />
+  <meta name="description" content="Fuo Tools 办公集：待办清单、习惯打卡、番茄钟，云端同步的轻量办公三件套。" />
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <meta name="theme-color" content="#101014" />
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="../assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=6" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=4" />
   <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
   <link rel="stylesheet" href="assets/office.css?v=1" />
   <style>
@@ -48,6 +48,41 @@
       margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.75;
       padding: 12px 16px; border: 1px dashed var(--border-2); border-radius: 10px;
     }
+    /* AI 管理大师 · 桌面版引导卡（金色特殊样式，跨两列） */
+    .of-ai-card {
+      grid-column: 1 / -1;
+      flex-direction: row; align-items: center; gap: 16px;
+      padding: 22px 22px;
+      border: 1px solid rgba(232, 197, 122, 0.45);
+      background:
+        radial-gradient(90% 160% at 92% -20%, rgba(232, 197, 122, 0.12), transparent 55%),
+        var(--card);
+    }
+    .of-ai-card:hover {
+      border-color: rgba(232, 197, 122, 0.8);
+      box-shadow: 0 8px 30px rgba(232, 197, 122, 0.12);
+    }
+    .of-ai-card .t-ic {
+      width: 46px; height: 46px; flex: none;
+      color: #e8c57a; border-color: rgba(232, 197, 122, 0.35);
+      background: rgba(232, 197, 122, 0.1);
+    }
+    .of-ai-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .of-ai-body b { font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .of-ai-badge {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      color: #141310; background: linear-gradient(135deg, #e8c57a, #d9b268);
+      padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    }
+    .of-ai-body p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.65; }
+    .of-ai-go {
+      margin-left: auto; flex: none; font-size: 12px; color: #e8c57a;
+      display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .of-ai-card { flex-wrap: wrap; }
+      .of-ai-go { margin-left: 0; }
+    }
   </style>
 </head>
 <body data-page="office">
@@ -71,20 +106,30 @@
         <section class="of-hero" data-reveal>
           <p class="of-eyebrow mono">// OFFICE SUITE</p>
           <h1>办公集</h1>
-          <p>和工具集互补的轻量办公套件：待办、打卡、专注，以及全站最强的 AI 管理大师——它已成为<b>桌面版专属</b>功能，网页端提供下载引导。数据云端同步（office_data 表），未建表时自动以「仅本机」模式运行。</p>
+          <p>轻量办公三件套与全站最强功能 AI 管理大师：待办、打卡、专注在线即用；管理大师需下载桌面版，指挥你所有的 AI 替你干活。</p>
         </section>
 
         <div class="of-grid" id="of-grid" aria-label="办公工具列表">
+          <!-- AI 管理大师 · 桌面版引导（v0.9：网页端入口，完整功能在 exe） -->
+          <a class="of-tool-card of-ai-card" id="of-ai-link" href="../../../fuotool/" aria-label="了解 AI 管理大师桌面版">
+            <i class="t-ic" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M12 3.5 4 7.5v5c0 4.4 3.2 7.4 8 9 4.8-1.6 8-4.6 8-9v-5l-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="m8.8 12.2 2.3 2.3 4.3-4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+            </i>
+            <span class="of-ai-body">
+              <b>AI 管理大师 <span class="of-ai-badge">桌面版 · v1.0.0 即将发布</span></b>
+              <p>扫描电脑 / 手机上已有的 AI，一句话牵动 WorkBuddy、AutoClaw、Doubao、Qwen 等智能体协同干活，消息与文件直接回传。浏览器沙箱无法操控本机应用，完整功能需下载桌面端。</p>
+            </span>
+            <span class="of-ai-go">前往下载页 →</span>
+          </a>
           <noscript><p class="of-foot">需要启用 JavaScript 才能加载列表。</p></noscript>
         </div>
 
         <p class="of-zone-note">
           办公集与开发工具集相互独立、互不影响。后续版本将在这里继续扩充（记账本、迷你表格、日历日程等）。
-          <b>AI 管理大师</b>已升级为桌面版专属功能——网页端入口会引导你前往
-          <a id="of-fuotool-link" href="#">下载页</a>获取 EXE。
+          AI 管理大师的完整能力（扫描设备 / 牵动智能体 / 文件交付）在桌面版提供，网页端保留下载引导入口。
         </p>
 
-        <p class="of-foot mono">v0.9.0 更新 · <a id="of-back" href="#">返回工作台</a></p>
+        <p class="of-foot mono">v0.8.0 新增 · AI 管理大师 v0.9.0 引入 · <a id="of-back" href="#">返回工作台</a></p>
       </main>
     </div>
   </div>
@@ -93,7 +138,7 @@
 
   <!-- Supabase SDK：本地打包（登录守卫用），不依赖任何 CDN -->
   <script src="../assets/vendor/supabase.min.js"></script>
-  <script src="../assets/js/config.js?v=4"></script>
+  <script src="../assets/js/config.js?v=5"></script>
   <script src="../assets/js/fx.js?v=2"></script>
   <script src="../assets/js/sidebar.js?v=6"></script>
   <script>
@@ -114,11 +159,6 @@
         slug: 'pomodoro', name: '番茄钟', tone: 'tone-amber',
         desc: '专注 25 分钟 · 休息 5 分钟 · 今日统计 · 桌面通知',
         svg: '<circle cx="12" cy="13.5" r="7.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
-      },
-      {
-        slug: 'ai', name: 'AI 管理大师', tone: 'tone-violet',
-        desc: '桌面版专属 · 原生扫描本机 AI · 一键派发 · 自动回收——从这里前往下载',
-        svg: '<circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3M6.7 6.7l2.1 2.1M15.2 15.2l2.1 2.1M17.3 6.7l-2.1 2.1M8.8 15.2l-2.1 2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
       },
     ];
 
@@ -154,8 +194,12 @@
 
     var back = document.getElementById('of-back');
     if (back) back.href = (window.FUO_PATHS && window.FUO_PATHS.DRIVE) || '../';
-    var ftl = document.getElementById('of-fuotool-link');
-    if (ftl) ftl.href = (window.FUO_PATHS && window.FUO_PATHS.FUOTOOL) || '../../../fuotool/';
+
+    /* AI 管理大师引导卡：指向 /fuotool/ 下载页（沙盒/线上自适应） */
+    var aiLink = document.getElementById('of-ai-link');
+    if (aiLink && window.FUO_PATHS && window.FUO_PATHS.FUOTOOL) {
+      aiLink.href = window.FUO_PATHS.FUOTOOL;
+    }
   })();
   </script>
 </body>

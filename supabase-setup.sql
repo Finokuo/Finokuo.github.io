@@ -568,3 +568,46 @@ create policy "office_data_owner_all" on public.office_data
 -- 完成！现在支持：注册登录用户名 · 云笔记多行+文件夹+收藏 · System 管理端
 --              · 回收站（软删除）· 全站公告 · Terminal 操作日志 · 公开主页简介
 --              · 笔记置顶 · 公开分享链接 · 版本历史 · 办公集云同步
+
+-- ============================================================
+-- 第六部分 · v0.10.0 增量：用户反馈表 feedback
+-- （增量脚本：supabase-v7.sql）
+-- ============================================================
+
+create table if not exists public.feedback (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users (id) on delete set null,
+  username   text,
+  contact    text,
+  content    text not null check (char_length(btrim(content)) between 1 and 500),
+  page       text,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists feedback_created_idx
+  on public.feedback (created_at desc);
+
+alter table public.feedback enable row level security;
+
+drop policy if exists "feedback_insert_any" on public.feedback;
+create policy "feedback_insert_any" on public.feedback
+  for insert to anon, authenticated
+  with check (char_length(btrim(content)) between 1 and 500);
+
+drop policy if exists "feedback_select_system" on public.feedback;
+create policy "feedback_select_system" on public.feedback
+  for select to authenticated using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+drop policy if exists "feedback_delete_system" on public.feedback;
+create policy "feedback_delete_system" on public.feedback
+  for delete to authenticated using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.username = 'System')
+  );
+
+-- 全量完成！支持：注册登录 · 云笔记 · System 管理端 · 回收站 · 公告 · 日志
+--              · 公开主页 · 置顶/分享/版本历史 · 办公集云同步 · 用户反馈

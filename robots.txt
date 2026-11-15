@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /drive/settings/
+Disallow: /drive/admin/
+Disallow: /drive/recycle/
+
+Sitemap: https://finokuo.github.io/sitemap.xml

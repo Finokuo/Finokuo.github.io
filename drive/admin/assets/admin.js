@@ -1,8 +1,8 @@
 /* =====================================================
  * Fuo Tools · 图形化管理台逻辑（admin/index.html 专用）
  * 身份：仅 System（profiles.username === 'System'）可进入
- * 三个面板：用户（搜索/分页/封禁/改名）· 公告（发布/删除）
- *          日志（audit_log 分页时间线）
+ * 四个面板：用户（搜索/分页/封禁/改名）· 公告（发布/删除）
+ *          日志（audit_log 分页时间线）· 反馈（feedback 列表/删除，v0.10.0）
  * 所有写操作自动写 audit_log 留痕（失败静默，不阻塞主流程）
  * 权限全部由数据库 RLS 保证，前端只做交互。
  * ===================================================== */
@@ -50,97 +50,20 @@
       .then(function () { /* 忽略 */ });
   }
 
-/* =====================================================
- * v0.8.1 修复：身份验证健壮化
- * 旧版把「查询失败」也当成 403，导致 System 本人被误拒。
- * 新版链路：
- *   查询出错 → 自动重试 2 次 → 仍失败 → 错误面板（显示具体原因）
- *              · 若注册信息（metadata）里用户名恰为 System，则放行
- *                （真正的权限仍由数据库 RLS 保证，这里只是门禁体验层）
- *   查询成功但无行 → 「账号缺 profile 记录」面板
- *   查询成功且 username !== 'System' → 403（面板展示当前登录身份）
- * ===================================================== */
-  var ADMIN_NAME = 'System';
-
-  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-
-  function identityText(u) {
-    if (!u) return '';
-    var meta = (u.user_metadata && u.user_metadata.username) || '';
-    return '当前登录：' + (meta || '（未设置用户名）') + (u.email ? ' · ' + u.email : '');
-  }
-
-  /* 单次查询加超时竞争：supabase-js 对网络失败有内部长重试（backoff），
-   * 不加超时会导致错误面板迟迟不出现。超时≈按错误处理，走下方重试链。 */
-  function withTimeout(p, ms) {
-    return new Promise(function (resolve) {
-      var done = false;
-      var timer = setTimeout(function () {
-        if (done) return;
-        done = true;
-        resolve({ error: { message: '请求超时（' + ms + ' ms）' } });
-      }, ms);
-      p.then(function (r) {
-        if (done) return;
-        done = true; clearTimeout(timer); resolve(r);
-      }, function (e) {
-        if (done) return;
-        done = true; clearTimeout(timer); resolve({ error: e });
-      });
-    });
-  }
-
-  /* profiles 查询：失败自动重试（网络抖动 / PostgREST 冷启动自愈） */
-  function fetchProfile(c, uid, attempt) {
-    return withTimeout(
-      c.from('profiles').select('username,status').eq('id', uid).maybeSingle(),
-      6000
-    ).then(function (r) {
-      if (r.error && attempt < 2) {
-        return delay(attempt === 0 ? 500 : 1500).then(function () {
-          return fetchProfile(c, uid, attempt + 1);
-        });
-      }
-      return r;
-    });
-  }
-
-  function showError(title, detail) {
+  /* ---------- 身份守卫：仅 System ----------
+   * 修复：原版把「查询出错」也当成「非 System」误拒（如 supabase-admin.sql 未执行
+   * 导致 status 列缺失时，data 为 null）。现拆成三分支并给出可自查的诊断信息：
+   *   ① 查询出错  → 提示执行 SQL / 检查网络，不再误判
+   *   ② 无档案行  → 回退注册元数据（user_metadata.username）判定
+   *   ③ 用户名不符 → 显示实际用户名（大小写 / 空格一眼可查）
+   */
+  function showDenied(reason) {
     $('ad-loading').hidden = true;
-    $('ad-denied').hidden = true;
-    $('ad-error-title').textContent = title;
-    $('ad-error-detail').textContent = detail || '';
-    var who = $('ad-error-who');
-    if (who) { who.textContent = identityText(user); who.hidden = false; }
-    $('ad-error').hidden = false;
+    var r = document.getElementById('ad-denied-reason');
+    if (r) r.textContent = reason;
+    $('ad-denied').hidden = false;
   }
 
-  /* ---------- 门禁面板链接（guard 入口就绪，无论身份可用） ---------- */
-  function initGateLinks() {
-    if (initGateLinks._done) return;
-    initGateLinks._done = true;
-    var drive = PATHS.DRIVE || '../';
-    ['ad-back-drive', 'ad-back-drive-2', 'ad-back-drive-3'].forEach(function (id) {
-      var el = $(id);
-      if (el) el.href = drive;
-    });
-    var tUrl = (window.FUO_BASE || '') + '/drive/tool-cluster/terminal' + (window.FUO_SUFFIX || '/');
-    if (PREVIEW) tUrl += (tUrl.indexOf('?') === -1 ? '?' : '&') + 'preview=1';
-    var tl = $('ad-link-terminal');
-    if (tl) tl.href = tUrl;
-    var retry = $('ad-retry');
-    if (retry) {
-      retry.addEventListener('click', function () {
-        $('ad-error').hidden = true;
-        var loading = $('ad-loading');
-        loading.textContent = '正在重新验证管理员身份…';
-        loading.hidden = false;
-        guard(); // 完整重走守卫（含面板重置）
-      });
-    }
-  }
-
-  /* ---------- 身份守卫：仅 System ---------- */
   function guard() {
     if (PREVIEW) {
       $('ad-loading').hidden = true;
@@ -148,12 +71,6 @@
       bootAll(true);
       return;
     }
-    initGateLinks(); // 面板按钮先就绪（403/错误用户也需可用）
-    // 重置三个互斥面板（重试入口复用 guard 时保证干净状态）
-    $('ad-error').hidden = true;
-    $('ad-denied').hidden = true;
-    $('ad-root').hidden = true;
-    $('ad-loading').hidden = false;
     var c = client();
     if (!c) {
       $('ad-loading').textContent = '// SDK 未就绪，请刷新重试';
@@ -166,45 +83,51 @@
         return;
       }
       user = session.user;
-      fetchProfile(c, user.id, 0).then(function (r) {
-        if (r.error) {
-          // 查询失败 ≠ 非管理员。先看注册信息是否为 System：是则放行（RLS 是真防线）
-          var metaName = (user.user_metadata && user.user_metadata.username) || '';
-          if (metaName === ADMIN_NAME) {
-            $('ad-loading').hidden = true;
-            $('ad-root').hidden = false;
-            bootAll(false);
-            showToast('网络不稳：已按注册信息放行，列表读取会自动重试');
+      c.from('profiles').select('username,status').eq('id', user.id).maybeSingle()
+        .then(function (_b) {
+          /* ① 查询出错：缺列（supabase-admin.sql 未执行）/ RLS / 网络 */
+          if (_b.error) {
+            var code = _b.error.code || '';
+            var msg = _b.error.message || '未知错误';
+            showDenied('档案查询失败（' + (code ? code + ' · ' : '') + msg + '）。' +
+              '常见原因：尚未执行 supabase-admin.sql（缺 status 列或 audit_log 表），或网络异常。执行后刷新本页即可。');
             return;
           }
-          showError('身份验证失败', '查询用户资料时出错（已自动重试）：' +
-            ((r.error && r.error.message) || '网络错误') + '。请检查网络后重试。');
-          return;
-        }
-        var p = r.data;
-        if (!p) {
-          showError('账号缺少资料记录',
-            '你的账号在 profiles 表里还没有记录（数据库可能未初始化）。' +
-            '请在 Supabase SQL Editor 执行 supabase-setup.sql 后重试。');
-          return;
-        }
-        if (p.status === 'banned') {
-          c.auth.signOut().then(function () {
-            window.location.replace((PATHS.MAIN || '../') + '?banned=1');
-          });
-          return;
-        }
-        if (p.username !== ADMIN_NAME) {
+          var p = _b.data;
+          if (p && p.status === 'banned') {
+            c.auth.signOut().then(function () {
+              window.location.replace((PATHS.MAIN || '../') + '?banned=1');
+            });
+            return;
+          }
+          var metaName = (user.user_metadata && user.user_metadata.username) || '';
+          /* ② 无档案行：回退注册元数据判定，避免误拒真正的 System */
+          if (!p) {
+            if (String(metaName).trim() === 'System') {
+              $('ad-loading').hidden = true;
+              $('ad-root').hidden = false;
+              bootAll(false);
+              showToast('提示：profiles 档案行缺失，已按注册名 System 放行');
+              return;
+            }
+            showDenied('未找到你的档案行（profiles 中没有此用户），且注册名也不是 System。' +
+              '如你认为这是误判，请重新登录后再试。');
+            return;
+          }
+          /* ③ 用户名不匹配：显示实际用户名，大小写 / 首尾空格一眼可查 */
+          var uname = String(p.username || '').trim();
+          if (uname !== 'System') {
+            showDenied('当前登录的用户名是「' + (p.username || '—') +
+              '」，仅 System 可进入（区分大小写，注意首尾空格）。');
+            return;
+          }
           $('ad-loading').hidden = true;
-          var who = $('ad-denied-who');
-          if (who) who.textContent = identityText(user) + '；资料库用户名：「' + p.username + '」。若你确实是 System，请确认登录的是 System 对应的邮箱账号。';
-          $('ad-denied').hidden = false;
-          return;
-        }
-        $('ad-loading').hidden = true;
-        $('ad-root').hidden = false;
-        bootAll(false);
-      });
+          $('ad-root').hidden = false;
+          bootAll(false);
+        })
+        .catch(function (e) {
+          showDenied('身份校验异常：' + ((e && e.message) || '网络错误') + '。请刷新重试。');
+        });
     });
   }
 
@@ -221,11 +144,12 @@
           x.classList.toggle('is-on', on);
           x.setAttribute('aria-selected', String(on));
         });
-        ['users', 'ann', 'audit'].forEach(function (p) {
+        ['users', 'ann', 'audit', 'fb'].forEach(function (p) {
           $('ad-panel-' + p).hidden = p !== name;
         });
         if (name === 'ann' && !annLoaded) loadAnnList();
         if (name === 'audit' && !auditLoaded) loadAudit();
+        if (name === 'fb' && !fbLoaded) loadFeedback();
       });
     });
   }
@@ -492,7 +416,7 @@
     box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
     if (PREVIEW) {
       renderAnnList([
-        { id: 'a1', content: 'Fuo Tools v0.9.0：桌面时代开启——AI 管理大师升级为桌面版专属，新增下载页。', created_at: new Date().toISOString(), isCurrent: true },
+        { id: 'a1', content: 'Fuo Tools v0.10.0 上线：反馈通道、桌面版下载页焕新与扫描演示升级。', created_at: new Date().toISOString(), isCurrent: true },
       ]);
       annLoaded = true;
       return;
@@ -567,6 +491,99 @@
   }
 
   /* =====================================================
+   * 反馈面板（feedback 表，v0.10.0）
+   * ===================================================== */
+  var fbLoaded = false;
+
+  function loadFeedback() {
+    var box = $('ad-fb-list');
+    box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
+    if (PREVIEW) {
+      renderFeedbackList([
+        { id: 'f1', username: 'V8Tester', contact: '', content: '希望笔记能加全局搜索，目前命令面板里的搜索已经很好用了！', page: '/drive/', created_at: new Date().toISOString() },
+        { id: 'f2', username: null, contact: 'QQ 12345678', content: '手机上点注册弹窗打不开，Chrome 安卓浏览器。', page: '/main/', created_at: new Date(Date.now() - 7200000).toISOString() },
+        { id: 'f3', username: 'NoteTester', contact: '', content: '建议：番茄钟能不能加长休息模式？连续专注四个之后自动切换。', page: '/drive/office/pomodoro/', created_at: new Date(Date.now() - 172800000).toISOString() },
+      ]);
+      fbLoaded = true;
+      return;
+    }
+    client().from('feedback')
+      .select('id,username,contact,content,page,created_at')
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(function (_a) {
+        if (_a.error) {
+          box.innerHTML = '<p class="ad-td-empty">' + (isMissingTable(_a.error)
+            ? '反馈表尚未创建：请先执行 supabase-v7.sql'
+            : '读取失败：' + (_a.error.message || '未知错误')) + '</p>';
+          return;
+        }
+        renderFeedbackList(_a.data || []);
+        fbLoaded = true;
+      });
+  }
+
+  function renderFeedbackList(list) {
+    var box = $('ad-fb-list');
+    box.innerHTML = '';
+    $('ad-fb-total').textContent = list.length + ' 条' + (list.length >= 50 ? ' · 最新 50' : '');
+    if (!list.length) {
+      var e = document.createElement('p');
+      e.className = 'ad-td-empty';
+      e.textContent = '还没有收到用户反馈。';
+      box.appendChild(e);
+      return;
+    }
+    list.forEach(function (fb) {
+      var item = document.createElement('div');
+      item.className = 'ad-fb-item';
+
+      var p = document.createElement('p');
+      p.textContent = fb.content;
+      item.appendChild(p);
+
+      var foot = document.createElement('div');
+      foot.className = 'ad-fb-foot';
+      var meta = document.createElement('span');
+      meta.className = 'mono';
+      var who = fb.username ? '@' + fb.username : '游客';
+      var contact = fb.contact ? ' · 联系：' + fb.contact : '';
+      var pg = fb.page ? ' · 来自：' + String(fb.page)
+        .replace(/^https?:\/\/[^/]+/, '')
+        .replace(/^\/$/, '主页') : '';
+      var tstr = '—';
+      try {
+        tstr = new Date(fb.created_at).toLocaleString('zh-CN', {
+          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+        });
+      } catch (err) { /* ignore */ }
+      meta.textContent = who + contact + pg + ' · ' + tstr;
+
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'ad-op is-danger';
+      del.textContent = '删除';
+      del.disabled = PREVIEW;
+      del.addEventListener('click', function () { askConfirm('delfb', fb); });
+
+      foot.appendChild(meta);
+      foot.appendChild(del);
+      item.appendChild(foot);
+      box.appendChild(item);
+    });
+  }
+
+  function deleteFeedback(fb) {
+    client().from('feedback').delete().eq('id', fb.id)
+      .then(function (_a) {
+        if (_a.error) { showToast('删除失败：' + (_a.error.message || '未知错误')); return; }
+        logAudit('delfeedback', String(fb.id).slice(0, 8), '删除反馈：' + (fb.content || '').slice(0, 40) + '…');
+        showToast('反馈已删除');
+        loadFeedback();
+      });
+  }
+
+  /* =====================================================
    * 日志面板（audit_log 时间线）
    * ===================================================== */
   var auditLoaded = false;
@@ -586,7 +603,7 @@
   var ACT_NAMES = {
     ban: '封禁账号', unban: '解封账号', rename: '重命名',
     setnote: '设置便签', announce: '发布公告', delannounce: '删除公告',
-    audit: '查看日志', purge: '清理数据',
+    audit: '查看日志', purge: '清理数据', delfeedback: '删除反馈',
   };
 
   function loadAudit() {
@@ -595,7 +612,7 @@
     if (PREVIEW) {
       aTotal = 3;
       renderAudit([
-        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.9.0 桌面时代开启…', created_at: new Date().toISOString() },
+        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.10.0 上线…', created_at: new Date().toISOString() },
         { action: 'ban', target: 'RippleTester', detail: '封禁账号（管理台）', created_at: new Date(Date.now() - 3600000).toISOString() },
         { action: 'rename', target: 'OldName', detail: '→ NewName（Terminal）', created_at: new Date(Date.now() - 86400000).toISOString() },
       ]);
@@ -699,6 +716,7 @@
       if (act.kind === 'ban') setBan(act.payload, true);
       else if (act.kind === 'unban') setBan(act.payload, false);
       else if (act.kind === 'delann') deleteAnn(act.payload);
+      else if (act.kind === 'delfb') deleteFeedback(act.payload);
     });
     $('ad-confirm').addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('[data-ad-cancel]')) {
@@ -722,7 +740,13 @@
 
   /* ---------- 链接 ---------- */
   function initLinks() {
-    // 面板链接已由 initGateLinks 在 guard 入口处理；这里只补 Terminal 链接无需重复
+    var drive = PATHS.DRIVE || '../';
+    // Terminal 地址：tool-cluster/terminal/
+    var tUrl = (window.FUO_BASE || '') + '/drive/tool-cluster/terminal' + (window.FUO_SUFFIX || '/');
+    if (PREVIEW) tUrl += (tUrl.indexOf('?') === -1 ? '?' : '&') + 'preview=1';
+    $('ad-back-drive').href = drive;
+    $('ad-back-drive-2').href = drive;
+    $('ad-link-terminal').href = tUrl;
   }
 
   /* ---------- 启动 ---------- */

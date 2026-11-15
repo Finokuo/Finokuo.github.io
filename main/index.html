@@ -4,8 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fuo Tools — 安静的云工作台</title>
-  <meta name="description" content="Fuo Tools：精选小工具 + 云端同步 + 一键分享。注册免费，数据随行。" />
+  <meta name="description" content="Fuo Tools：精选开发者与效率小工具，在线 JSON 格式化、Base64、二维码、云笔记等 17 款。注册免费，多端云同步，数据随时导出。" />
   <meta name="color-scheme" content="dark light" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <link rel="canonical" href="https://finokuo.github.io/main/" />
+  <!-- 社交分享卡片（Open Graph / Twitter） -->
+  <meta property="og:site_name" content="Fuo Tools" />
+  <meta property="og:title" content="Fuo Tools — 安静的云工作台" />
+  <meta property="og:description" content="精选开发者与效率小工具，注册即同步，数据随行。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://finokuo.github.io/main/" />
+  <meta property="og:image" content="https://finokuo.github.io/assets/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Fuo Tools — 安静的云工作台" />
+  <meta name="twitter:description" content="精选开发者与效率小工具，注册即同步，数据随行。" />
+  <meta name="twitter:image" content="https://finokuo.github.io/assets/og-cover.png" />
+  <!-- 结构化数据：帮助搜索引擎理解站点类型 -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Fuo Tools",
+    "url": "https://finokuo.github.io/",
+    "description": "精选开发者与效率小工具，云端同步，免费使用",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "zh-CN",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
+  }
+  </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="assets/js/theme.js?v=4"></script>
@@ -13,6 +43,7 @@
   <link rel="stylesheet" href="../drive/assets/css/accent.css?v=1" />
 </head>
 <body>
+  <a class="skip-link" href="#main">跳到主内容</a>
   <!-- 极光光斑（装饰） -->
   <div class="aurora aurora-a" aria-hidden="true"></div>
   <div class="aurora aurora-b" aria-hidden="true"></div>
@@ -30,7 +61,6 @@
         <a href="#features">功能</a>
         <a href="#tools">工具集</a>
         <a href="#how">上手</a>
-        <a href="#" data-goto-fuotool>桌面版</a>
       </nav>
       <div class="nav-actions">
         <button class="theme-btn" type="button" data-theme-toggle aria-label="切换亮色 / 暗色模式" title="切换主题">
@@ -43,14 +73,14 @@
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <!-- ===== Hero ===== -->
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
           <span class="hero-badge">
             <span class="dot" aria-hidden="true"></span>
-            <span class="mono">FUO TOOLS · v0.9 桌面时代</span>
+            <span class="mono">FUO TOOLS · 公测 v0.9</span>
           </span>
           <h1 class="hero-title">
             小工具，大能量。<br />
@@ -164,18 +194,23 @@
           <p class="section-sub">17 款 · 随版本持续上新</p>
         </div>
         <div class="tool-grid">
-          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开 JSON 格式化工具（已可用，进入工作台使用）"><i class="tc-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></i><b>JSON 格式化</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-tool="json" aria-label="打开 JSON 格式化工具（免登录可直接试用）"><i class="tc-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></i><b>JSON 格式化</b><em class="mono">免登录可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开颜色工具（已可用）"><i class="tc-ic tone-fuchsia" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5S6 10.2 6 14.2a6 6 0 0 0 12 0C18 10.2 12 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg></i><b>颜色工具</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开密码生成器（已可用）"><i class="tc-ic tone-emerald" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M11.5 12H21M18 12v3.2M15 12v2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>密码生成器</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开文本统计（已可用）"><i class="tc-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 6h15M4.5 12h10M4.5 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>文本统计</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开时间戳转换（已可用）"><i class="tc-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></i><b>时间戳转换</b><em class="mono">可用</em></button>
-          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开 Base64 编解码（已可用）"><i class="tc-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14M9.5 4l-2 16M16.5 4l-2 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>Base64</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-tool="base64" aria-label="打开 Base64 编解码（免登录可直接试用）"><i class="tc-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14M9.5 4l-2 16M16.5 4l-2 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>Base64</b><em class="mono">免登录可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开 UUID 生成器（已可用）"><i class="tc-ic tone-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M13 10h4.5M13 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>UUID 生成</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开文本 Diff（已可用）"><i class="tc-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v15M7 12h2.5M15 12h2.5M16.2 9.8v4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>文本 Diff</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开二维码生成器（已可用）"><i class="tc-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M14 14h2.6M19.2 14h1.3M14 17.6v2.4M17.6 17.6h2.9M14 21h1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>二维码生成</b><em class="mono">可用</em></button>
           <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开云笔记（Markdown 预览已可用）"><i class="tc-ic tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h9l4 4v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5.5A1.5 1.5 0 0 1 6.5 4H6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></i><b>Markdown 笔记</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开正则测试器（已可用）"><i class="tc-ic tone-rose" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 4.5 4.5 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15 7.5v9M11.3 9.7l7.4 4.6M18.7 9.7l-7.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20.2" cy="19" r="1.3" fill="currentColor"/></svg></i><b>正则测试</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开 JWT 解码器（已可用）"><i class="tc-ic tone-violet" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 4.5c-3 1.5-4.5 4-4.5 7.5S6 18 9 19.5M15 4.5c3 1.5 4.5 4 4.5 7.5S18 18 15 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></i><b>JWT 解码</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开进制转换工具（已可用）"><i class="tc-ic tone-cyan" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5v17M5 7.5l7 4 7-4M5 16.5l7-4 7 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 3" fill="none"/></svg></i><b>进制转换</b><em class="mono">可用</em></button>
+          <button class="tool-chip is-live" data-reveal type="button" data-goto-drive aria-label="打开 Lorem 占位文本生成器（已可用）"><i class="tc-ic tone-amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 10.5h14M5 15h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M16.5 13.3v4.4l3.5-2.2z" fill="currentColor"/></svg></i><b>Lorem 文本</b><em class="mono">可用</em></button>
         </div>
-        <p class="tools-note mono">13 款工具 + 云笔记登录即可用 · 使用记录与收藏自动云同步</p>
+        <p class="tools-note mono">17 款工具登录即用（16 款工具 + 云笔记）· JSON / Base64 免登录可直接试用 · 使用记录与收藏自动云同步</p>
+        <p class="tools-seo">免费在线工具合集：JSON 格式化校验、Base64 编解码、URL 编解码、正则表达式测试、时间戳转换、UUID 生成器、二维码生成、文本对比 Diff、哈希计算、JWT 解码、进制转换、Lorem 占位文本、强密码生成、颜色工具、图片压缩与云端 Markdown 笔记 —— 免安装、注册即多端同步。</p>
       </div>
     </section>
 
@@ -191,7 +226,7 @@
           <div class="step" data-reveal>
             <b class="mono">01</b>
             <h3>注册账号</h3>
-            <p>用户名 + 密码，一分钟搞定。</p>
+            <p>用户名 + 邮箱 + 密码，一分钟搞定。</p>
           </div>
           <div class="step" data-reveal>
             <b class="mono">02</b>
@@ -228,10 +263,12 @@
       </div>
       <p class="mono">© 2025 FUO TOOLS · 静态而快速，云端而可靠</p>
       <nav class="footer-links" aria-label="页脚导航">
-        <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/Finokuo/Finokuo.github.io" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="#features">功能</a>
         <a href="#tools">工具集</a>
-        <a href="#" data-goto-fuotool>桌面版下载</a>
+        <a href="terms.html">服务条款</a>
+        <a href="privacy.html">隐私政策</a>
+        <a href="#" id="foot-feedback" title="告诉我们你遇到的问题或想法">反馈</a>
       </nav>
     </div>
   </footer>
@@ -269,14 +306,24 @@
           </span>
         </label>
         <label class="field">
-          <span class="field-label">密码</span>
+          <span class="field-label" id="auth-pwd-label">密码</span>
           <span class="field-box">
             <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
-            <input type="password" id="auth-password" name="password" placeholder="至少 6 位" autocomplete="current-password" minlength="6" required />
+            <input type="password" id="auth-password" name="password" placeholder="输入密码" autocomplete="current-password" required />
             <button class="pw-toggle" type="button" id="pw-toggle" aria-label="显示或隐藏密码">
               <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
             </button>
           </span>
+          <span class="pw-meter" id="pw-meter" hidden aria-hidden="true"><i></i><i></i><i></i><i></i><em class="pw-hint mono" id="pw-hint"></em></span>
+        </label>
+
+        <div class="auth-row" id="forgot-row" hidden>
+          <button type="button" class="link-btn" id="pw-forgot">忘记密码？</button>
+        </div>
+
+        <label class="agree" id="agree-row" hidden>
+          <input type="checkbox" id="auth-agree" />
+          <span>我已阅读并同意 <a href="terms.html" target="_blank" rel="noopener">《服务条款》</a>与<a href="privacy.html" target="_blank" rel="noopener">《隐私政策》</a></span>
         </label>
 
         <p class="auth-msg" id="auth-msg" hidden></p>
@@ -287,7 +334,7 @@
         </button>
       </form>
 
-      <p class="auth-foot" id="auth-foot">登录即代表同意以最大的善意使用本站 :)</p>
+      <p class="auth-foot" id="auth-foot">登录 / 注册即代表同意<a href="terms.html" target="_blank" rel="noopener">《服务条款》</a>与<a href="privacy.html" target="_blank" rel="noopener">《隐私政策》</a></p>
     </div>
   </div>
 
@@ -297,7 +344,18 @@
   <!-- Supabase SDK：本地打包，不依赖任何 CDN（国内网络友好） -->
   <script src="assets/vendor/supabase.min.js"></script>
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/fx.js?v=2"></script>
-  <script src="assets/js/app.js?v=5"></script>
+  <script src="assets/js/fx.js?v=3"></script>
+  <script src="../drive/assets/js/feedback.js?v=1"></script>
+  <script src="assets/js/app.js?v=3"></script>
+  <script>
+    /* 页脚反馈入口（v0.10.0）：打开共享反馈弹窗 */
+    (function () {
+      var link = document.getElementById('foot-feedback');
+      if (link) link.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.FUO_FEEDBACK) window.FUO_FEEDBACK.open();
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -31,7 +31,7 @@ window.FUO_PATHS = {
   RECYCLE: window.FUO_BASE + '/drive/recycle' + window.FUO_SUFFIX,
   N: window.FUO_BASE + '/drive/n' + window.FUO_SUFFIX,
   U: window.FUO_BASE + '/drive/u' + window.FUO_SUFFIX,
-  // v0.9：桌面版下载页（AI 管理大师 EXE 专属入口）
+  // v0.9：Fuo Tool 桌面版下载页（/fuotool/，AI 管理大师引导）
   FUOTOOL: window.FUO_BASE + '/fuotool' + window.FUO_SUFFIX,
 };
 
@@ -48,3 +48,9 @@ window.FUO_TOOL_URL = function (slug) {
 window.FUO_OFFICE_URL = function (slug) {
   return window.FUO_BASE + '/drive/office/' + encodeURIComponent(slug) + window.FUO_SUFFIX;
 };
+
+/**
+ * v0.9.1 免登录试用白名单：这些工具未登录也可直接使用，
+ * 结果仅保存在本机（tool-page.js / sidebar.js 守卫放行 + 试用横幅）。
+ */
+window.FUO_TRIAL_TOOLS = { json: 1, base64: 1 };

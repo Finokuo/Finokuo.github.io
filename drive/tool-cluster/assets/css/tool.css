@@ -335,3 +335,16 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 @media (max-width: 560px) {
   .radix-key { width: 74px; }
 }
+
+/* v0.9.1：免登录试用横幅（游客模式） */
+.trial-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  margin-bottom: 18px; padding: 12px 16px;
+  border: 1px solid var(--border-2); border-left: 3px solid var(--accent);
+  border-radius: 12px; background: var(--hover-soft);
+  font-size: 13px; color: var(--muted);
+}
+.trial-bar b { color: var(--text); font-weight: 650; }
+.trial-bar a { color: var(--accent-bright); font-weight: 600; white-space: nowrap; }
+.trial-bar a:hover { text-decoration: underline; }

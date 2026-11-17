@@ -1,8 +1,10 @@
 /* =====================================================
  * Fuo Tools · 图形化管理台逻辑（admin/index.html 专用）
  * 身份：仅 System（profiles.username === 'System'）可进入
- * 四个面板：用户（搜索/分页/封禁/改名）· 公告（发布/删除）
- *          日志（audit_log 分页时间线）· 反馈（feedback 列表/删除，v0.10.0）
+ * 三个面板：用户（搜索/分页/封禁/改名/改密）· 公告（发布/删除）
+ *          反馈（feedback 列表/删除）· 日志（audit_log 分页时间线）
+ * 改密走 RPC admin_reset_password（supabase-v7.sql），System 专属，
+ *   函数内部校验身份并写 audit_log（明文不落库）。
  * 所有写操作自动写 audit_log 留痕（失败静默，不阻塞主流程）
  * 权限全部由数据库 RLS 保证，前端只做交互。
  * ===================================================== */
@@ -144,12 +146,12 @@
           x.classList.toggle('is-on', on);
           x.setAttribute('aria-selected', String(on));
         });
-        ['users', 'ann', 'audit', 'fb'].forEach(function (p) {
+        ['users', 'ann', 'fb', 'audit'].forEach(function (p) {
           $('ad-panel-' + p).hidden = p !== name;
         });
         if (name === 'ann' && !annLoaded) loadAnnList();
+        if (name === 'fb' && !fbLoaded) loadFb();
         if (name === 'audit' && !auditLoaded) loadAudit();
-        if (name === 'fb' && !fbLoaded) loadFeedback();
       });
     });
   }
@@ -298,6 +300,16 @@
       bRen.addEventListener('click', function () { openRename(p); });
       tdOps.appendChild(bRen);
 
+      var bPwd = document.createElement('button');
+      bPwd.type = 'button';
+      bPwd.className = 'ad-op';
+      bPwd.textContent = '改密';
+      bPwd.disabled = isSelf || isPreview; // System 自己的密码走设置页；预览不可操作
+      bPwd.title = isSelf ? 'System 自己的密码请在设置页修改'
+                          : '重置该账号的登录密码（对方将被强制下线）';
+      bPwd.addEventListener('click', function () { openPasswd(p); });
+      tdOps.appendChild(bPwd);
+
       tr.appendChild(tdName);
       tr.appendChild(tdStatus);
       tr.appendChild(tdNotes);
@@ -372,6 +384,64 @@
       });
   }
 
+  /* ---------- 改密（v0.9.2 · admin_reset_password RPC，System only） ----------
+   * 与 Terminal 的 passwd 同一数据库函数：身份/长度/存在性校验、
+   * bcrypt 入库、踢会话、audit 留痕全部在函数内完成。 */
+  var passwdTarget = null;
+
+  function openPasswd(p) {
+    passwdTarget = p;
+    $('ad-passwd-target').textContent = p.username;
+    $('ad-passwd-input').value = '';
+    $('ad-passwd-msg').hidden = true;
+    $('ad-passwd').hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('ad-passwd-input').focus(); }, 60);
+  }
+  function closePasswd() {
+    $('ad-passwd').hidden = true;
+    document.body.style.overflow = '';
+    passwdTarget = null;
+  }
+  function savePasswd() {
+    if (!passwdTarget) return;
+    var pwd = $('ad-passwd-input').value;
+    var msg = $('ad-passwd-msg');
+    function fail(t) {
+      msg.className = 'tf-msg is-err';
+      msg.textContent = t;
+      msg.hidden = false;
+    }
+    if (pwd.length < 8 || pwd.length > 72) {
+      fail('密码需为 8-72 位（当前 ' + pwd.length + ' 位）。');
+      return;
+    }
+
+    var p = passwdTarget;
+    var btn = $('ad-passwd-save');
+    btn.disabled = true;
+    client().rpc('admin_reset_password', { target_username: p.username, new_password: pwd })
+      .then(function (_a) {
+        btn.disabled = false;
+        if (_a.error) {
+          var m = _a.error.message || '未知错误';
+          if (/FUO_PASSWD_SELF/.test(m)) fail('不能重置 System 自己的密码（请在设置页修改）。');
+          else if (/FUO_PASSWD_LEN/.test(m)) fail(m.replace(/^FUO_PASSWD_LEN:\s*/, ''));
+          else if (/FUO_PASSWD_NOUSER/.test(m)) fail('该用户已不存在，请刷新列表。');
+          else if (/FUO_PASSWD_FORBIDDEN/.test(m)) fail('仅 System 账号可以重置密码。');
+          else if (_a.error.code === 'PGRST202' || /function .* does not exist|Could not find the function/i.test(m)) {
+            fail('改密函数尚未创建：请先在 Supabase SQL Editor 执行 supabase-v7.sql（幂等）。');
+          } else {
+            fail('重置失败：' + m);
+          }
+          return;
+        }
+        closePasswd();
+        showToast(_a.data || ('已重置「' + p.username + '」的密码'));
+        loadUsers();
+      });
+  }
+
   /* =====================================================
    * 公告面板
    * ===================================================== */
@@ -416,7 +486,7 @@
     box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
     if (PREVIEW) {
       renderAnnList([
-        { id: 'a1', content: 'Fuo Tools v0.10.0 上线：反馈通道、桌面版下载页焕新与扫描演示升级。', created_at: new Date().toISOString(), isCurrent: true },
+        { id: 'a1', content: 'Fuo Tools v0.9.1 上线：免登录试用、安全增强与隐私条款等 14 项改进。', created_at: new Date().toISOString(), isCurrent: true },
       ]);
       annLoaded = true;
       return;
@@ -491,95 +561,144 @@
   }
 
   /* =====================================================
-   * 反馈面板（feedback 表，v0.10.0）
+   * 反馈面板（v0.9.2 · feedback 表：supabase-feedback.sql）
    * ===================================================== */
   var fbLoaded = false;
+  var fbPage = 0;
+  var fbTotal = 0;
+  var FB_PAGE = 12;
+  var KIND_NAMES = { bug: '缺陷', suggestion: '建议', other: '其他' };
 
-  function loadFeedback() {
+  function initFb() {
+    $('ad-fb-kind').addEventListener('change', function () {
+      fbPage = 0;
+      loadFb();
+    });
+    $('ad-fb-refresh').addEventListener('click', function () {
+      fbPage = 0;
+      loadFb();
+    });
+    $('ad-fb-prev').addEventListener('click', function () {
+      if (fbPage > 0) { fbPage--; loadFb(); }
+    });
+    $('ad-fb-next').addEventListener('click', function () {
+      if ((fbPage + 1) * FB_PAGE < fbTotal) { fbPage++; loadFb(); }
+    });
+  }
+
+  function loadFb() {
     var box = $('ad-fb-list');
     box.innerHTML = '<p class="ad-td-empty mono">读取中…</p>';
     if (PREVIEW) {
-      renderFeedbackList([
-        { id: 'f1', username: 'V8Tester', contact: '', content: '希望笔记能加全局搜索，目前命令面板里的搜索已经很好用了！', page: '/drive/', created_at: new Date().toISOString() },
-        { id: 'f2', username: null, contact: 'QQ 12345678', content: '手机上点注册弹窗打不开，Chrome 安卓浏览器。', page: '/main/', created_at: new Date(Date.now() - 7200000).toISOString() },
-        { id: 'f3', username: 'NoteTester', contact: '', content: '建议：番茄钟能不能加长休息模式？连续专注四个之后自动切换。', page: '/drive/office/pomodoro/', created_at: new Date(Date.now() - 172800000).toISOString() },
+      fbTotal = 3;
+      renderFb([
+        { id: 'f1', kind: 'bug', content: 'JSON 工具粘贴 5MB 大文件时输入框会卡一下。', username: 'Finokuo', page: '/drive/tool-cluster/json/', created_at: new Date().toISOString() },
+        { id: 'f2', kind: 'suggestion', content: '希望云笔记支持导出 Word，写周报要用。', username: null, page: '/drive/tool-cluster/notes/', created_at: new Date(Date.now() - 5400000).toISOString() },
+        { id: 'f3', kind: 'other', content: '桌面版源码包我跑起来了，扫描到 9 个 AI，豆包和元宝都能牵动！', username: null, page: '/fuotool/', created_at: new Date(Date.now() - 172800000).toISOString() },
       ]);
       fbLoaded = true;
       return;
     }
-    client().from('feedback')
-      .select('id,username,contact,content,page,created_at')
-      .order('created_at', { ascending: false })
-      .limit(50)
-      .then(function (_a) {
-        if (_a.error) {
-          box.innerHTML = '<p class="ad-td-empty">' + (isMissingTable(_a.error)
-            ? '反馈表尚未创建：请先执行 supabase-v7.sql'
-            : '读取失败：' + (_a.error.message || '未知错误')) + '</p>';
+    var kind = $('ad-fb-kind').value;
+    var from = fbPage * FB_PAGE;
+    var req = client().from('feedback')
+      .select('id,kind,content,username,page,created_at', { count: 'exact' })
+      .order('created_at', { ascending: false });
+    if (kind) req = req.eq('kind', kind);
+    req.range(from, from + FB_PAGE - 1)
+      .then(function (_r) {
+        if (_r.error) {
+          box.innerHTML = '<p class="ad-td-empty">' + (isMissingTable(_r.error)
+            ? '反馈表尚未创建：请先执行 supabase-feedback.sql'
+            : '读取失败：' + (_r.error.message || '未知错误')) + '</p>';
           return;
         }
-        renderFeedbackList(_a.data || []);
+        fbTotal = (_r.count != null) ? _r.count : (_r.data || []).length;
+        renderFb(_r.data || []);
         fbLoaded = true;
       });
   }
 
-  function renderFeedbackList(list) {
+  function renderFb(list) {
     var box = $('ad-fb-list');
     box.innerHTML = '';
-    $('ad-fb-total').textContent = list.length + ' 条' + (list.length >= 50 ? ' · 最新 50' : '');
+    var pages = Math.max(1, Math.ceil(fbTotal / FB_PAGE));
+    $('ad-fb-page').textContent = (fbPage + 1) + ' / ' + pages;
+    $('ad-fb-prev').disabled = fbPage <= 0;
+    $('ad-fb-next').disabled = (fbPage + 1) >= pages;
+    $('ad-fb-total').textContent = fbTotal + ' 条反馈';
+
     if (!list.length) {
       var e = document.createElement('p');
       e.className = 'ad-td-empty';
-      e.textContent = '还没有收到用户反馈。';
+      e.textContent = '还没有反馈。全站右下角「反馈」按钮收到的内容会出现在这里。';
       box.appendChild(e);
       return;
     }
+
     list.forEach(function (fb) {
       var item = document.createElement('div');
       item.className = 'ad-fb-item';
 
-      var p = document.createElement('p');
-      p.textContent = fb.content;
-      item.appendChild(p);
+      var head = document.createElement('div');
+      head.className = 'ad-fb-head';
+
+      var chip = document.createElement('span');
+      chip.className = 'ad-fb-kind' + (fb.kind === 'bug' ? ' is-bug' : fb.kind === 'suggestion' ? ' is-suggestion' : '');
+      chip.textContent = KIND_NAMES[fb.kind] || fb.kind;
+      head.appendChild(chip);
+
+      var who = document.createElement('span');
+      who.className = 'ad-fb-user' + (fb.username ? '' : ' is-anon');
+      who.textContent = fb.username || '游客';
+      head.appendChild(who);
+
+      if (fb.page) {
+        var pg = document.createElement('span');
+        pg.className = 'ad-fb-page-path mono';
+        pg.title = fb.page;
+        pg.textContent = fb.page;
+        head.appendChild(pg);
+      }
+
+      var time = document.createElement('span');
+      time.className = 'ad-fb-time mono';
+      try {
+        time.textContent = new Date(fb.created_at).toLocaleString('zh-CN', {
+          year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+        });
+      } catch (err) { time.textContent = '—'; }
+      head.appendChild(time);
+
+      var content = document.createElement('p');
+      content.className = 'ad-fb-content';
+      content.textContent = fb.content;
 
       var foot = document.createElement('div');
       foot.className = 'ad-fb-foot';
-      var meta = document.createElement('span');
-      meta.className = 'mono';
-      var who = fb.username ? '@' + fb.username : '游客';
-      var contact = fb.contact ? ' · 联系：' + fb.contact : '';
-      var pg = fb.page ? ' · 来自：' + String(fb.page)
-        .replace(/^https?:\/\/[^/]+/, '')
-        .replace(/^\/$/, '主页') : '';
-      var tstr = '—';
-      try {
-        tstr = new Date(fb.created_at).toLocaleString('zh-CN', {
-          month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
-        });
-      } catch (err) { /* ignore */ }
-      meta.textContent = who + contact + pg + ' · ' + tstr;
-
       var del = document.createElement('button');
       del.type = 'button';
       del.className = 'ad-op is-danger';
       del.textContent = '删除';
       del.disabled = PREVIEW;
+      del.title = PREVIEW ? '预览模式不可操作' : '删除这条反馈（自动留痕）';
       del.addEventListener('click', function () { askConfirm('delfb', fb); });
-
-      foot.appendChild(meta);
       foot.appendChild(del);
+
+      item.appendChild(head);
+      item.appendChild(content);
       item.appendChild(foot);
       box.appendChild(item);
     });
   }
 
-  function deleteFeedback(fb) {
+  function deleteFb(fb) {
     client().from('feedback').delete().eq('id', fb.id)
-      .then(function (_a) {
-        if (_a.error) { showToast('删除失败：' + (_a.error.message || '未知错误')); return; }
-        logAudit('delfeedback', String(fb.id).slice(0, 8), '删除反馈：' + (fb.content || '').slice(0, 40) + '…');
+      .then(function (_r) {
+        if (_r.error) { showToast('删除失败：' + (_r.error.message || '未知错误')); return; }
+        logAudit('delfb', fb.username || '游客', '删除反馈：' + (fb.content || '').slice(0, 40) + ((fb.content || '').length > 40 ? '…' : ''));
         showToast('反馈已删除');
-        loadFeedback();
+        loadFb();
       });
   }
 
@@ -602,8 +721,10 @@
 
   var ACT_NAMES = {
     ban: '封禁账号', unban: '解封账号', rename: '重命名',
+    admin_reset_password: '重置密码',
     setnote: '设置便签', announce: '发布公告', delannounce: '删除公告',
-    audit: '查看日志', purge: '清理数据', delfeedback: '删除反馈',
+    delfb: '删除反馈',
+    audit: '查看日志', purge: '清理数据',
   };
 
   function loadAudit() {
@@ -612,7 +733,7 @@
     if (PREVIEW) {
       aTotal = 3;
       renderAudit([
-        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.10.0 上线…', created_at: new Date().toISOString() },
+        { action: 'announce', target: '', detail: '发布公告：Fuo Tools v0.9.1 上线…', created_at: new Date().toISOString() },
         { action: 'ban', target: 'RippleTester', detail: '封禁账号（管理台）', created_at: new Date(Date.now() - 3600000).toISOString() },
         { action: 'rename', target: 'OldName', detail: '→ NewName（Terminal）', created_at: new Date(Date.now() - 86400000).toISOString() },
       ]);
@@ -653,7 +774,7 @@
       return;
     }
 
-    var DANGER_ACTS = { ban: 1, delannounce: 1, purge: 1 };
+    var DANGER_ACTS = { ban: 1, delannounce: 1, purge: 1, admin_reset_password: 1 };
     list.forEach(function (a) {
       var item = document.createElement('div');
       item.className = 'ad-audit-item' + (DANGER_ACTS[a.action] ? ' is-danger' : '');
@@ -703,6 +824,7 @@
     if (kind === 'ban') text = '确定封禁「' + payload.username + '」吗？该账号将无法登录，正在线上的会话会被踢出。';
     else if (kind === 'unban') text = '确定解封「' + payload.username + '」吗？';
     else if (kind === 'delann') text = '确定删除这条公告吗？删除后用户端横幅立即消失。';
+    else if (kind === 'delfb') text = '确定删除这条反馈吗？删除后不可恢复（操作会留痕）。';
     $('ad-confirm-text').textContent = text;
     $('ad-confirm').hidden = false;
   }
@@ -716,7 +838,7 @@
       if (act.kind === 'ban') setBan(act.payload, true);
       else if (act.kind === 'unban') setBan(act.payload, false);
       else if (act.kind === 'delann') deleteAnn(act.payload);
-      else if (act.kind === 'delfb') deleteFeedback(act.payload);
+      else if (act.kind === 'delfb') deleteFb(act.payload);
     });
     $('ad-confirm').addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('[data-ad-cancel]')) {
@@ -731,10 +853,18 @@
     $('ad-rename').addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('[data-ad-close]')) closeRename();
     });
+    $('ad-passwd-save').addEventListener('click', savePasswd);
+    $('ad-passwd-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); savePasswd(); }
+    });
+    $('ad-passwd').addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('[data-ad-close]')) closePasswd();
+    });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
       if (!$('ad-confirm').hidden) { $('ad-confirm').hidden = true; confirmAct = null; }
       if (!$('ad-rename').hidden) closeRename();
+      if (!$('ad-passwd').hidden) closePasswd();
     });
   }
 
@@ -754,6 +884,7 @@
     initTabs();
     initUsers();
     initAnn();
+    initFb();
     initAudit();
     initConfirm();
     initLinks();

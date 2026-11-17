@@ -5,30 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fuo Tool 桌面版 · AI 管理大师，指挥你所有的 AI</title>
 <meta name="description" content="Fuo Tool 桌面版下载页：AI 管理大师可扫描电脑 / iPhone / Android 上已有的 AI，一句话牵动 WorkBuddy、AutoClaw、Doubao、Qwen 等智能体协同干活，消息与文件直接回传。">
-<meta name="theme-color" content="#07080a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307080a' stroke='rgba(45,212,191,.55)' stroke-width='1.4'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='%232dd4bf' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0e0f13">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e0f13' stroke='rgba(251,146,60,.55)' stroke-width='1.4'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='%23fb923c' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 /* =====================================================
  * Fuo Tool 桌面版下载页 · 设计语言承接「网页设计」参考稿
- * 暗色编辑排版 + 流体粒子 + 金/橙/青三强调色
+ * 暗色编辑排版 + 流体粒子 + 橙/深橙/天青三强调色（配色规范 v1.0：全站唯一橙色强调落点）
  * ===================================================== */
 :root{
-  --bg:#07080a;
-  --bg-soft:#0b0d10;
-  --panel:#0e1114;
-  --panel-2:#12161b;
+  --bg:#0e0f13;
+  --bg-soft:#15171e;
+  --panel:#1b1e27;
+  --panel-2:#20242f;
   --line:rgba(255,255,255,.08);
   --line-strong:rgba(255,255,255,.14);
   --text:#f2f1ed;
   --text-dim:#a7a9b4;
   --text-faint:#6b6d78;
-  --accent:#2dd4bf;
-  --accent-2:#5eead4;
-  --accent-3:#7fb7c4;
-  --accent-soft:rgba(45,212,191,.12);
+  /* 配色规范 §五·强调色 Orange（暗色：#FB923C 文字 8.04:1 / 底配墨字 8.18:1） */
+  --accent:#fb923c;
+  --accent-2:#ea580c;
+  --accent-3:#38bdf8;   /* 信息语义（规范 §六 Info） */
+  --accent-soft:rgba(251,146,60,.12);
+  --success:#4ade80;    /* 规范 §六 Success */
+  --info:#38bdf8;
   --serif:'Fraunces','Noto Serif SC',Georgia,'Songti SC','SimSun',serif;
   --sans:'Inter','Noto Sans SC',system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
   --mono:'JetBrains Mono','SF Mono',Consolas,'Noto Sans SC',monospace;
@@ -41,7 +44,7 @@ body{
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;
 }
-::selection{background:rgba(45,212,191,.28);color:var(--text)}
+::selection{background:rgba(251,146,60,.28);color:var(--text)}
 a{color:inherit}
 button{font-family:inherit}
 
@@ -62,7 +65,7 @@ button{font-family:inherit}
   display:flex;align-items:center;justify-content:space-between;gap:1rem;
   padding:1.1rem 2.4rem;transition:background .35s ease,border-color .35s ease,padding .35s ease;
   border-bottom:1px solid transparent;}
-.topbar.is-scrolled{background:rgba(7,8,10,.72);backdrop-filter:blur(14px);
+.topbar.is-scrolled{background:rgba(14,15,19,.72);backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);border-bottom-color:var(--line);padding:.8rem 2.4rem;}
 .brand{font-family:var(--serif);font-size:1rem;letter-spacing:.02em;color:var(--text-dim);
   text-decoration:none;white-space:nowrap;}
@@ -75,10 +78,10 @@ button{font-family:inherit}
 .top-nav a:hover,.top-nav a.is-active{color:var(--text);}
 .top-nav a.is-active::after{width:100%;}
 .pill{font-size:.82rem;font-weight:500;letter-spacing:.04em;text-decoration:none;
-  color:#04211c;background:linear-gradient(135deg,var(--accent),#14b8a6);
+  color:#141310;background:linear-gradient(135deg,var(--accent),#fdba74);
   padding:.55rem 1.25rem;border-radius:999px;white-space:nowrap;
   transition:transform .25s ease,box-shadow .25s ease;}
-.pill:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(45,212,191,.28);}
+.pill:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(251,146,60,.28);}
 
 /* ---------- 通用排版 ---------- */
 .wrap{width:100%;max-width:var(--maxw);margin:0 auto;position:relative;z-index:2;}
@@ -95,7 +98,7 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
 /* 章节幽灵大数字 */
 .ghost{position:absolute;top:-1.2rem;right:-1rem;z-index:-1;user-select:none;pointer-events:none;
   font-family:var(--serif);font-size:clamp(9rem,20vw,17rem);font-weight:300;line-height:1;
-  background:linear-gradient(180deg,rgba(45,212,191,.16),rgba(94,234,212,.03));
+  background:linear-gradient(180deg,rgba(251,146,60,.16),rgba(234,88,12,.03));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 
 /* ---------- Hero ---------- */
@@ -108,20 +111,20 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
 .btn-primary{
   display:inline-flex;align-items:center;gap:.6em;cursor:pointer;
   font-size:1rem;font-weight:600;letter-spacing:.02em;
-  color:#04211c;background:linear-gradient(135deg,var(--accent) 0%,#14b8a6 55%,var(--accent-2) 130%);
+  color:#141310;background:linear-gradient(135deg,var(--accent) 0%,#fdba74 55%,var(--accent-2) 130%);
   border:none;border-radius:999px;padding:1rem 2.1rem;
   position:relative;overflow:hidden;
   transition:transform .28s ease,box-shadow .28s ease;}
 .btn-primary::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
   background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);
   transform:skewX(-20deg);transition:left .6s ease;}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(45,212,191,.32);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(251,146,60,.32);}
 .btn-primary:hover::after{left:130%;}
 .btn-primary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
 .btn-ghost{display:inline-flex;align-items:center;gap:.6em;text-decoration:none;
   font-size:.95rem;color:var(--text-dim);border:1px solid var(--line-strong);
   border-radius:999px;padding:1rem 1.8rem;transition:all .28s ease;}
-.btn-ghost:hover{border-color:rgba(45,212,191,.5);color:var(--text);background:var(--accent-soft);}
+.btn-ghost:hover{border-color:rgba(251,146,60,.5);color:var(--text);background:var(--accent-soft);}
 .btn-ghost:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
 .hero-meta{margin-top:3rem;display:flex;gap:2.6rem;flex-wrap:wrap;}
 .hero-meta div{display:flex;flex-direction:column;gap:.35rem;}
@@ -175,7 +178,7 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
   font-size:.8rem;line-height:1.9;color:var(--text-dim);
   min-height:330px;white-space:pre-wrap;word-break:break-all;}
 .console-body .c-cmd{color:var(--text);}
-.console-body .c-ok{color:var(--accent-3);}
+.console-body .c-ok{color:var(--success);}
 .console-body .c-gold{color:var(--accent);}
 .console-body .c-warn{color:var(--accent-2);}
 .console-body .c-dim{color:var(--text-faint);}
@@ -188,7 +191,7 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
 .step{border:1px solid var(--line);border-radius:14px;padding:1.5rem 1.4rem;
   background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.008));
   transition:transform .35s ease,border-color .35s ease;}
-.step:hover{transform:translateY(-3px);border-color:rgba(45,212,191,.38);}
+.step:hover{transform:translateY(-3px);border-color:rgba(251,146,60,.38);}
 .step .k{font-family:var(--serif);font-size:1.6rem;color:var(--accent);font-weight:300;}
 .step h3{font-family:var(--serif);font-weight:500;font-size:1.08rem;margin-top:.55rem;}
 .step p{font-size:.85rem;color:var(--text-dim);line-height:1.65;margin-top:.45rem;font-weight:300;}
@@ -201,8 +204,8 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
 .scan-devices .dv{font-size:.86rem;letter-spacing:.04em;color:var(--text-dim);cursor:pointer;
   border:1px solid var(--line);background:transparent;border-radius:999px;
   padding:.55rem 1.25rem;transition:all .25s ease;}
-.scan-devices .dv:hover{border-color:rgba(45,212,191,.45);color:var(--text);}
-.scan-devices .dv.is-on{color:#04211c;background:linear-gradient(135deg,var(--accent),#14b8a6);
+.scan-devices .dv:hover{border-color:rgba(251,146,60,.45);color:var(--text);}
+.scan-devices .dv.is-on{color:#141310;background:linear-gradient(135deg,var(--accent),#fdba74);
   border-color:transparent;font-weight:600;}
 .scan-devices .dv:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .scan-main{display:grid;grid-template-columns:1fr 1.35fr;min-height:300px;}
@@ -221,49 +224,45 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
   border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.018);
   opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease,border-color .3s ease;}
 .ai-row.is-in{opacity:1;transform:translateY(0);}
-.ai-row:hover{border-color:rgba(127,183,196,.45);}
+.ai-row:hover{border-color:rgba(56,189,248,.45);}
 .ai-row .dot{width:34px;height:34px;border-radius:10px;flex:none;
   display:flex;align-items:center;justify-content:center;
   font-family:var(--serif);font-size:1rem;color:var(--accent);
-  background:var(--accent-soft);border:1px solid rgba(45,212,191,.25);}
+  background:var(--accent-soft);border:1px solid rgba(251,146,60,.25);}
 .ai-row .nm{font-size:.92rem;color:var(--text);}
 .ai-row .kd{font-family:var(--mono);font-size:.7rem;color:var(--text-faint);margin-top:.15rem;}
 .ai-row .st{margin-left:auto;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;
-  color:var(--accent-3);border:1px solid rgba(127,183,196,.35);border-radius:999px;
+  color:var(--accent-3);border:1px solid rgba(56,189,248,.35);border-radius:999px;
   padding:.22rem .6rem;white-space:nowrap;}
 .scan-empty{margin:auto;text-align:center;color:var(--text-faint);
   font-family:var(--mono);font-size:.8rem;line-height:2.2;}
-/* 扫描过程日志流（终端感） */
-.scan-log{display:flex;flex-direction:column;gap:.12rem;padding:.1rem .15rem .55rem;}
-.scan-logline{font-family:var(--mono);font-size:.7rem;color:var(--text-faint);line-height:1.85;
-  opacity:0;transform:translateX(-6px);animation:fuo-log-in .35s ease forwards;}
-.scan-logline.log-done{color:var(--accent);}
-@keyframes fuo-log-in{to{opacity:1;transform:none;}}
-@media (prefers-reduced-motion:reduce){.scan-logline{animation:none;opacity:1;transform:none;}}
-.scan-btn{margin-top:.2rem;cursor:pointer;border:1px solid rgba(45,212,191,.5);
+.scan-btn{margin-top:.2rem;cursor:pointer;border:1px solid rgba(251,146,60,.5);
   background:var(--accent-soft);color:var(--accent);border-radius:10px;
   padding:.75rem 1rem;font-size:.88rem;font-weight:500;letter-spacing:.04em;
   transition:all .25s ease;}
-.scan-btn:hover:not(:disabled){background:rgba(45,212,191,.2);}
+.scan-btn:hover:not(:disabled){background:rgba(251,146,60,.2);}
 .scan-btn:disabled{opacity:.45;cursor:wait;}
 .scan-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.faq .a code{font-family:var(--mono);font-size:.82em;color:var(--accent);
+  background:var(--accent-soft);border:1px solid rgba(251,146,60,.25);border-radius:6px;
+  padding:.1em .45em;white-space:nowrap;}
 
 /* ---------- 卡片行 ---------- */
 .card-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.2rem;margin-top:2.8rem;}
 .card{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01));
   border:1px solid var(--line);border-radius:14px;padding:1.7rem 1.5rem;
   transition:transform .38s ease,border-color .38s ease,background .38s ease;}
-.card:hover{transform:translateY(-4px);border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.03);}
+.card:hover{transform:translateY(-4px);border-color:rgba(251,146,60,.4);background:rgba(251,146,60,.03);}
 .card .ic{font-family:var(--serif);font-size:1.75rem;color:var(--accent);font-weight:400;}
 .card h3{font-family:var(--serif);font-weight:500;font-size:1.12rem;margin-top:.7rem;}
 .card p{font-size:.86rem;color:var(--text-dim);line-height:1.68;margin-top:.5rem;font-weight:300;}
 
 /* ---------- 下载区 ---------- */
-.dl-card{margin-top:2.8rem;border:1px solid rgba(45,212,191,.3);border-radius:20px;
+.dl-card{margin-top:2.8rem;border:1px solid rgba(251,146,60,.3);border-radius:20px;
   padding:3rem 2.6rem;position:relative;overflow:hidden;
   background:
-    radial-gradient(90% 130% at 85% -10%,rgba(45,212,191,.13),transparent 55%),
-    radial-gradient(70% 120% at 0% 110%,rgba(127,183,196,.08),transparent 55%),
+    radial-gradient(90% 130% at 85% -10%,rgba(251,146,60,.13),transparent 55%),
+    radial-gradient(70% 120% at 0% 110%,rgba(56,189,248,.08),transparent 55%),
     var(--panel);}
 .dl-card h3{font-family:var(--serif);font-weight:400;font-size:1.9rem;}
 .dl-card .ver{font-family:var(--mono);font-size:.78rem;color:var(--text-faint);margin-top:.5rem;}
@@ -277,14 +276,14 @@ h1.title em,h2 em{font-style:italic;color:var(--accent);}
 .dl-os .os b{font-size:.9rem;color:var(--text-dim);font-weight:500;}
 .dl-os .os span{display:block;font-size:.74rem;color:var(--text-faint);margin-top:.25rem;}
 .web-keep{margin-top:2.2rem;font-size:.88rem;color:var(--text-dim);line-height:1.8;font-weight:300;}
-.web-keep a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(45,212,191,.35);}
+.web-keep a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(251,146,60,.35);}
 .web-keep a:hover{border-bottom-color:var(--accent);}
 
 /* ---------- FAQ ---------- */
 .faq{margin-top:2.6rem;display:flex;flex-direction:column;gap:.9rem;max-width:820px;}
 details{border:1px solid var(--line);border-radius:13px;background:var(--panel);
   overflow:hidden;transition:border-color .3s ease;}
-details[open]{border-color:rgba(45,212,191,.35);}
+details[open]{border-color:rgba(251,146,60,.35);}
 summary{cursor:pointer;list-style:none;padding:1.15rem 1.4rem;
   font-family:var(--serif);font-size:1.05rem;font-weight:500;
   display:flex;align-items:center;justify-content:space-between;gap:1rem;}
@@ -310,7 +309,7 @@ details .a b{color:var(--text);font-weight:500;}
 
 /* ---------- Toast ---------- */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translate(-50%,16px);z-index:99;
-  background:var(--panel-2);border:1px solid rgba(45,212,191,.45);border-radius:12px;
+  background:var(--panel-2);border:1px solid rgba(251,146,60,.45);border-radius:12px;
   padding:.85rem 1.4rem;font-size:.86rem;color:var(--text);max-width:min(88vw,480px);
   text-align:center;line-height:1.6;box-shadow:0 14px 40px rgba(0,0,0,.5);
   opacity:0;visibility:hidden;transition:opacity .3s ease,transform .3s ease,visibility .3s;}
@@ -382,9 +381,8 @@ details .a b{color:var(--text);font-weight:500;}
       <p class="eyebrow reveal is-in">Fuo Tool · Desktop Edition</p>
       <h1 class="title big reveal is-in" data-d="1">让设备上的每一个 AI<br><em>听你调遣</em></h1>
       <p class="lead reveal is-in" data-d="2">
-        全新桌面版带来旗舰功能「AI 管理大师」：扫描电脑或手机上已有的 AI，
-        一句话牵动 WorkBuddy、AutoClaw、Doubao、Qwen 等智能体协同干活——
-        消息与成果文件，直接回传到你手里。
+        全新桌面版带来旗舰功能「AI 管理大师」：扫描电脑上已有的 AI——豆包、DeepSeek、Kimi、ChatGPT、通义千问等客户端与网页版，
+        一句话同时投喂；回复与截图进度实时回流，成果文件自动归档回传。
       </p>
       <div class="cta-row reveal is-in" data-d="3">
         <button class="btn-primary" type="button" data-download>
@@ -397,9 +395,9 @@ details .a b{color:var(--text);font-weight:500;}
       </div>
       <div class="hero-rule reveal is-in" data-d="4"></div>
       <div class="hero-meta reveal is-in" data-d="4">
-        <div><span>当前版本</span><b>v1.0.0 · Windows x64</b></div>
+        <div><span>当前版本</span><b>v1.0.0 · 源码尝鲜已开放</b></div>
         <div><span>支持平台</span><b>Windows 10 及以上</b></div>
-        <div><span>安装体积</span><b>约 90 MB</b></div>
+        <div><span>分发方式</span><b>源码包 · Python 3.10+</b></div>
         <div><span>价格</span><b>免费使用</b></div>
       </div>
     </div>
@@ -409,8 +407,8 @@ details .a b{color:var(--text);font-weight:500;}
   <!-- ============ 数字带 ============ -->
   <section class="stats" aria-label="核心数字">
     <div class="wrap stat-grid">
-      <div class="stat reveal"><div class="num"><span data-count="4">0</span><small>+</small></div>
-        <div class="lab">可牵动的智能体生态：WorkBuddy、AutoClaw、Doubao、Qwen……</div></div>
+      <div class="stat reveal"><div class="num"><span data-count="29">0</span><small>种</small></div>
+        <div class="lab">内置识别的主流 AI：豆包、DeepSeek、Kimi、ChatGPT……识别不了的窗口可手动绑定。</div></div>
       <div class="stat reveal" data-d="1"><div class="num"><span data-count="3">0</span><small>类</small></div>
         <div class="lab">设备扫描全覆盖：PC、iPhone、Android 逐台识别已装 AI。</div></div>
       <div class="stat reveal" data-d="2"><div class="num"><span data-count="17">0</span><small>款</small></div>
@@ -433,9 +431,9 @@ details .a b{color:var(--text);font-weight:500;}
             你只需要用一句话说出目标，大师负责拆解任务、分派智能体、盯进度、收成果。
           </p>
           <ul class="list-style">
-            <li><b>跨智能体指挥：</b>WorkBuddy、AutoClaw、Doubao、Qwen……扫描到的 AI 都可被牵动，能力互补、各司其职。</li>
-            <li><b>自然语言下指令：</b>「把周报整理成 PPT 大纲，英文文案交给 Doubao 润色」——大师自动拆解、分派、跟进。</li>
-            <li><b>消息回传：</b>每个智能体的回复实时汇总在同一条时间线，谁在干什么、进展到哪，一目了然。</li>
+            <li><b>跨应用指挥：</b>豆包、DeepSeek、Kimi、ChatGPT……扫描到的 AI 都可被牵动，能力互补、各司其职。</li>
+            <li><b>自然语言下指令：</b>「把周报整理成 PPT 大纲，英文文案交给豆包润色」——大师自动拆解、分派、跟进。</li>
+            <li><b>消息回传：</b>每个 AI 的回复实时汇总在同一条时间线，配合 3 秒一帧的截图回流，谁在干什么、进展到哪，一目了然。</li>
             <li><b>文件交付：</b>产出的文档、图片、表格按日期自动归档落盘，打开即用。</li>
           </ul>
         </div>
@@ -514,19 +512,19 @@ details .a b{color:var(--text);font-weight:500;}
       <h2 class="section-title reveal" data-d="1">把管理大师<em>装进电脑</em></h2>
       <div class="dl-card reveal" data-d="2">
         <h3>Fuo Tool 桌面版 · Windows</h3>
-        <p class="ver">v1.0.0 · 免安装绿色版 · 约 90 MB · 托管于 GitHub Releases · 免费使用</p>
+        <p class="ver">v1.0.0 · 源码包 55 KB · 正式安装包打磨中 · 免费使用</p>
         <div class="dl-actions">
-          <button class="btn-primary" type="button" data-download>
+          <a class="btn-primary" id="dl-src" href="#" rel="noopener">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4.5 20h15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            下载 Windows 版
-          </button>
-          <span class="ver" style="margin-top:0">Windows 10 / 11 · x64</span>
+            下载尝鲜源码包（v1.0.0）
+          </a>
+          <span class="ver" style="margin-top:0">Windows 10 / 11 · x64 · Python 3.10+</span>
         </div>
         <div class="dl-note">
-          <span><i></i>安装包签名校验</span>
-          <span><i></i>无需管理员权限</span>
-          <span><i></i>静默更新可选</span>
-          <span><i></i>卸载干净无残留</span>
+          <span><i></i>解压后 pip install -r requirements.txt</span>
+          <span><i></i>python main.py 直接启动</span>
+          <span><i></i>build.bat 可自行打包 exe</span>
+          <span><i></i>纯本地运行 · 无需账号即可扫描</span>
         </div>
         <div class="dl-os">
           <div class="os"><b>macOS</b><span>适配打磨中 · 敬请期待</span></div>
@@ -565,8 +563,13 @@ details .a b{color:var(--text);font-weight:500;}
         </details>
         <details class="reveal" data-d="4">
           <summary>支持哪些智能体？没在列表里的怎么办？</summary>
-          <div class="a">首发支持 WorkBuddy、AutoClaw、Doubao、Qwen 等主流智能体，并内置通用适配层，
-            可牵动绝大多数提供本机接口或命令行的 AI 工具。没有适配的也欢迎反馈，排期透明。</div>
+          <div class="a">内置 29 种主流 AI 的识别与适配：豆包、DeepSeek、Kimi、ChatGPT、通义千问、腾讯元宝、文心一言、讯飞星火、Claude 等；
+            识别不了的窗口可手动绑定（自动定位输入框与发送键），一样能牵动。没有适配的也欢迎反馈，排期透明。</div>
+        </details>
+        <details class="reveal" data-d="5">
+          <summary>源码包怎么跑？不想装 Python 怎么办？</summary>
+          <div class="a">解压后进入目录，执行 <code>pip install -r requirements.txt</code>，再运行 <code>python main.py</code> 即可打开管理大师；
+            想要绿色单文件 exe，双击 <code>build.bat</code> 用 PyInstaller 自动打包。不熟悉 Python 的用户建议等正式安装包（打磨中）。</div>
         </details>
       </div>
     </div>
@@ -582,7 +585,7 @@ details .a b{color:var(--text);font-weight:500;}
       <a href="../main/" id="lk-main2">登录 / 注册</a>
       <a href="#top">回到顶部</a>
     </nav>
-    <span class="f-meta">© 2025 Fuo Tools · web v0.10.0 · desktop v1.0.0</span>
+    <span class="f-meta">© 2025 Fuo Tools · web v0.9.2 · desktop v1.0.0 源码尝鲜开放</span>
   </div>
 </footer>
 
@@ -591,14 +594,19 @@ details .a b{color:var(--text);font-weight:500;}
 <script>
 /* =====================================================
  * Fuo Tool 下载页交互
- * 下载直链：GitHub Releases（仓库单文件上限 100MB，Releases 支持 2GB）
- * 发布流程：Releases → Draft a new release → Tag v1.0.0 →
- *           上传 FuoTool-win32-x64.zip → Publish，直链即全局生效
+ * 下载地址发布后：把 DOWNLOAD_URL 填上直链即可全局生效
  * ===================================================== */
 (function () {
   'use strict';
 
-  var DOWNLOAD_URL = 'https://github.com/Finokuo/Finokuo.github.io/releases/latest/download/FuoTool-win32-x64.zip';
+  /* ---------- 下载地址（自适应沙盒预览 / 线上根路径） ----------
+   * 沙盒预览（路径含 /fuo/）：站点根 = /fuo/ 前缀；线上部署在仓库根目录。 */
+  var SITE_ROOT = (function () {
+    var p = window.location.pathname;
+    var i = p.indexOf('/fuo/');
+    return i !== -1 ? p.slice(0, i) : '';
+  })();
+  var SRC_URL = SITE_ROOT + '/download/fuo-ai-manager-v1.0.0-src.zip';
 
   var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (s) { return document.querySelector(s); };
@@ -625,11 +633,21 @@ details .a b{color:var(--text);font-weight:500;}
     toastT = setTimeout(function () { toastEl.classList.remove('is-in'); }, 3400);
   }
 
-  /* ---------- 下载按钮 ---------- */
+  /* ---------- 下载按钮 ----------
+   * 主按钮 = 尝鲜源码包（已开放直链）；
+   * 正式 exe 安装包发布后，把 SRC_URL 换成 exe 直链即可。 */
+  var srcBtn = document.getElementById('dl-src');
+  if (srcBtn) {
+    srcBtn.setAttribute('href', SRC_URL);
+    srcBtn.setAttribute('download', 'fuo-ai-manager-v1.0.0-src.zip');
+  }
   Array.prototype.forEach.call(document.querySelectorAll('[data-download]'), function (btn) {
     btn.addEventListener('click', function () {
-      if (DOWNLOAD_URL) { window.open(DOWNLOAD_URL, '_blank', 'noopener'); return; }
-      toast('v1.0.0 正在最后打包：正式发布后此按钮即为官方直链，欢迎回来领取。');
+      if (srcBtn) {
+        window.location.href = SRC_URL;
+        return;
+      }
+      toast('正式安装包打磨中：可先下载「尝鲜源码包」，解压即用。');
     });
   });
 
@@ -698,7 +716,7 @@ details .a b{color:var(--text);font-weight:500;}
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
     var w = 0, h = 0, dpr = 1, particles = [];
-    var COLORS = ['rgba(45,212,191,', 'rgba(94,234,212,', 'rgba(127,183,196,'];
+    var COLORS = ['rgba(251,146,60,', 'rgba(234,88,12,', 'rgba(56,189,248,'];
     var ptr = { x: -9999, y: -9999 };
     var running = true;
 
@@ -760,7 +778,7 @@ details .a b{color:var(--text);font-weight:500;}
             ctx.beginPath();
             ctx.moveTo(pa.x + pa.ox, pa.y + pa.oy);
             ctx.lineTo(pb.x + pb.ox, pb.y + pb.oy);
-            ctx.strokeStyle = 'rgba(45,212,191,' + (0.06 * (1 - dd / 120)) + ')';
+            ctx.strokeStyle = 'rgba(251,146,60,' + (0.06 * (1 - dd / 120)) + ')';
             ctx.lineWidth = .6;
             ctx.stroke();
           }
@@ -786,16 +804,16 @@ details .a b{color:var(--text);font-weight:500;}
     if (!body) return;
     var LINES = [
       { t: '$ fuo scan --device pc', c: 'c-cmd' },
-      { t: '✓ 已发现 6 个 AI · WorkBuddy / AutoClaw / Doubao / Qwen / Claude / Kimi', c: 'c-ok' },
+      { t: '✓ 已发现 6 个 AI · 豆包 / DeepSeek / Kimi / ChatGPT / 通义千问 / Claude', c: 'c-ok' },
       { t: ' ', c: 'c-dim' },
-      { t: '$ fuo run "把周报.docx 整理成 PPT 大纲，英文文案交给 Doubao 润色"', c: 'c-cmd' },
-      { t: '⧗ 任务拆解完成 · 3 个子任务已分派', c: 'c-warn' },
-      { t: '  ├─ WorkBuddy …… 解析文档结构', c: 'c-dim' },
-      { t: '  ├─ Qwen       …… 撰写中文大纲', c: 'c-dim' },
-      { t: '  └─ Doubao     …… 润色英文文案', c: 'c-dim' },
-      { t: '✓ WorkBuddy 完成 · outline.md（2.4 KB）', c: 'c-ok' },
-      { t: '✓ Qwen      完成 · 大纲 v1 · 3 章 12 节', c: 'c-ok' },
-      { t: '✓ Doubao    完成 · copy_en.md（1.1 KB）', c: 'c-ok' },
+      { t: '$ fuo run "把周报.docx 整理成 PPT 大纲，英文文案交给豆包润色"', c: 'c-cmd' },
+      { t: '⧗ 任务拆解完成 · 3 个子任务已分派 · 截图回流 3 秒一帧', c: 'c-warn' },
+      { t: '  ├─ DeepSeek …… 解析文档结构', c: 'c-dim' },
+      { t: '  ├─ 通义千问 …… 撰写中文大纲', c: 'c-dim' },
+      { t: '  └─ 豆包     …… 润色英文文案', c: 'c-dim' },
+      { t: '✓ DeepSeek 完成 · outline.md（2.4 KB）', c: 'c-ok' },
+      { t: '✓ 通义千问 完成 · 大纲 v1 · 3 章 12 节', c: 'c-ok' },
+      { t: '✓ 豆包     完成 · copy_en.md（1.1 KB）', c: 'c-ok' },
       { t: '✉ 交付完成：3 个文件已归档至 ~/FuoTool/交付/今天/', c: 'c-gold' }
     ];
     var PAUSE_AFTER = { 1: 900, 7: 500, 11: 3200 };
@@ -857,12 +875,12 @@ details .a b{color:var(--text);font-weight:500;}
         hint: '设备扫描 · PC',
         desc: 'PC 端会枚举本机安装的桌面客户端、浏览器常驻网页版与本地模型运行时。',
         list: [
-          { n: 'WorkBuddy', k: 'desktop · 客户端' },
-          { n: 'AutoClaw', k: 'automation · 自动化助手' },
-          { n: 'Doubao', k: 'web · 网页版已登录' },
-          { n: 'Qwen', k: 'desktop · 客户端' },
-          { n: 'Claude Desktop', k: 'desktop · 客户端' },
+          { n: '豆包', k: 'desktop · 客户端' },
+          { n: 'DeepSeek', k: 'web · 浏览器网页版' },
           { n: 'Kimi', k: 'desktop · 客户端' },
+          { n: 'ChatGPT', k: 'web · 网页版已登录' },
+          { n: '通义千问', k: 'desktop · 客户端' },
+          { n: 'Claude Desktop', k: 'desktop · 客户端' },
           { n: 'Cursor', k: 'editor · AI 编辑器' },
           { n: 'Ollama', k: 'runtime · 本地模型 ×3' }
         ]
@@ -925,41 +943,8 @@ details .a b{color:var(--text);font-weight:500;}
       });
     });
 
-    /* ---------- 扫描脚本：日志流 + 变速进度 + 停顿时分批亮起 AI ---------- */
-    var SCRIPTS = {
-      pc: [
-        { log: '$ fuo scan --device pc', dur: 300, to: 4 },
-        { log: '› 枚举已安装应用 · 注册表 / 开始菜单…', dur: 850, to: 26, reveal: [0, 1] },
-        { log: '› 探测浏览器常驻会话…', dur: 700, to: 47, reveal: [2, 3] },
-        { log: '› 枚举桌面客户端…', dur: 600, to: 66, reveal: [4, 5] },
-        { log: '› 探测编辑器与本地运行时 :11434…', dur: 800, to: 85, reveal: [6] },
-        { log: '› ollama · 3 models · reachable', dur: 550, to: 97, reveal: [7] },
-        { log: null, dur: 320, to: 100 }
-      ],
-      iphone: [
-        { log: '$ fuo scan --device iphone', dur: 280, to: 4 },
-        { log: '› 搜索同网络设备 · bonjour…', dur: 800, to: 22 },
-        { log: '› 已配对 · “Zhao 的 iPhone” · iOS 18', dur: 640, to: 42, reveal: [0, 1] },
-        { log: '› 枚举已安装 AI 应用…', dur: 760, to: 64, reveal: [2, 3] },
-        { log: '› 检查系统智能体接口…', dur: 620, to: 88, reveal: [4] },
-        { log: '› apps · 6 · intents ok', dur: 460, to: 100, reveal: [5] }
-      ],
-      android: [
-        { log: '$ fuo scan --device android', dur: 280, to: 4 },
-        { log: '› adb devices · 1 found', dur: 700, to: 20 },
-        { log: '› 已授权 · Android 15 · USB 通道', dur: 600, to: 40, reveal: [0, 1] },
-        { log: '› 枚举 AI 应用与智能体接口…', dur: 800, to: 62, reveal: [2, 3] },
-        { log: '› 检查 Intent / 快捷方式…', dur: 660, to: 86, reveal: [4, 5] },
-        { log: '› assistant service · ok', dur: 480, to: 100, reveal: [6] }
-      ]
-    };
-    var PAUSE = 470;    /* 每批 AI 亮起后的停顿（模拟探测等待） */
-    var STAGGER = 95;   /* 同批 AI 逐个亮起的间隔 */
-
-    function easeOut(k) { return 1 - Math.pow(1 - k, 2.2); }
-    function easeInOut(k) { return k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2.2) / 2; }
-
-    function makeAiRow(ai) {
+    /* 组装一条结果行（扫描过程与收尾共用） */
+    function buildRow(ai) {
       var row = document.createElement('div');
       row.className = 'ai-row';
       var dot = document.createElement('span');
@@ -982,95 +967,126 @@ details .a b{color:var(--text);font-weight:500;}
       btn.disabled = true;
       btn.textContent = '扫描中…';
       list.innerHTML = '';
+      bar.style.width = '0';
+      pct.textContent = 'arming…';
 
       var d = DEVICES[curDev];
-      var script = SCRIPTS[curDev];
-      var t0 = performance.now();
-      var logBox = document.createElement('div');
-      logBox.className = 'scan-log';
-      list.appendChild(logBox);
+      var N = d.list.length;
 
-      function mkLog(text, cls) {
-        var el = document.createElement('div');
-        el.className = 'scan-logline' + (cls ? ' ' + cls : '');
-        el.textContent = text;
-        logBox.appendChild(el);
-      }
-
-      function reveal(indices) {
-        indices.forEach(function (idx, j) {
-          var ai = d.list[idx];
-          if (!ai) return;
-          setTimeout(function () {
-            var row = makeAiRow(ai);
-            list.appendChild(row);
-            requestAnimationFrame(function () { row.classList.add('is-in'); });
-            list.scrollTop = list.scrollHeight;
-          }, REDUCED ? 0 : j * STAGGER);
-        });
-      }
-
+      /* 无动画偏好：一次性全部亮起，跳过节奏演出 */
       if (REDUCED) {
-        /* 动效减弱偏好：瞬时完成，不播放过程 */
-        script.forEach(function (st) {
-          if (st.log) mkLog(st.log);
-          if (st.reveal) st.reveal.forEach(function (i) {
-            if (!d.list[i]) return;
-            var row = makeAiRow(d.list[i]);
-            row.classList.add('is-in');
-            list.appendChild(row);
-          });
+        d.list.forEach(function (ai) {
+          var row = buildRow(ai);
+          row.classList.add('is-in');
+          list.appendChild(row);
         });
         bar.style.width = '100%';
-        pct.textContent = 'done · ' + d.list.length + ' found';
-        mkLog('✓ done · ' + d.list.length + ' found', 'log-done');
+        pct.textContent = 'done · ' + N + ' found';
         busy = false;
         btn.disabled = false;
         btn.textContent = '重新扫描';
         return;
       }
 
-      function finish() {
-        var secs = ((performance.now() - t0) / 1000).toFixed(1);
-        bar.style.width = '100%';
-        pct.textContent = 'done · ' + d.list.length + ' found · ' + secs + 's';
-        mkLog('✓ done · ' + d.list.length + ' found · ' + secs + 's', 'log-done');
-        busy = false;
-        btn.disabled = false;
-        btn.textContent = '重新扫描';
+      /* =====================================================
+       * 节奏化扫描：快扫（大步跳跃）→ 深扫（慢慢磨）→ 停顿（屏息等待）
+       * 停顿段附近最容易出现发现——像真实扫描那样「一顿一冒」。
+       * 每个 AI 有一个隐藏的发现阈值（带抖动），进度越过即冒出。
+       * ===================================================== */
+      var prog = 0;         // 当前进度 0~100
+      var found = 0;        // 已冒出的 AI 数
+      var stag = 0;         // 同帧多发现时的错峰序号
+      var marks = [];
+      for (var i = 0; i < N; i++) {
+        /* 阈值均匀铺开 + 抖动，整体落在 5% ~ 96% */
+        marks.push(Math.max(5, Math.min(96, (i + 0.45 + Math.random() * 0.55) / N * 100)));
       }
 
-      var prog = 0, si = 0, stageStart = null, pauseUntil = 0;
-      function frame(ts) {
-        if (ts < pauseUntil) { requestAnimationFrame(frame); return; } /* 停顿：进度冻结 */
-        var stage = script[si];
-        if (!stage) { finish(); return; }
-        if (stageStart === null) {
-          stageStart = ts;
-          if (stage.log) mkLog(stage.log);
+      function spawn() {
+        while (found < N && prog >= marks[found]) {
+          (function (ai, delay) {
+            var row = buildRow(ai);
+            list.appendChild(row);
+            setTimeout(function () { row.classList.add('is-in'); }, 40 + delay * 240);
+          })(d.list[found], stag++);
+          found++;
         }
-        var k = Math.min(1, (ts - stageStart) / stage.dur);
-        /* 奇偶阶段交替缓动：先快后慢 / 缓入缓出，营造真实扫描的节奏 */
-        var e = (si % 2 === 0) ? easeOut(k) : easeInOut(k);
-        var p = prog + (stage.to - prog) * e;
-        bar.style.width = p + '%';
-        pct.textContent = 'scanning · ' + Math.round(p) + '%';
-        if (k >= 1) {
-          prog = stage.to;
-          if (stage.reveal) {
-            reveal(stage.reveal);
-            pauseUntil = ts + PAUSE;
-          }
-          si++;
-          stageStart = null;
-          if (si >= script.length) { finish(); return; }
-        }
-        requestAnimationFrame(frame);
       }
-      requestAnimationFrame(frame);
+
+      function finish() {
+        /* 补亮尚未冒出的（兜底，理论上极少发生） */
+        while (found < N) {
+          (function (ai, delay) {
+            var row = buildRow(ai);
+            list.appendChild(row);
+            setTimeout(function () { row.classList.add('is-in'); }, 60 + delay * 220);
+          })(d.list[found], stag++);
+          found++;
+        }
+        bar.style.width = '100%';
+        pct.textContent = 'done · ' + N + ' found';
+        setTimeout(function () {
+          busy = false;
+          btn.disabled = false;
+          btn.textContent = '重新扫描';
+        }, 700);
+      }
+
+      /* 一轮 = 选一种节奏段，段内按各自步长推进；段间短暂换气 */
+      function step() {
+        if (prog >= 99.5) { finish(); return; }
+
+        /* 即将触发新发现时提高「停顿」概率 → 停顿冒 AI */
+        var pendingNear = found < N && prog >= marks[found] - 6;
+        var roll = Math.random();
+        var type, steps, lo, hi, sLo, sHi;
+        if (roll < (pendingNear ? 0.32 : 0.40)) {
+          type = 'sweep'; steps = 2 + ((Math.random() * 3) | 0);
+          lo = 60; hi = 115; sLo = 2.6; sHi = 4.6;        // 快扫：大步快进
+        } else if (roll < (pendingNear ? 0.62 : 0.76)) {
+          type = 'deep'; steps = 2 + ((Math.random() * 2) | 0);
+          lo = 150; hi = 290; sLo = 0.8; sHi = 1.8;       // 深扫：磨蹭推进
+        } else {
+          type = 'hold'; steps = 1;
+          lo = 430; hi = 900; sLo = 0.1; sHi = 0.5;       // 停顿：几乎不动
+        }
+
+        var label = type === 'sweep' ? 'fast sweep'
+                  : type === 'deep' ? 'deep scan'
+                  : 'listening';
+        var k = 0;
+
+        (function next() {
+          prog = Math.min(99.6, prog + sLo + Math.random() * (sHi - sLo));
+          bar.style.width = prog.toFixed(1) + '%';
+          pct.textContent = label + ' · ' + Math.floor(prog) + '% · ' + found + '/' + N;
+          spawn();
+          k++;
+          if (k < steps && prog < 99.5) {
+            setTimeout(next, lo + Math.random() * (hi - lo));
+            return;
+          }
+          /* 停顿段收尾：若阈值就差临门一脚，推进越过它 → 冒出 */
+          if (type === 'hold' && found < N && prog >= marks[found] - 1.5) {
+            prog = Math.min(99.6, marks[found] + Math.random() * 0.8);
+            bar.style.width = prog.toFixed(1) + '%';
+            pct.textContent = label + ' · ' + Math.floor(prog) + '% · ' + found + '/' + N;
+            spawn();
+          }
+          setTimeout(step, 70 + Math.random() * 120);
+        })();
+      }
+
+      setTimeout(step, 260);
     });
   })();
+
+  /* v0.9.2：全站反馈挂件（右下角悬浮按钮，脚本自带样式与 SDK 惰性加载） */
 })();
+
 </script>
+
+<!-- v0.9.2：全站反馈挂件（/drive 共享组件，/fuotool 无需 config.js） -->
+<script src="../drive/assets/js/feedback.js?v=1" data-fb-js></script>
 </body>
 </html>

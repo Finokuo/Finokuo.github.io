@@ -7,18 +7,24 @@
 :root {
   color-scheme: dark;
 
-  --bg: #07080a;
-  --panel: #0b0d10;
-  --card: #0e1114;
-  --card-2: #13171b;
+  --bg: #07090b;
+  --panel: #0c1013;
+  --card: #11161a;
+  --card-2: #161c21;
   --border: rgba(255, 255, 255, 0.08);
   --border-2: rgba(255, 255, 255, 0.16);
   --border-strong: rgba(255, 255, 255, 0.3);
-  --text: #f4f4f5;
-  --text-2: #d6d6dc;
-  --text-dim: #b7c4c9;
-  --muted: #9aa3ab;
-  --faint: #5c6570;
+  --border-interactive: #6e7a82;  /* 可交互边界 ≥3:1（规范缺陷③） */
+  --text: #f2f5f6;
+  --text-2: #c7cfd2;
+  --text-dim: #a8b2b7;
+  --muted: #97a2a8;
+  --faint: #6b757b;
+
+  /* 主色阶 Teal 11 档（规范 §三）与中性阶：同 drive/style.css，角色变量取档 */
+  --teal-50: #f0fdfa; --teal-100: #ccfbf1; --teal-200: #99f6e4; --teal-300: #5eead4;
+  --teal-400: #2dd4bf; --teal-500: #14b8a6; --teal-600: #0d9488; --teal-700: #0f766e;
+  --teal-800: #115e59; --teal-900: #134e4a; --teal-950: #042f2c;
 
   /* 主题色：teal 青（唯一色相，以"光"的形式出现） */
   --accent: #2dd4bf;
@@ -26,8 +32,18 @@
   --accent-deep: #0d9488;
   --accent-glow: rgba(45, 212, 191, 0.16);
   --accent-glow-strong: rgba(45, 212, 191, 0.32);
-  --danger: #f47174;
-  --warn: #e8b34c;
+  --color-link: #99f6e4;    /* 链接色（规范缺陷④） */
+  --secondary: #a78bfa;
+  --secondary-solid: #7c3aed;
+  --accent-orange: #fb923c;       /* 全站唯一强调：/fuotool 下载 */
+  --accent-orange-solid: #c2410c;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #38bdf8;
+  --warn: #fbbf24;
+  --selected-bg: #042f2c;
+  --tag-bg: #042f2c;
 
   /* 组件级变量 */
   --btn-primary-bg: #fafafa;
@@ -44,7 +60,7 @@
   --lit-grad: linear-gradient(115deg, #ffffff 5%, #c8fbf1 45%, var(--accent) 95%);
   --card-hover: #10141a;
   --spot-color: rgba(45, 212, 191, 0.1);
-  --field-bg: #0a0c0e;
+  --field-bg: #0a0d10;
   --field-focus: rgba(94, 234, 212, 0.55);
   --inset-bg: #0b0e11;
   --modal-bg: #0d1013;
@@ -86,26 +102,37 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f4f5f6;
-  --panel: #fafbfb;
+  --bg: #f5f7f8;
+  --panel: #fafbfc;
   --card: #ffffff;
-  --card-2: #edf0f1;
+  --card-2: #eff3f4;
   --border: rgba(16, 24, 32, 0.1);
   --border-2: rgba(16, 24, 32, 0.18);
   --border-strong: rgba(16, 24, 32, 0.32);
-  --text: #16191d;
-  --text-2: #242930;
-  --text-dim: #3f4850;
-  --muted: #5a6470;
-  --faint: #8d96a0;
+  --border-interactive: #7e898f;
+  --text: #111618;
+  --text-2: #2b3438;
+  --text-dim: #465056;
+  --muted: #5c676d;
+  --faint: #828d93;
 
-  --accent: #0d9488;
-  --accent-bright: #0f766e;
+  --accent: #0d9488;        /* 亮色保留：光效/渐变/图标等非文字场景 */
+  --accent-bright: #0f766e; /* 亮色文字类用途必须用这档（5.47:1，规范缺陷①） */
   --accent-deep: #115e59;
   --accent-glow: rgba(13, 148, 136, 0.12);
   --accent-glow-strong: rgba(13, 148, 136, 0.24);
-  --danger: #d1434b;
-  --warn: #9c6d1a;
+  --color-link: #0f766e;
+  --secondary: #6d28d9;
+  --secondary-solid: #6d28d9;
+  --accent-orange: #c2410c;
+  --accent-orange-solid: #c2410c;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #c81e25;
+  --info: #0369a1;
+  --warn: #b45309;
+  --selected-bg: #f0fdfa;
+  --tag-bg: #f0fdfa;
 
   --btn-primary-bg: #17191c;
   --btn-primary-bg-hover: #2c2f33;
@@ -166,6 +193,8 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* 极光光斑绝对定位越界裁剪；clip 不生成滚动容器，不影响 sticky 导航 */
+  overflow-x: clip;
 }
 
 .mono { font-family: var(--mono); }
@@ -387,7 +416,7 @@ img, svg { display: block; }
   display: block; padding: 7px 10px; border-radius: 7px;
   font-size: 11px; color: var(--faint);
 }
-.ms-item.is-on { background: rgba(45, 212, 191, 0.1); color: var(--accent-bright); font-weight: 600; }
+.ms-item.is-on { background: var(--tag-bg); color: var(--accent-bright); font-weight: 600; }
 
 .mock-main { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .mock-hello b { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
@@ -437,6 +466,8 @@ img, svg { display: block; }
   font-size: 11px; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 14px;
   text-shadow: 0 0 14px var(--accent-glow-strong);
 }
+/* 亮色模式小字文字类必须用 teal-700 文字档（5.47:1），不用品牌原色（规范缺陷①） */
+:root[data-theme="light"] .eyebrow { color: var(--accent-bright); text-shadow: none; }
 .section-head h2 { font-size: clamp(26px, 3.4vw, 36px); letter-spacing: -0.03em; font-weight: 700; }
 .section-sub { margin-top: 10px; color: var(--muted); font-size: 15px; }
 
@@ -583,7 +614,7 @@ img, svg { display: block; }
 .footer p { font-size: 12px; color: var(--faint); letter-spacing: 0.02em; }
 .footer-links { display: flex; gap: 18px; font-size: 13px; color: var(--muted); }
 .footer-links a { transition: color 0.15s; }
-.footer-links a:hover { color: var(--accent-bright); }
+.footer-links a:hover { color: var(--color-link); }
 
 /* ---------- 弹窗 ---------- */
 .modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; }
@@ -623,7 +654,7 @@ img, svg { display: block; }
   height: 34px; border: none; border-radius: 7px; background: transparent;
   font-size: 13.5px; font-weight: 600; color: var(--muted); transition: all 0.15s;
 }
-.auth-tab.is-active { background: rgba(45, 212, 191, 0.14); color: var(--accent-bright); }
+.auth-tab.is-active { background: var(--tag-bg); color: var(--accent-bright); }
 
 .auth-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
 .auth-sub { margin: 2px 0 18px; font-size: 13px; color: var(--muted); }
@@ -633,7 +664,7 @@ img, svg { display: block; }
 .field-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .field-box {
   display: flex; align-items: center; gap: 10px;
-  border: 1px solid var(--border-2); border-radius: 10px;
+  border: 1px solid var(--border-interactive); border-radius: 10px;
   background: var(--field-bg); padding: 0 12px; height: 46px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -651,9 +682,11 @@ img, svg { display: block; }
 .pw-toggle:hover { color: var(--text); }
 
 .auth-msg { font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; line-height: 1.55; }
-.auth-msg.is-error { background: rgba(244, 113, 116, 0.08); color: var(--danger); border: 1px solid rgba(244, 113, 116, 0.22); }
-.auth-msg.is-info { background: var(--hover-soft); color: var(--muted); border: 1px solid var(--border); }
-.auth-msg.is-success { background: rgba(45, 212, 191, 0.08); color: var(--accent-bright); border: 1px solid rgba(45, 212, 191, 0.25); }
+.auth-msg.is-error { background: rgba(248, 113, 113, 0.08); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.22); }
+.auth-msg.is-info { background: rgba(56, 189, 248, 0.08); color: var(--info); border: 1px solid rgba(56, 189, 248, 0.22); }
+:root[data-theme="light"] .auth-msg.is-info { background: rgba(3, 105, 161, 0.07); border-color: rgba(3, 105, 161, 0.25); }
+.auth-msg.is-success { background: rgba(74, 222, 128, 0.08); color: var(--success); border: 1px solid rgba(74, 222, 128, 0.25); }
+:root[data-theme="light"] .auth-msg.is-success { background: rgba(21, 128, 61, 0.07); border-color: rgba(21, 128, 61, 0.25); }
 
 .spinner {
   width: 15px; height: 15px; border-radius: 50%;
@@ -705,7 +738,7 @@ img, svg { display: block; }
    ===================================================== */
 .tone-teal     { --ic: #2dd4bf; --ic-soft: rgba(45, 212, 191, 0.13); --ic-line: rgba(45, 212, 191, 0.32); --ic-glow: rgba(45, 212, 191, 0.2); }
 .tone-emerald  { --ic: #34d399; --ic-soft: rgba(52, 211, 153, 0.12); --ic-line: rgba(52, 211, 153, 0.32); --ic-glow: rgba(52, 211, 153, 0.18); }
-.tone-amber    { --ic: #e8b34c; --ic-soft: rgba(232, 179, 76, 0.12); --ic-line: rgba(232, 179, 76, 0.32); --ic-glow: rgba(232, 179, 76, 0.18); }
+.tone-amber    { --ic: #fbbf24; --ic-soft: rgba(251, 191, 36, 0.12); --ic-line: rgba(251, 191, 36, 0.32); --ic-glow: rgba(251, 191, 36, 0.18); }
 .tone-rose     { --ic: #fb7185; --ic-soft: rgba(251, 113, 133, 0.12); --ic-line: rgba(251, 113, 133, 0.32); --ic-glow: rgba(251, 113, 133, 0.18); }
 .tone-violet   { --ic: #a78bfa; --ic-soft: rgba(167, 139, 250, 0.13); --ic-line: rgba(167, 139, 250, 0.32); --ic-glow: rgba(167, 139, 250, 0.2); }
 .tone-orange   { --ic: #fb923c; --ic-soft: rgba(251, 146, 60, 0.12); --ic-line: rgba(251, 146, 60, 0.32); --ic-glow: rgba(251, 146, 60, 0.18); }
@@ -755,17 +788,17 @@ button.tool-chip { cursor: pointer; }
   box-shadow: 0 0 12px var(--ic-glow, rgba(45, 212, 191, 0.18));
   transform: scale(1.08);
 }
-/* 状态徽章：可用 / SOON */
+/* 状态徽章：可用 / SOON（success 语义色，颜色+文字双提示） */
 .tool-chip.is-live em {
-  color: #34d399; border-color: rgba(52, 211, 153, 0.35);
-  background: rgba(52, 211, 153, 0.06);
+  color: var(--success); border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.06);
 }
 .tool-chip.is-live:hover em {
-  color: #34d399; border-color: rgba(52, 211, 153, 0.6);
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.15);
+  color: var(--success); border-color: rgba(74, 222, 128, 0.6);
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.15);
 }
 :root[data-theme="light"] .tool-chip.is-live em {
-  color: #047857; border-color: rgba(5, 150, 105, 0.35); background: rgba(5, 150, 105, 0.06);
+  color: var(--success); border-color: rgba(21, 128, 61, 0.35); background: rgba(21, 128, 61, 0.06);
 }
 
 /* ---------- 主题切换 · 圆形扩散（View Transitions，全站统一工艺） ---------- */
@@ -806,7 +839,7 @@ button.tool-chip { cursor: pointer; }
 }
 .pw-meter i.on { opacity: 1; background: var(--accent-bright); }
 .pw-meter[data-lv="weak"] i.on { background: var(--danger); }
-.pw-meter[data-lv="mid"] i.on { background: #f0b45c; }
+.pw-meter[data-lv="mid"] i.on { background: var(--warning); }
 .pw-meter .pw-hint {
   flex: none; margin-left: 9px; font-style: normal;
   font-size: 11px; color: var(--muted); white-space: nowrap;
@@ -833,8 +866,8 @@ button.tool-chip { cursor: pointer; }
   flex: none; width: 15px; height: 15px; margin-top: 2px;
   accent-color: var(--accent-bright); cursor: pointer;
 }
-.agree a { color: var(--accent-bright); }
-.agree a:hover { text-decoration: underline; }
+.agree a { color: var(--color-link); text-decoration: underline; text-underline-offset: 2px; }
+.agree a:hover { color: var(--accent-bright); }
 
 .auth-foot a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
-.auth-foot a:hover { color: var(--accent-bright); }
+.auth-foot a:hover { color: var(--color-link); }

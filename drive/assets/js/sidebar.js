@@ -33,7 +33,7 @@
     }
   } catch (e) { /* ignore */ }
 
-  /* ---------- 全站附带：命令面板 + 反馈弹窗 + Service Worker ---------- */
+  /* ---------- 全站附带：命令面板 + 反馈挂件 + Service Worker ---------- */
   function loadSidecars() {
     if (!SELF_BASE) return;
     // Ctrl+K 命令面板（palette.js 自带去重，重复注入无害）
@@ -43,11 +43,11 @@
       s.src = SELF_BASE + 'palette.js?v=5';
       document.head.appendChild(s);
     }
-    // 用户反馈弹窗（feedback.js 自带去重；主页由页面自己引入）
-    if (!window.__FUO_FEEDBACK_JS__) {
-      window.__FUO_FEEDBACK_JS__ = true;
+    // v0.9.2：全站反馈挂件（feedback.js 自带去重，右下角悬浮按钮）
+    if (!window.__FUO_FEEDBACK__ && !document.querySelector('script[data-fb-js]')) {
       var f = document.createElement('script');
       f.src = SELF_BASE + 'feedback.js?v=1';
+      f.setAttribute('data-fb-js', '1');
       document.head.appendChild(f);
     }
     // PWA Service Worker（仅 https / localhost；scope = /drive/）
@@ -409,26 +409,6 @@
     wrap.insertBefore(bar, topbar ? topbar.nextSibling : wrap.firstChild);
   }
 
-  /* ---------- 侧栏反馈按钮（v0.10.0）：注入式与工作台原生侧栏通用 ---------- */
-  function injectFeedbackButton(aside) {
-    var userRow = aside.querySelector('.side-user');
-    if (!userRow || userRow.querySelector('.sb-feedback')) return;
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'sb-feedback';
-    btn.title = '反馈';
-    btn.setAttribute('aria-label', '打开反馈');
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path d="M21 12a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.9-.36-4.1-1L3 21l1.5-5.4A8.5 8.5 0 1 1 21 12Z" ' +
-      'stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
-    btn.addEventListener('click', function () {
-      if (window.FUO_FEEDBACK) window.FUO_FEEDBACK.open();
-    });
-    var anchor = userRow.querySelector('#sb-logout') || userRow.querySelector('.side-logout');
-    if (anchor) userRow.insertBefore(btn, anchor);
-    else userRow.appendChild(btn);
-  }
-
   /* ---------- 启动 ---------- */
   function boot() {
     var aside = document.getElementById('sidebar');
@@ -436,7 +416,6 @@
     // 空壳才注入模板；工作台原生侧栏（已有子元素）只挂折叠按钮
     if (!aside.firstChild) buildSidebar(aside.getAttribute('data-active') || 'tools');
     initCollapse(aside);
-    injectFeedbackButton(aside);
     renderCrumb();
     loadSidecars();
     if (aside.getAttribute('data-guard') === '1') {

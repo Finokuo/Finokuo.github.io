@@ -39,7 +39,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101014' stroke='rgba(255,255,255,0.28)' stroke-width='1'/%3E%3Cpath d='M11 23V9h10M11 16h8.5' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
   <script src="assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=5" />
   <link rel="stylesheet" href="../drive/assets/css/accent.css?v=1" />
 </head>
 <body>
@@ -80,7 +80,7 @@
         <div class="hero-copy">
           <span class="hero-badge">
             <span class="dot" aria-hidden="true"></span>
-            <span class="mono">FUO TOOLS · 公测 v0.9</span>
+            <span class="mono">FUO TOOLS · 公测 v0.9.2</span>
           </span>
           <h1 class="hero-title">
             小工具，大能量。<br />
@@ -268,7 +268,6 @@
         <a href="#tools">工具集</a>
         <a href="terms.html">服务条款</a>
         <a href="privacy.html">隐私政策</a>
-        <a href="#" id="foot-feedback" title="告诉我们你遇到的问题或想法">反馈</a>
       </nav>
     </div>
   </footer>
@@ -345,17 +344,8 @@
   <script src="assets/vendor/supabase.min.js"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/fx.js?v=3"></script>
-  <script src="../drive/assets/js/feedback.js?v=1"></script>
   <script src="assets/js/app.js?v=3"></script>
-  <script>
-    /* 页脚反馈入口（v0.10.0）：打开共享反馈弹窗 */
-    (function () {
-      var link = document.getElementById('foot-feedback');
-      if (link) link.addEventListener('click', function (e) {
-        e.preventDefault();
-        if (window.FUO_FEEDBACK) window.FUO_FEEDBACK.open();
-      });
-    })();
-  </script>
+  <!-- v0.9.2：全站反馈挂件（右下角悬浮按钮） -->
+  <script src="../drive/assets/js/feedback.js?v=1" data-fb-js></script>
 </body>
 </html>

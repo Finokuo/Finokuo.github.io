@@ -7,36 +7,61 @@
 :root {
   color-scheme: dark;
 
-  --bg: #07080a;
-  --panel: #0b0d10;
-  --card: #0e1114;
-  --card-2: #13171b;
+  /* ===== 中性色阶 12 档（配色规范 §四 · 灰带冷青调 H195°-210°） ===== */
+  --n-950: #07090b; --n-900: #0c1013; --n-850: #11161a; --n-800: #161c21;
+  --n-750: #1e262b; --n-700: #2c373d; --n-600: #3a464d; --n-550: #566269;
+  --n-500: #6b757b; --n-400: #97a2a8; --n-300: #c7cfd2; --n-100: #f2f5f6;
+
+  /* ===== 主色阶 Teal 11 档（配色规范 §三 · 锚点 #2DD4BF） ===== */
+  --teal-50: #f0fdfa; --teal-100: #ccfbf1; --teal-200: #99f6e4; --teal-300: #5eead4;
+  --teal-400: #2dd4bf; --teal-500: #14b8a6; --teal-600: #0d9488; --teal-700: #0f766e;
+  --teal-800: #115e59; --teal-900: #134e4a; --teal-950: #042f2c;
+
+  /* 角色变量（暗色默认 · 值取自色阶） */
+  --bg: #07090b;            /* N-950 页面底：不用纯黑 */
+  --panel: #0c1013;         /* N-900 面板底 */
+  --card: #11161a;          /* N-850 卡片底 */
+  --card-2: #161c21;        /* N-800 二级面层 */
   --border: rgba(255, 255, 255, 0.08);
   --border-2: rgba(255, 255, 255, 0.16);
   --border-strong: rgba(255, 255, 255, 0.3);
-  --text: #f4f4f5;
-  --text-2: #d6d6dc;
-  --text-dim: #b7c4c9;
-  --muted: #9aa3ab;
-  --faint: #5c6570;
+  --border-interactive: #6e7a82;  /* 可交互边界（输入框/复选框）≥3:1，规范缺陷③ */
+  --text: #f2f5f6;          /* N-100 主文字：不用纯白 */
+  --text-2: #c7cfd2;        /* N-300 */
+  --text-dim: #a8b2b7;      /* N-350：text-2 与 muted 之间的过渡档 */
+  --muted: #97a2a8;         /* N-400 */
+  --faint: #6b757b;         /* N-500 */
 
-  /* 主题色：teal 青 */
+  /* 主题色：teal 青（唯一色相，以"光"的形式出现） */
   --accent: #2dd4bf;
   --accent-bright: #5eead4;
   --accent-deep: #0d9488;
   --accent-glow: rgba(45, 212, 191, 0.16);
   --accent-glow-strong: rgba(45, 212, 191, 0.32);
-  --danger: #f47174;
-  --warn: #e8b34c;
+  --color-link: #99f6e4;    /* 链接色（暗 14.44:1）规范缺陷④ */
+  /* 辅助色 Violet / 强调色 Orange（规范 §五；橙全站仅 /fuotool 下载一处） */
+  --secondary: #a78bfa;
+  --secondary-solid: #7c3aed;
+  --accent-orange: #fb923c;
+  --accent-orange-solid: #c2410c;
+  /* 语义色（规范 §六 · 与主色相完全错开；缺陷⑤补 success/info） */
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #38bdf8;
+  --warn: #fbbf24;          /* 旧名兼容 */
+  /* 选中/标签底：实色档，不用 rgba 透明度（规范 §八） */
+  --selected-bg: #042f2c;
+  --tag-bg: #042f2c;
 
   /* 组件级变量 */
   --nav-bg: rgba(7, 8, 10, 0.75);
-  --sidebar-bg: #090b0d;
+  --sidebar-bg: #0c1013;    /* N-900 面板底 */
   --hover-soft: rgba(255, 255, 255, 0.06);
-  --field-bg: #0a0c0e;
+  --field-bg: #0a0d10;      /* 输入框底（规范 §八） */
   --field-focus: rgba(94, 234, 212, 0.5);
   --inset-bg: #0b0e11;
-  --card-hover: #0e1418;
+  --card-hover: #161c21;    /* N-800：hover 不换色相只提亮 */
   --spot-color: rgba(45, 212, 191, 0.08);
   --user-grad: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent);
   --brand-grad: linear-gradient(135deg, #fafafa, #99f6e4);
@@ -44,7 +69,7 @@
   --brand-glow: 0 0 18px rgba(45, 212, 191, 0.25);
   --hello-base: #0b0e10;
   --stat-grad: linear-gradient(180deg, #ffffff 30%, #7de8d8 100%);
-  --toast-bg: #0f1518;
+  --toast-bg: #1e262b;      /* N-750 弹层/Toast 底 */
   --scrollbar-thumb: #22292e;
   --scrollbar-thumb-hover: #2c363c;
   --selection-bg: rgba(45, 212, 191, 0.32);
@@ -64,26 +89,38 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f4f5f6;
-  --panel: #fafbfb;
-  --card: #ffffff;
-  --card-2: #edf0f1;
+  /* 亮色只覆盖角色变量，色阶（--teal-*/--n-*）自 :root 继承 */
+  --bg: #f5f7f8;            /* N-100 页面底（冷调浅灰） */
+  --panel: #fafbfc;         /* N-50 */
+  --card: #ffffff;          /* N-0 */
+  --card-2: #eff3f4;        /* N-150 */
   --border: rgba(16, 24, 32, 0.1);
   --border-2: rgba(16, 24, 32, 0.18);
   --border-strong: rgba(16, 24, 32, 0.32);
-  --text: #16191d;
-  --text-2: #242930;
-  --text-dim: #3f4850;
-  --muted: #5a6470;
-  --faint: #8d96a0;
+  --border-interactive: #7e898f;  /* 可交互边界 ≥3:1 */
+  --text: #111618;          /* N-900 */
+  --text-2: #2b3438;        /* N-700 */
+  --text-dim: #465056;      /* text-2 与 muted 之间的过渡档 */
+  --muted: #5c676d;         /* N-600 */
+  --faint: #828d93;         /* N-500 */
 
-  --accent: #0d9488;
-  --accent-bright: #0f766e;
+  --accent: #0d9488;        /* 亮色保留：光效/渐变/图标等非文字场景 */
+  --accent-bright: #0f766e; /* 亮色文字类用途必须用这档（5.47:1） */
   --accent-deep: #115e59;
   --accent-glow: rgba(13, 148, 136, 0.12);
   --accent-glow-strong: rgba(13, 148, 136, 0.24);
-  --danger: #d1434b;
-  --warn: #9c6d1a;
+  --color-link: #0f766e;    /* 链接色（亮 5.47:1） */
+  --secondary: #6d28d9;
+  --secondary-solid: #6d28d9;
+  --accent-orange: #c2410c;
+  --accent-orange-solid: #c2410c;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #c81e25;
+  --info: #0369a1;
+  --warn: #b45309;
+  --selected-bg: #f0fdfa;
+  --tag-bg: #f0fdfa;
 
   --nav-bg: rgba(251, 252, 252, 0.82);
   --sidebar-bg: #fbfcfc;
@@ -138,6 +175,18 @@ body::before {
 }
 
 a { color: inherit; text-decoration: none; }
+/* 正文内链接（规范 §八·链接）：链接色 + 下划线第二区分，hover 加深 */
+.nb-preview a, .ad-foot a, .u-bio a, .prose a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(127, 127, 127, 0.4);
+  transition: color 0.15s;
+}
+.nb-preview a:hover, .ad-foot a:hover, .u-bio a:hover, .prose a:hover {
+  color: var(--accent-bright);
+  text-decoration-color: currentColor;
+}
 button { font: inherit; cursor: pointer; }
 svg { display: block; }
 :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 6px; }
@@ -161,11 +210,9 @@ svg { display: block; }
 .main-wrap { display: flex; flex-direction: column; min-width: 0; position: relative; }
 .content { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 24px 26px 56px; position: relative; z-index: 1; }
 
-/* 主区右上角常驻微光
-   （v0.9 修复：原 right:-80px 会让移动端多出 80px 幽灵横向滚动，
-    改为 right:0 收进容器内，模糊光晕视觉几乎无差） */
+/* 主区右上角常驻微光 */
 .main-wrap::before {
-  content: ""; position: absolute; top: -60px; right: 0;
+  content: ""; position: absolute; top: -60px; right: -80px;
   width: 420px; height: 300px; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(45, 212, 191, 0.08), transparent);
   filter: blur(50px); pointer-events: none;
@@ -200,11 +247,8 @@ svg { display: block; }
 .side-item svg { width: 17px; height: 17px; opacity: 0.85; }
 .side-item:hover { background: var(--hover-soft); color: var(--text); }
 .side-item.is-active {
-  background: linear-gradient(90deg, rgba(45, 212, 191, 0.12), rgba(45, 212, 191, 0.03));
+  background: var(--selected-bg); /* 实色档 teal-950/teal-50（规范 §八：选中底不用透明度） */
   color: var(--accent-bright); font-weight: 600;
-}
-:root[data-theme="light"] .side-item.is-active {
-  background: linear-gradient(90deg, rgba(13, 148, 136, 0.1), rgba(13, 148, 136, 0.02));
 }
 .side-item.is-active::before {
   content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 2px;
@@ -237,7 +281,7 @@ svg { display: block; }
   background: transparent; color: var(--faint); display: grid; place-items: center;
   transition: background 0.15s, color 0.15s;
 }
-.side-logout:hover { background: rgba(244, 113, 116, 0.1); color: var(--danger); }
+.side-logout:hover { background: rgba(248, 113, 113, 0.1); color: var(--danger); }
 .side-logout svg { width: 16px; height: 16px; }
 
 /* ---------- 顶栏 ---------- */
@@ -274,8 +318,8 @@ svg { display: block; }
   display: flex; align-items: center; gap: 10px;
   padding: 11px 16px; border-radius: 12px; font-size: 13px; font-weight: 500;
 }
-.banner .is-warn { background: rgba(232, 179, 76, 0.08); color: var(--warn); border: 1px solid rgba(232, 179, 76, 0.22); }
-.banner .is-info { background: rgba(45, 212, 191, 0.06); color: var(--accent-bright); border: 1px solid rgba(45, 212, 191, 0.22); }
+.banner .is-warn { background: rgba(251, 191, 36, 0.08); color: var(--warn); border: 1px solid rgba(251, 191, 36, 0.22); }
+.banner .is-info { background: rgba(56, 189, 248, 0.07); color: var(--info); border: 1px solid rgba(56, 189, 248, 0.25); }
 
 /* ---------- 问候 Hero ---------- */
 .hello {
@@ -336,12 +380,12 @@ svg { display: block; }
   background: var(--card-2); color: var(--muted); border: 1px solid var(--border);
   transition: all 0.2s;
 }
-.chip.is-saving { background: rgba(232, 179, 76, 0.08); color: var(--warn); border-color: rgba(232, 179, 76, 0.25); }
-.chip.is-synced { background: rgba(45, 212, 191, 0.08); color: var(--accent-bright); border-color: rgba(45, 212, 191, 0.3); }
-.chip.is-error { background: rgba(244, 113, 116, 0.08); color: var(--danger); border-color: rgba(244, 113, 116, 0.25); }
+.chip.is-saving { background: rgba(251, 191, 36, 0.08); color: var(--warn); border-color: rgba(251, 191, 36, 0.25); }
+.chip.is-synced { background: rgba(74, 222, 128, 0.08); color: var(--success); border-color: rgba(74, 222, 128, 0.3); }
+.chip.is-error { background: rgba(248, 113, 113, 0.08); color: var(--danger); border-color: rgba(248, 113, 113, 0.25); }
 .chip-soon { color: var(--accent-deep); border-color: rgba(45, 212, 191, 0.25); }
-.chip-live { background: rgba(52, 211, 153, 0.08); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
-:root[data-theme="light"] .chip-live { color: #047857; background: rgba(5, 150, 105, 0.08); border-color: rgba(5, 150, 105, 0.32); }
+.chip-live { background: rgba(74, 222, 128, 0.08); color: var(--success); border-color: rgba(74, 222, 128, 0.3); }
+:root[data-theme="light"] .chip-live { color: var(--success); background: rgba(21, 128, 61, 0.08); border-color: rgba(21, 128, 61, 0.32); }
 
 /* =====================================================
    彩色图标系统（Win11 设置页风：每类条目一个专属色）
@@ -349,7 +393,7 @@ svg { display: block; }
    ===================================================== */
 .tone-teal     { --ic: #2dd4bf; --ic-soft: rgba(45, 212, 191, 0.13); --ic-line: rgba(45, 212, 191, 0.32); --ic-glow: rgba(45, 212, 191, 0.2); }
 .tone-emerald  { --ic: #34d399; --ic-soft: rgba(52, 211, 153, 0.12); --ic-line: rgba(52, 211, 153, 0.32); --ic-glow: rgba(52, 211, 153, 0.18); }
-.tone-amber    { --ic: #e8b34c; --ic-soft: rgba(232, 179, 76, 0.12); --ic-line: rgba(232, 179, 76, 0.32); --ic-glow: rgba(232, 179, 76, 0.18); }
+.tone-amber    { --ic: #fbbf24; --ic-soft: rgba(251, 191, 36, 0.12); --ic-line: rgba(251, 191, 36, 0.32); --ic-glow: rgba(251, 191, 36, 0.18); }
 .tone-rose     { --ic: #fb7185; --ic-soft: rgba(251, 113, 133, 0.12); --ic-line: rgba(251, 113, 133, 0.32); --ic-glow: rgba(251, 113, 133, 0.18); }
 .tone-violet   { --ic: #a78bfa; --ic-soft: rgba(167, 139, 250, 0.13); --ic-line: rgba(167, 139, 250, 0.32); --ic-glow: rgba(167, 139, 250, 0.2); }
 .tone-orange   { --ic: #fb923c; --ic-soft: rgba(251, 146, 60, 0.12); --ic-line: rgba(251, 146, 60, 0.32); --ic-glow: rgba(251, 146, 60, 0.18); }
@@ -441,7 +485,7 @@ svg { display: block; }
 .account-list dt { flex: none; width: 58px; color: var(--faint); }
 .account-list dd { min-width: 0; word-break: break-all; font-weight: 500; color: var(--text-2); }
 #btn-logout-2 { margin-top: auto; height: 40px; color: var(--muted); position: relative; z-index: 1; }
-#btn-logout-2:hover { color: var(--danger); border-color: rgba(244, 113, 116, 0.4); }
+#btn-logout-2:hover { color: var(--danger); border-color: rgba(248, 113, 113, 0.4); }
 
 /* ---------- 通用按钮 ---------- */
 .btn {
@@ -545,7 +589,7 @@ svg { display: block; }
 .tf { display: flex; flex-direction: column; gap: 6px; }
 .tf-label { font-size: 11px; letter-spacing: 0.06em; color: var(--faint); }
 .tf-area {
-  min-height: 120px; resize: none; border: 1px solid var(--border);
+  min-height: 120px; resize: none; border: 1px solid var(--border-interactive);
   border-radius: 10px; padding: 11px 13px; background: var(--field-bg);
   color: var(--text); font: 12.5px/1.65 var(--mono);
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -553,7 +597,7 @@ svg { display: block; }
 .tf-area.grow { min-height: 150px; }
 .tf-area:focus { outline: none; border-color: var(--field-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
 .tf-input {
-  height: 40px; border: 1px solid var(--border); border-radius: 10px;
+  height: 40px; border: 1px solid var(--border-interactive); border-radius: 10px;
   padding: 0 12px; background: var(--field-bg); color: var(--text); font-size: 13px;
   transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
 }
@@ -576,7 +620,9 @@ svg { display: block; }
   background: var(--accent); border-color: transparent; color: #04211e;
 }
 .tbtn.is-primary:hover { background: var(--accent-bright); }
-:root[data-theme="light"] .tbtn.is-primary { color: #ffffff; }
+/* 亮色实色按钮降档到 teal-700（白字 5.47:1，规范缺陷②：#2DD4BF/#0D9488 配白字不达 AA） */
+:root[data-theme="light"] .tbtn.is-primary { background: var(--teal-700, #0f766e); color: #ffffff; }
+:root[data-theme="light"] .tbtn.is-primary:hover { background: var(--teal-800, #115e59); }
 
 /* 颜色工具 */
 .color-top { display: flex; gap: 12px; align-items: stretch; }
@@ -605,7 +651,7 @@ svg { display: block; }
 .pw-bar i { display: block; height: 100%; width: 0; border-radius: 4px; transition: width 0.25s; }
 .pw-bar i.is-weak { background: var(--danger); }
 .pw-bar i.is-mid { background: var(--warn); }
-.pw-bar i.is-strong { background: #34d399; }
+.pw-bar i.is-strong { background: var(--success); }
 .pw-strength { font-size: 11px; color: var(--faint); }
 .pw-len { display: flex; align-items: center; gap: 12px; }
 .pw-len input[type="range"] { flex: 1; accent-color: var(--accent); }
@@ -840,7 +886,7 @@ svg { display: block; }
   border: 1px solid var(--border); color: var(--muted);
 }
 .u-chip.is-ok { color: var(--accent-bright); border-color: rgba(45, 212, 191, 0.32); }
-.u-chip.is-ban { color: var(--danger); border-color: rgba(244, 113, 116, 0.36); }
+.u-chip.is-ban { color: var(--danger); border-color: rgba(248, 113, 113, 0.36); }
 .u-actions { display: flex; justify-content: center; gap: 10px; }
 .u-empty { text-align: center; color: var(--muted); padding: 40px 0 10px; }
 .u-empty b { display: block; font-size: 17px; color: var(--text); margin: 10px 0 6px; }

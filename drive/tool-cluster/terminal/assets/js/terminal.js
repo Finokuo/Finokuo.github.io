@@ -62,8 +62,11 @@
     if (err && (err.code === '42501' || /row-level security/i.test(m))) {
       return '没有权限：请确认当前登录的是 System 账号，且已执行 supabase-admin.sql。';
     }
-    if (/FUO_ADMIN_ONLY|FUO_SYSTEM_SELF_BAN|FUO_SYSTEM_RENAME/.test(m)) {
-      return m; // 触发器抛出的中文提示，直接透出
+    if (/FUO_ADMIN_ONLY|FUO_SYSTEM_SELF_BAN|FUO_SYSTEM_RENAME|FUO_PASSWD_/.test(m)) {
+      return m; // 触发器/函数抛出的中文提示，直接透出
+    }
+    if (err && (err.code === 'PGRST202' || /function .* does not exist|Could not find the function/i.test(m))) {
+      return 'RPC 不存在：请先在 Supabase SQL Editor 执行 supabase-v7.sql（改密函数增量，幂等）。';
     }
     if (err && (err.code === '23505' || /duplicate key/i.test(m))) {
       return '该用户名已被占用。';
@@ -200,6 +203,10 @@
     rename: {
       desc: '修改用户名  rename <旧名> <新名>',
       run: function (args) { doRename(args[0], args[1]); }
+    },
+    passwd: {
+      desc: '重置账号密码  passwd <用户名> <新密码>（8-72 位，对方强制下线）',
+      run: function (args) { doPasswd(args[0], args.slice(1).join(' ')); }
     },
     note: {
       desc: '查看某账号的快捷笔记  note <用户名>',
@@ -423,6 +430,34 @@
           print('✔ 已' + (status === 'banned' ? '封禁 ' : '解封 ') + username +
             (status === 'banned' ? '（其下次访问即被踢出并无法登录）' : ''), '_ok');
           logAudit(status === 'banned' ? 'ban' : 'unban', username);
+        });
+    });
+  }
+
+  /* ---------- 改密（v7 RPC admin_reset_password，审计由函数内部写入） ---------- */
+  function doPasswd(username, pwd) {
+    username = (username || '').trim();
+    if (!username || !pwd) {
+      return print('用法：passwd <用户名> <新密码>（8-72 位；含空格密码直接跟在名字后面输入）', '_warn');
+    }
+    if (username === ADMIN_NAME) return print('不能通过管理端重置 System 自己的密码（请在设置页自助修改）。', '_err');
+    if (pwd.length < 8 || pwd.length > 72) {
+      return print('新密码需为 8-72 位（当前 ' + pwd.length + ' 位）。', '_err');
+    }
+    if (PREVIEW) {
+      print('✔ [预览] 已模拟重置 ' + username + ' 的密码（8-72 位，明文不落库）。', '_ok');
+      print('  （登录 System 并执行 supabase-v7.sql 后生效：对方将被强制下线）', '_dim');
+      return;
+    }
+    print('重置 ' + username + ' 的密码 …', '_dim');
+    getProfileByUsername(username).then(function (r) {
+      if (r.error) return print(dbHint(r.error), '_err');
+      if (!r.data) return print('用户名不存在：' + username, '_err');
+      q(sb.rpc('admin_reset_password', { target_username: username, new_password: pwd }))
+        .then(function (r2) {
+          if (r2.error) return print(dbHint(r2.error), '_err');
+          print('✔ ' + (r2.data || ('已重置 ' + username + ' 的密码')), '_ok');
+          print('  对方所有会话已失效；明文留在命令历史里，可执行 clear 清屏。', '_dim');
         });
     });
   }

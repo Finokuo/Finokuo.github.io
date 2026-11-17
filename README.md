@@ -94,7 +94,7 @@ git push -u origin main
 3. 下次访问根域名 → 已登录，直接进 `/drive/`；未登录 → 进 `/main/`
 4. 工作台「快捷笔记」支持**自动云同步**（防抖 900ms 保存到 Supabase）
 
-## 七、功能总览（v0.10.0）
+## 七、功能总览（v0.9.1）
 
 - **16 款本地工具**：JSON / 颜色 / 密码 / 文本统计 / 时间戳 / Base64 / UUID / Diff / 正则测试器 / 二维码 / 哈希 / URL / 图片压缩 / **JWT 解码器 / 进制转换（BigInt）/ Lorem 占位文本**
 - **办公集（新工作区）**：**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步
@@ -104,18 +104,12 @@ git push -u origin main
 - **工具热度榜**：目录页「常用」置顶（仅本机记录）
 - **工具配置分享**：密码生成器 / 颜色工具参数进 URL，复制链接即还原配置
 - **独立回收站页**：剩余天数进度条 · 批量恢复 · 清空
-- **图形化管理台** `/drive/admin/`（System 专属）：用户表格（搜索/封禁/改名）· 公告编辑器 · 审计日志时间线 · **反馈列表（查看/删除，v0.10.0）**
-- **用户反馈系统（v0.10.0）**：侧栏「反馈」按钮 + 主页页脚入口，游客与登录用户均可提交（≤500 字 + 可选联系方式）；仅 System 可查看/删除（RLS）；60 秒前端频控防刷
+- **图形化管理台** `/drive/admin/`（System 专属）：用户表格（搜索/封禁/改名）· 公告编辑器 · 审计日志时间线
 - **导出账号数据**：设置页一键导出全部笔记/收藏/资料为 JSON 备份
 - 公告系统 · 公开用户主页 · 修改密码/简介 · Terminal（新 `admin` 命令直达图形台）
 - **PWA 可安装** · 收藏系统 · 最近使用 · 亮暗主题 · 侧栏折叠 · System 账号封禁体系
 
 > v0.8.0 修复：进入工作台侧栏先显示邮箱再切用户名的闪烁（现在直接展示用户名）
->
-> **v0.10.0 新增：**
->
-> - **用户反馈系统**：网页端侧栏「反馈」按钮（含工作台原生侧栏）+ 主页页脚入口 → Supabase feedback 表（supabase-v7.sql）；游客可匿名提交，System 在管理台第四个「反馈」标签页查看/删除；删除自动留痕 audit_log
-> - **桌面版下载页焕新**：/fuotool/ 配色从金/橙切换为与主站一致的青色极光体系（保留编辑排版布局，品牌统一）；扫描演示重写——变速进度、停顿探测、终端日志流、分批亮起 AI（更真实）
 >
 > **v0.9.1 修复与增强（依据《改进方案》17 项清单）：**
 >
@@ -156,15 +150,7 @@ git push -u origin main
 | `supabase-admin.sql` | System 管理员增量（profiles.status + 触发器） |
 | `supabase-v5.sql` | v0.7 增量：回收站软删除 / 公告表 / 操作日志 / 用户简介（幂等） |
 | `supabase-v6.sql` | **v0.8 增量**：笔记置顶 / 公开分享 / 版本历史 / 办公集云同步（幂等） |
-| `drive/assets/js/feedback.js` | **v0.10.0 新增**：共享反馈弹窗（侧栏按钮由 sidebar.js 注入） |
-| `supabase-v7.sql` | **v0.10.0 增量**：用户反馈表 feedback（幂等） |
+| `supabase-tester-password.sql` | **设置类**：Tester 统一密码——用户名含 tester 的账号按注册顺序重置为 123456T1 / 123456T2…（幂等可重跑，踢旧会话 + audit 留痕） |
+| `supabase-v7.sql` | **v0.9.2 增量**：System 改密 RPC `admin_reset_password`（Terminal `passwd` 命令 + 管理台「改密」按钮共用；bcrypt 入库、强制下线、审计留痕、仅 authenticated 可调用） |
 | `drive/manifest.json` + `drive/sw.js` | PWA：安装清单 + 离线缓存壳（仅 https 生效） |
 | `drive/u/index.html` | 公开用户主页（`/u/?u=用户名`，未登录可看） |
-
-## 八、桌面版（Fuo Tool · AI 管理大师 v1.0.0）
-
-- 下载页：`https://finokuo.github.io/fuotool/`；桌面版 exe 建议放 **GitHub Releases**（仓库单文件上限 100MB，Releases 支持到 2GB）：
-  1. 仓库 → Releases → Draft a new release → Tag `v1.0.0`
-  2. 上传 zip（命名 `FuoTool-win32-x64.zip`）→ Publish
-  3. 直链即为 `https://github.com/Finokuo/Finokuo.github.io/releases/latest/download/FuoTool-win32-x64.zip`（fuotool/index.html 顶部的 `DOWNLOAD_URL` 常量已指向该地址）
-- 功能：群聊式多智能体协作（同任务/智能分配）· 单聊 · 语言增强 · 文件交付 · 本机扫描 · 后端体系（Ollama / LM Studio / 火山方舟 / DashScope / DeepSeek / 自定义）

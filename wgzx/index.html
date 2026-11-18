@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="「温故知新」初中全科复习平台: 7~9 年级九大学科知识点、闪卡复习、AI 答疑、智能出题、错题本、背诵打卡。纯静态单页应用, 无需安装。" />
+  <meta name="theme-color" content="#da2323" />
+  <title>温故知新 · 初中全科复习</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23dc2626'/%3E%3Ctext x='32' y='42' font-size='28' font-family='serif' font-weight='700' fill='%23fff' text-anchor='middle'%3E温%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <div id="app">
+    <header id="site-header" class="site-header"></header>
+    <main id="main" class="site-main" tabindex="-1"></main>
+    <footer id="site-footer" class="site-footer"></footer>
+  </div>
+
+  <!-- 浮层挂载点 -->
+  <div id="ai-root"></div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+  <div id="mobile-nav-root"></div>
+
+  <!-- 数据层(顺序敏感: subjects-core 最先初始化命名空间) -->
+  <script defer src="data/subjects-core.js"></script>
+  <script defer src="data/subject-chinese.js"></script>
+  <script defer src="data/subject-math.js"></script>
+  <script defer src="data/subject-english.js"></script>
+  <script defer src="data/subject-physics.js"></script>
+  <script defer src="data/subject-chemistry.js"></script>
+  <script defer src="data/subject-biology.js"></script>
+  <script defer src="data/subject-history.js"></script>
+  <script defer src="data/subject-geography.js"></script>
+  <script defer src="data/subject-politics.js"></script>
+  <script defer src="data/editions.js"></script>
+  <script defer src="data/recite.js"></script>
+
+  <!-- 应用层(顺序敏感) -->
+  <script defer src="js/core.js"></script>
+  <script defer src="js/store.js"></script>
+  <script defer src="js/data.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/ai.js"></script>
+  <script defer src="js/header.js"></script>
+  <script defer src="js/footer.js"></script>
+  <script defer src="js/views/home.js"></script>
+  <script defer src="js/views/browse.js"></script>
+  <script defer src="js/views/study.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>

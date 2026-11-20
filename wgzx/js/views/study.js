@@ -77,6 +77,60 @@
     )
   }
 
+  var MAX_QUESTIONS = 20
+
+  /**
+   * 数字步进器(高度自定义题量, 上限 20): [−] [输入框] [+]
+   * opts: { get, set, min=1, max=20|fn(), label, onChange }
+   * 返回元素带 .sync(): 外部数量变化后同步禁用态/显值(不重建 DOM, 不丢焦点)
+   */
+  function countStepper(opts) {
+    var min = opts.min != null ? opts.min : 1
+    function maxVal() { return typeof opts.max === 'function' ? opts.max() : (opts.max != null ? opts.max : MAX_QUESTIONS) }
+    function clamp(v) {
+      v = parseInt(v, 10)
+      if (isNaN(v)) v = min
+      return Math.max(min, Math.min(maxVal(), v))
+    }
+    var input = W.h('input', {
+      type: 'number', class: 'input stepper-input', 'aria-label': opts.label || '数量',
+      min: String(min), max: String(MAX_QUESTIONS), inputmode: 'numeric',
+    })
+    input.value = String(opts.get())
+    var minusBtn = W.h('button', { class: 'stepper-btn', type: 'button', 'aria-label': '减少数量', onclick: function () { apply(opts.get() - 1) } }, W.icon('minus', 14))
+    var plusBtn = W.h('button', { class: 'stepper-btn', type: 'button', 'aria-label': '增加数量', onclick: function () { apply(opts.get() + 1) } }, W.icon('plus', 14))
+
+    function paint() {
+      var cur = opts.get()
+      if (document.activeElement !== input) input.value = String(cur)
+      minusBtn.disabled = cur <= min || null
+      plusBtn.disabled = cur >= maxVal() || null
+    }
+    function apply(v, fromTyping) {
+      var c = clamp(v)
+      if (c !== opts.get()) {
+        opts.set(c)
+        if (opts.onChange) opts.onChange(c)
+      }
+      if (fromTyping) {
+        if (String(c) !== input.value) input.value = String(c)
+      } else {
+        input.value = String(c)
+      }
+      paint()
+    }
+    input.addEventListener('input', function () {
+      if (input.value === '') return
+      apply(parseInt(input.value, 10), true)
+    })
+    input.addEventListener('blur', function () { apply(input.value === '' ? min : parseInt(input.value, 10)) })
+
+    var el = W.h('div', { class: 'stepper', role: 'group', 'aria-label': opts.label || '数量选择' }, minusBtn, input, plusBtn)
+    el.sync = paint
+    paint()
+    return el
+  }
+
   function subjectMap() {
     var m = {}
     for (var i = 0; i < W.data.subjects.length; i++) m[W.data.subjects[i].name] = W.data.subjects[i]
@@ -143,16 +197,47 @@
     return wrap
   }
 
-  /** 大题题型选择(预设或小知推荐) + 推荐理由行 */
+  var BIG_CUSTOM = '__custom__'
+
+  /** 大题题型的当前生效值(预设或自定义文本) */
+  function effBigType(st) {
+    return st.bigCustom ? (st.bigCustomText || '').trim() : (st.bigType || '')
+  }
+
+  /** 大题题型选择(预设/小知推荐/自定义输入) + 推荐理由行 */
   function bigTypeField(state, onSuggest) {
     var labels = state.suggestions.length
       ? state.suggestions.map(function (s) { return s.label })
       : W.bigqPresets(state.subject)
-    if (!state.bigType || labels.indexOf(state.bigType) < 0) state.bigType = labels[0] || ''
+    if (!state.bigCustom && (!state.bigType || labels.indexOf(state.bigType) < 0)) state.bigType = labels[0] || ''
     var sel = W.h('select', { class: 'select', 'aria-label': '大题题型' })
     for (var i = 0; i < labels.length; i++) sel.appendChild(W.h('option', { value: labels[i] }, labels[i]))
-    sel.value = state.bigType
-    sel.addEventListener('change', function () { state.bigType = sel.value })
+    sel.appendChild(W.h('option', { value: BIG_CUSTOM }, '✎ 自定义题型…'))
+    sel.value = state.bigCustom ? BIG_CUSTOM : state.bigType
+
+    // 自定义题型输入行(切换显示, 不重渲染避免闪烁)
+    var customRow = W.h('div', { class: 'row' },
+      W.h('div', { class: 'flex-1' }, W.h('input', {
+        class: 'input', maxlength: '24', placeholder: '输入自定义题型, 如「动点与最值综合」',
+        value: state.bigCustomText, 'aria-label': '自定义大题题型',
+      })),
+    )
+    var customInput = customRow.firstChild.firstChild
+    customInput.addEventListener('input', function () { state.bigCustomText = customInput.value })
+    function paintCustom(focus) {
+      customRow.style.display = state.bigCustom ? '' : 'none'
+      if (state.bigCustom && focus) customInput.focus()
+    }
+    sel.addEventListener('change', function () {
+      if (sel.value === BIG_CUSTOM) state.bigCustom = true
+      else {
+        state.bigCustom = false
+        state.bigType = sel.value
+      }
+      paintCustom(true)
+    })
+    paintCustom()
+
     var suggestBtn = W.ui.btn('小知推荐题型', { variant: 'outline', size: 'sm', icon: 'sparkles', onClick: function () { onSuggest(suggestBtn) } })
     var reason = null
     if (state.suggestions.length) {
@@ -167,6 +252,7 @@
       { class: 'field' },
       W.h('span', { class: 'field-label' }, '大题题型'),
       W.h('div', { class: 'row', style: { alignItems: 'flex-start' } }, W.h('div', { class: 'flex-1' }, sel), suggestBtn),
+      customRow,
       reason,
     )
   }
@@ -427,7 +513,7 @@
     var state = {
       phase: 'form', // form | generating | run | result
       subject: '数学', qType: '选择', difficulty: '中等', count: 5,
-      bigType: '', suggestions: [], suggesting: false,
+      bigType: '', bigCustom: false, bigCustomText: '', suggestions: [], suggesting: false,
       chapters: new Set(), note: '',
       loading: false, genDone: 0, genTotal: 0,
       questions: null, meta: null, calibNote: null,
@@ -450,6 +536,8 @@
           state.suggesting = false
           state.suggestions = sugs || []
           state.bigType = ''
+          state.bigCustom = false
+          state.bigCustomText = ''
           render()
           if (state.suggestions.length) W.toast('小知按校考惯例推荐了 ' + state.suggestions.length + ' 个题型', 'success')
           else W.toast('小知暂时没给出推荐, 已使用默认题型', 'error')
@@ -464,9 +552,16 @@
 
     function generate(reqOverride) {
       if (state.loading) return
+      // 大题: 预设题型或自定义题型(不可为空)
+      var effBig = effBigType(state)
+      if (state.qType === '大题' && state.bigCustom && !effBig) {
+        W.toast('请先填写自定义大题题型', 'error')
+        return
+      }
+      var reqCount = Math.max(1, Math.min(MAX_QUESTIONS, state.count || 5))
       var subj = subjectMap()[state.subject]
-      var req = { subject: state.subject, qType: state.qType, difficulty: state.difficulty, count: state.count }
-      if (state.qType === '大题' && state.bigType) req.bigType = state.bigType
+      var req = { subject: state.subject, qType: state.qType, difficulty: state.difficulty, count: reqCount }
+      if (state.qType === '大题' && effBig) req.bigType = effBig
       if (subj && state.chapters.size) {
         var names = []
         for (var i = 0; i < subj.chapters.length; i++) if (state.chapters.has(subj.chapters[i].uid)) names.push(subj.chapters[i].name)
@@ -475,6 +570,7 @@
       if (state.note.trim()) req.note = state.note.trim()
       if (reqOverride) for (var k in reqOverride) req[k] = reqOverride[k]
 
+      state.count = reqCount
       state.loading = true
       state.phase = 'generating'
       state.genDone = 0
@@ -809,6 +905,8 @@
       selSubject.addEventListener('change', function () {
         state.subject = selSubject.value
         state.bigType = ''
+        state.bigCustom = false
+        state.bigCustomText = ''
         state.suggestions = []
         state.chapters.clear()
         render()
@@ -824,11 +922,13 @@
         state.difficulty,
         function (v) { state.difficulty = v },
       )
-      var segCount = segGroup(
-        [{ v: 3, label: '3 题' }, { v: 5, label: '5 题' }, { v: 8, label: '8 题' }, { v: 10, label: '10 题' }],
-        state.count,
-        function (v) { state.count = v },
-      )
+      // 题量: 高度自定义(1~20 题任意值, 可点按也可直接输入)
+      var countCtl = countStepper({
+        get: function () { return state.count },
+        set: function (v) { state.count = v },
+        min: 1, max: MAX_QUESTIONS,
+        label: '题量',
+      })
 
       var noteInput = W.h('input', { class: 'input', placeholder: '备注: 如「侧重计算」', value: state.note, 'aria-label': '出题备注' })
       noteInput.addEventListener('input', function () { state.note = noteInput.value })
@@ -842,7 +942,7 @@
         fieldBlock('学科', selSubject),
         fieldBlock('题型', segQType),
         fieldBlock('难度', segDiff),
-        fieldBlock('题量', segCount),
+        fieldBlock('题量', countCtl, '可点箭头或直接输入, 最多 ' + MAX_QUESTIONS + ' 题'),
       )
 
       var kids = [topFields]
@@ -1275,14 +1375,30 @@
   // ================= 5. 组卷打印 =================
 
   W.views.paper = function (rootEl, view, ctx) {
+    var MAX_BIG_ROWS = 8
     var state = {
       phase: 'form', // form | gen | paper
-      subject: '数学', nChoice: 5, nFill: 4, nBig: 2,
-      bigType: '', suggestions: [], suggesting: false,
+      subject: '数学', nChoice: 5, nFill: 4,
+      // 大题可分多组题型, 每组独立选型(预设/小知推荐/自定义)与题量
+      bigs: [{ type: '', custom: false, customText: '', count: 2 }],
+      suggestions: [], suggesting: false,
       chapters: new Set(),
-      paper: null, ansOpen: false,
+      paper: null, ansOpen: false, _focusCustom: -1,
     }
-    var CN_NUM = ['一', '二', '三', '四', '五']
+    var CN_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二']
+
+    function presetLabels() {
+      return state.suggestions.length
+        ? state.suggestions.map(function (s) { return s.label })
+        : W.bigqPresets(state.subject)
+    }
+    function bigsTotal() {
+      var n = 0
+      for (var i = 0; i < state.bigs.length; i++) n += state.bigs[i].count
+      return n
+    }
+    function paperTotal() { return state.nChoice + state.nFill + bigsTotal() }
+    function rowBigType(row) { return row.custom ? (row.customText || '').trim() : (row.type || '') }
 
     function suggestBigTypes(btn) {
       if (state.suggesting) return
@@ -1293,9 +1409,20 @@
         .then(function (sugs) {
           state.suggesting = false
           state.suggestions = sugs || []
-          state.bigType = ''
+          // 按推荐一键组好大题部分: 每个推荐题型一行, 数量取建议值且总量不超上限
+          var budget = MAX_QUESTIONS - state.nChoice - state.nFill
+          var rows = []
+          for (var i = 0; i < state.suggestions.length && rows.length < MAX_BIG_ROWS; i++) {
+            if (budget < 1) break
+            var sug = state.suggestions[i]
+            var c = Math.max(1, Math.min(parseInt(sug.count, 10) || 1, budget))
+            rows.push({ type: sug.label, custom: false, customText: '', count: c })
+            budget -= c
+          }
+          if (rows.length) state.bigs = rows
           render()
-          if (state.suggestions.length) W.toast('小知推荐了 ' + state.suggestions.length + ' 个常考大题题型', 'success')
+          if (state.suggestions.length) W.toast('小知推荐了 ' + rows.length + ' 组常考大题题型, 已自动排好', 'success')
+          else W.toast('小知暂时没给出推荐, 已使用默认题型', 'error')
         })
         .catch(function (e) {
           state.suggesting = false
@@ -1316,15 +1443,31 @@
 
     function generate() {
       if (state.phase === 'gen') return
-      var total = state.nChoice + state.nFill + state.nBig
+      // 校验: 每组大题的自定义题型必须已填写
+      for (var bi = 0; bi < state.bigs.length; bi++) {
+        if (state.bigs[bi].custom && !rowBigType(state.bigs[bi])) {
+          W.toast('第 ' + (bi + 1) + ' 组大题的自定义题型还没填写', 'error')
+          return
+        }
+      }
+      var total = paperTotal()
       if (total <= 0) {
         W.toast('请至少选择 1 道题', 'error')
         return
       }
+      if (total > MAX_QUESTIONS) {
+        W.toast('总题量最多 ' + MAX_QUESTIONS + ' 题(当前 ' + total + ' 题), 请删减后再生成', 'error')
+        return
+      }
+
       var jobs = []
       if (state.nChoice > 0) jobs.push({ qType: '选择', count: state.nChoice, difficulty: '中等', label: '选择题' })
       if (state.nFill > 0) jobs.push({ qType: '填空', count: state.nFill, difficulty: '中等', label: '填空题' })
-      if (state.nBig > 0) jobs.push({ qType: '大题', count: state.nBig, difficulty: '困难', label: '解答题', bigType: state.bigType || undefined })
+      for (var bj = 0; bj < state.bigs.length; bj++) {
+        var row = state.bigs[bj]
+        var t = rowBigType(row)
+        jobs.push({ qType: '大题', count: row.count, difficulty: '困难', label: '「' + (t || '解答题') + '」', bigType: t || undefined })
+      }
 
       var names = chapterNames()
       state.phase = 'gen'
@@ -1388,39 +1531,156 @@
       selSubject.value = state.subject
       selSubject.addEventListener('change', function () {
         state.subject = selSubject.value
-        state.bigType = ''
+        state.bigs = [{ type: '', custom: false, customText: '', count: 2 }]
         state.suggestions = []
         state.chapters.clear()
         render()
       })
 
-      function countSeg(key, options) {
-        var items = []
-        for (var j = 0; j < options.length; j++) items.push({ v: options[j], label: options[j] + ' 道' })
-        return segGroup(items, state[key], function (v) { state[key] = v })
+      // ---- 题量步进器: 选择/填空 0~20, 大题每组 1~20, 全卷合计不超 20 ----
+      var steppers = []
+      var totalEl = null
+      var addBigBtnRef = null
+      function syncAll() {
+        for (var si = 0; si < steppers.length; si++) steppers[si].sync()
+        if (totalEl) {
+          var t = paperTotal()
+          totalEl.textContent = t >= MAX_QUESTIONS
+            ? '已满 ' + MAX_QUESTIONS + ' 题(上限)'
+            : '共 ' + t + ' / ' + MAX_QUESTIONS + ' 题'
+          totalEl.style.color = t >= MAX_QUESTIONS ? 'var(--danger)' : 'var(--primary)'
+        }
+        if (addBigBtnRef) addBigBtnRef.disabled = state.bigs.length >= MAX_BIG_ROWS || paperTotal() >= MAX_QUESTIONS || null
       }
+      function makeStepper(get, set, min, label) {
+        var st = countStepper({
+          get: get,
+          set: set,
+          min: min,
+          max: function () { return MAX_QUESTIONS - (paperTotal() - get()) },
+          label: label,
+          onChange: syncAll,
+        })
+        steppers.push(st)
+        return st
+      }
+
+      var choiceStepper = makeStepper(function () { return state.nChoice }, function (v) { state.nChoice = v }, 0, '选择题数量')
+      var fillStepper = makeStepper(function () { return state.nFill }, function (v) { state.nFill = v }, 0, '填空题数量')
+
+      // ---- 大题多组行 ----
+      var labels = presetLabels()
+      for (var ri = 0; ri < state.bigs.length; ri++) {
+        var r0 = state.bigs[ri]
+        if (!r0.custom && (!r0.type || labels.indexOf(r0.type) < 0)) r0.type = labels[0] || ''
+      }
+
+      function bigRowEl(row, idx) {
+        var sel = W.h('select', { class: 'select', 'aria-label': '第 ' + (idx + 1) + ' 组大题题型' })
+        for (var li = 0; li < labels.length; li++) sel.appendChild(W.h('option', { value: labels[li] }, labels[li]))
+        sel.appendChild(W.h('option', { value: BIG_CUSTOM }, '✎ 自定义题型…'))
+        sel.value = row.custom ? BIG_CUSTOM : row.type
+        sel.addEventListener('change', function () {
+          if (sel.value === BIG_CUSTOM) row.custom = true
+          else {
+            row.custom = false
+            row.type = sel.value
+          }
+          state._focusCustom = idx
+          render()
+        })
+        var customInput = W.h('input', {
+          class: 'input', maxlength: '24', placeholder: '输入自定义题型, 如「材料分析题」',
+          value: row.customText, 'aria-label': '第 ' + (idx + 1) + ' 组自定义题型',
+        })
+        customInput.addEventListener('input', function () { row.customText = customInput.value })
+        customInput.style.display = row.custom ? '' : 'none'
+        if (state._focusCustom === idx && row.custom) {
+          state._focusCustom = -1
+          setTimeout(function () { customInput.focus() }, 0)
+        }
+
+        var delBtn = W.h(
+          'button',
+          { class: 'icon-btn', type: 'button', title: '删除该组', 'aria-label': '删除第 ' + (idx + 1) + ' 组大题', onclick: function () { state.bigs.splice(idx, 1); render() } },
+          W.icon('trash', 16),
+        )
+
+        return W.h(
+          'div',
+          { class: 'big-row' },
+          W.h(
+            'div',
+            { class: 'big-row-top' },
+            W.h('div', { class: 'big-row-type' }, sel),
+            makeStepper(function () { return row.count }, function (v) { row.count = v }, 1, '第 ' + (idx + 1) + ' 组大题数量'),
+            delBtn,
+          ),
+          customInput,
+        )
+      }
+
+      var addBigBtn = W.ui.btn('添加大题题型', { variant: 'outline', size: 'sm', icon: 'plus', onClick: function () {
+        if (state.bigs.length >= MAX_BIG_ROWS) return
+        state.bigs.push({ type: labels[0] || '', custom: false, customText: '', count: 1 })
+        render()
+      } })
+      addBigBtnRef = addBigBtn
+      var suggestBtn = W.ui.btn('小知推荐题型组合', { variant: 'outline', size: 'sm', icon: 'sparkles', onClick: function () { suggestBigTypes(suggestBtn) } })
+
+      var bigKids = []
+      for (var bi = 0; bi < state.bigs.length; bi++) bigKids.push(bigRowEl(state.bigs[bi], bi))
+      if (!bigKids.length) {
+        bigKids.push(W.h('span', { class: 'muted small' }, '当前没有大题; 点「添加大题题型」可加入, 或用小知推荐一键排好'))
+      }
+      if (state.suggestions.length) {
+        bigKids.push(
+          W.h(
+            'div',
+            { class: 'muted', style: { fontSize: '12px', lineHeight: '1.6' } },
+            state.suggestions.map(function (s) { return W.h('div', {}, '「' + s.label + '」 ' + (s.reason || '')) }),
+          ),
+        )
+      }
+
+      var bigField = W.h(
+        'div',
+        { class: 'field' },
+        W.h(
+          'div',
+          { class: 'row-wrap', style: { alignItems: 'center', rowGap: '6px' } },
+          W.h('span', { class: 'field-label' }, '大题(可分多组题型)'),
+          W.h('span', { class: 'flex-1' }),
+          suggestBtn,
+          addBigBtn,
+        ),
+        bigKids,
+      )
+
+      totalEl = W.h('div', { class: 'small', style: { textAlign: 'center', color: 'var(--primary)', fontWeight: '600' } }, '共 ' + paperTotal() + ' / ' + MAX_QUESTIONS + ' 题')
 
       var kids = [
         W.h(
           'div',
           { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' } },
           fieldBlock('学科', selSubject),
-          fieldBlock('选择题数量', countSeg('nChoice', [0, 3, 5, 8])),
-          fieldBlock('填空题数量', countSeg('nFill', [0, 2, 4, 6])),
-          fieldBlock('大题数量', countSeg('nBig', [0, 1, 2, 3])),
+          fieldBlock('选择题数量', choiceStepper, '可为 0'),
+          fieldBlock('填空题数量', fillStepper, '可为 0'),
         ),
+        W.h('div', { class: 'mt-3' }, bigField),
       ]
-      if (state.nBig > 0) kids.push(W.h('div', { class: 'mt-3' }, bigTypeField(state, suggestBigTypes)))
       if (subj) kids.push(W.h('div', { class: 'mt-3' }, fieldBlock('出题范围(可多选, 不选即全科)', chapterPicker(subj, state.chapters))))
       if (!W.ai.hasAI()) kids.push(W.h('div', { class: 'mt-3' }, noAiLine()))
 
       var goBtn = W.ui.btn('生成试卷', { variant: 'primary', size: 'lg', icon: 'printer', onClick: generate })
       goBtn.style.width = '100%'
 
+      syncAll()
       return [
-        pageHead('printer', '组卷打印', '自定义题量与范围生成练习卷, 一键打印; 打印时自动隐藏按钮与答案区'),
+        pageHead('printer', '组卷打印', '自定义题型组合与题量(全卷最多 ' + MAX_QUESTIONS + ' 题), 一键打印; 打印时自动隐藏按钮与答案区'),
         W.ui.card(W.h('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } }, kids)),
-        W.h('div', { class: 'mt-3' }, goBtn),
+        W.h('div', { class: 'mt-3' }, totalEl),
+        W.h('div', { class: 'mt-2' }, goBtn),
       ]
     }
 

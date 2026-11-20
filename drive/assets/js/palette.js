@@ -16,7 +16,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS || {};
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.4：读全局记忆，整站漫游
 
   /* 工具元数据（与 tool-page.js 注册表保持一致；独立携带避免加载顺序依赖） */
   var TOOLS_META = [

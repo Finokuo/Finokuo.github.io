@@ -13,7 +13,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS || {};
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.5：读全局记忆，整站漫游
 
   var sb = null;
   var user = null;
@@ -384,7 +384,7 @@
       });
   }
 
-  /* ---------- 改密（v0.9.2 · admin_reset_password RPC，System only） ----------
+  /* ---------- 改密（v0.9.5 · admin_reset_password RPC，System only） ----------
    * 与 Terminal 的 passwd 同一数据库函数：身份/长度/存在性校验、
    * bcrypt 入库、踢会话、audit 留痕全部在函数内完成。 */
   var passwdTarget = null;
@@ -561,7 +561,7 @@
   }
 
   /* =====================================================
-   * 反馈面板（v0.9.2 · feedback 表：supabase-feedback.sql）
+   * 反馈面板（v0.9.5 · feedback 表：supabase-feedback.sql）
    * ===================================================== */
   var fbLoaded = false;
   var fbPage = 0;

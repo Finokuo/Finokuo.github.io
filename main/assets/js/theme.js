@@ -3,10 +3,12 @@
  * 在 <head> 中同步加载：先于 CSS 设置 data-theme，避免闪白。
  * 选择持久化到 localStorage（key: fu-theme，可选 dark/light/system，默认暗色）。
  *
- * 切换动效（element-plus 同款工艺，全站统一，新页面直接沿用）：
+ * 切换动效（全站统一工艺，新页面直接沿用）：
  *   路径 A · 支持 View Transitions 的浏览器（Chrome/Edge 111+、Safari 18+）：
- *     快照圆形裁剪 —— 切亮色：新快照从点击处【扩散】（裁 ::view-transition-new）
- *                     切暗色：旧快照向点击处【收起】（裁 ::view-transition-old）
+ *     快照圆形裁剪 —— 目标主题的新快照从点击处【扩散】盖满全屏，亮/暗两个方向对称；
+ *     切暗不再让旧亮色画面整屏收起，避免前半程铺满白底的「闪白」观感。
+ *     层级在 CSS 显式声明（old=1 / new=2），不依赖浏览器默认堆叠；
+ *     若个别引擎导致动画无法就位，200ms 内自动降级为直接切换，绝不冻结画面。
  *   路径 B · 其余浏览器（Firefox / 旧 Safari 等）DOM 兜底：
  *     在点击处生成一个目标主题背景色的纯色圆，扩大盖满全屏后切换主题。
  *     效果与路径 A 一致，全平台可见。
@@ -86,31 +88,51 @@
     } catch (e) { return false; }
   }
 
-  /* 路径 A：View Transitions 快照裁剪 */
+  /* 路径 A：View Transitions 快照裁剪 —— 新快照（目标主题）从点击处扩散
+   * 亮→暗 / 暗→亮 同一套方向逻辑，对称、无方向特判；
+   * CSS 侧 old=1 / new=2 显式置顶（见 style.css），不赌 UA 默认堆叠。 */
   function vtRipple(x, y, next) {
-    var trans = document.startViewTransition(function () { apply(next); });
+    var trans;
+    try {
+      trans = document.startViewTransition(function () { apply(next); });
+    } catch (e) { apply(next); return; }
+
     var endRadius = endRadiusOf(x, y);
+    var clip = [
+      'circle(0px at ' + x + 'px ' + y + 'px)',
+      'circle(' + endRadius + 'px at ' + x + 'px ' + y + 'px)'
+    ];
+    var settled = false;
+
+    /* 兑底①：ready 迟迟不就绪（个别引擎/连点/后台标签）→ 直接落位，
+     * 杜绝「画面冻结在旧主题直到动画结束才突变」的卡帧观感 */
+    var safety = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      try { trans.skipTransition(); } catch (e) { /* ignore */ }
+    }, 200);
 
     trans.ready.then(function () {
-      // element-plus 同款方向性（clipPath 两帧：起点帧 → 终点帧）
-      //  · 切到亮色：new 快照 circle(0)→circle(半径)，从点击处扩散
-      //  · 切到暗色：old 快照 circle(半径)→circle(0)，向点击处收起
-      //    （old 需置顶，见 CSS :root[data-theme='dark']::view-transition-old）
-      var clip = [
-        'circle(0px at ' + x + 'px ' + y + 'px)',
-        'circle(' + endRadius + 'px at ' + x + 'px ' + y + 'px)'
-      ];
-      document.documentElement.animate(
-        { clipPath: next === 'dark' ? clip.slice().reverse() : clip },
-        {
-          duration: DUR,
-          easing: 'ease-in-out',
-          pseudoElement: next === 'dark'
-            ? '::view-transition-old(root)'
-            : '::view-transition-new(root)'
+      if (settled) return;
+      settled = true;
+      clearTimeout(safety);
+      try {
+        /* 兑底②：animate 不支持伪元素等异常 → skipTransition 直接切，不留冻结帧 */
+        var anim = root.animate(
+          { clipPath: clip },
+          { duration: DUR, easing: 'ease-in-out',
+            pseudoElement: '::view-transition-new(root)' }
+        );
+        if (anim && anim.finished && anim.finished.catch) {
+          anim.finished.catch(function () { /* 被中断：忽略 */ });
         }
-      );
-    }).catch(function () { /* 连点等导致 transition 被跳过：忽略 */ });
+      } catch (e) {
+        try { trans.skipTransition(); } catch (_e) { /* ignore */ }
+      }
+    }).catch(function () {
+      /* 连点等导致 transition 被跳过：忽略 */
+      if (!settled) { settled = true; clearTimeout(safety); }
+    });
   }
 
   /* 路径 B：DOM 兜底 —— 纯色圆（目标主题背景色）扩大盖满后切主题 */
@@ -200,6 +222,17 @@
   // 立即应用（本脚本位于 <head>，早于首帧渲染）
   apply(get());
   applyAccent(storedAccent());
+
+  /* 首帧画布底色兑底：主 CSS 尚未就绪时，html 画布即按目标主题着色，
+   * 杜绝暗色页加载瞬间的「先白后暗」闪屏。
+   * 两个值 = style.css 的 --bg（暗 #07080a / 亮 #f4f5f6），改色时需同步。 */
+  try {
+    var critical = document.createElement('style');
+    critical.setAttribute('data-fuo-critical', '');
+    critical.textContent =
+      'html{background:#07080a}html[data-theme="light"]{background:#f4f5f6}';
+    document.head.appendChild(critical);
+  } catch (e) { /* ignore */ }
 
   // 暴露给其他脚本（设置页等）：
   //   get()          → 当前已解析主题（dark/light）

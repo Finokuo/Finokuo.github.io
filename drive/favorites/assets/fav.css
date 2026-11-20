@@ -4,21 +4,21 @@
    ===================================================== */
 
 .fv-eyebrow {
-  font-size: 11px; letter-spacing: 0.14em;
-  color: var(--accent-bright); margin-bottom: 10px;
+  font-size: 12px; letter-spacing: 0.14em;
+  color: var(--accent-bright); margin-bottom: 8px;
 }
-.fv-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.fv-hero h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
 .fv-hero p {
-  margin-top: 10px; color: var(--text-dim);
+  margin-top: 8px; color: var(--text-dim);
   font-size: 14px; max-width: 580px; line-height: 1.75;
 }
 
-.fv-sec { margin-top: 34px; }
+.fv-sec { margin-top: 32px; }
 .fv-sec-title {
-  font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
   display: flex; align-items: center; gap: 8px;
 }
-.fv-sec-title .mono { font-size: 11px; color: var(--faint); font-weight: 400; }
+.fv-sec-title .mono { font-size: 12px; color: var(--faint); font-weight: 400; }
 
 /* ---------- 工具收藏卡片 ---------- */
 .fv-tool-grid {
@@ -30,41 +30,49 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .fv-tool {
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 18px 16px 14px;
-  border-radius: 16px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 16px 16px 12px;
+  border-radius: 14px; border: 1px solid var(--border);
   background: var(--card);
   position: relative; overflow: hidden;
   text-decoration: none; color: var(--text);
   animation: fvIn 0.45s ease both;
   animation-delay: calc(var(--i, 0) * 45ms);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.18s var(--ease); /* B4 */
 }
 .fv-tool:hover {
   transform: translateY(-3px);
   border-color: rgba(45, 212, 191, 0.4);
   box-shadow: var(--shadow-hover);
 }
+/* H1：卡片微光跟随（统一 --spot-color 令牌、极弱 alpha≤0.06；--mx/--my 由 fav.js 注入，
+   与工作台 .card::after 同规格） */
+.fv-tool::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity 0.26s var(--ease); /* B4 */
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), var(--spot-color), transparent 65%);
+}
+.fv-tool:hover::after { opacity: 1; }
 .fv-tool .fv-ic {
   width: 34px; height: 34px; border-radius: 10px;
   display: grid; place-items: center;
 }
 .fv-tool .fv-ic svg { width: 18px; height: 18px; }
-.fv-tool b { font-size: 14.5px; font-weight: 700; }
+.fv-tool b { font-size: 14px; font-weight: 700; }
 .fv-tool p { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.65; }
 .fv-go {
-  margin-top: auto; font-size: 11px; color: var(--accent-bright); opacity: 0.75;
-  transition: opacity 0.18s, transform 0.18s;
+  margin-top: auto; font-size: 12px; color: var(--accent-bright); opacity: 0.75;
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease); /* B4 */
 }
 .fv-tool:hover .fv-go { opacity: 1; transform: translateX(3px); }
 
 /* 取消收藏按钮（工具卡 / 笔记行共用） */
 .fv-unstar {
   position: absolute; top: 10px; right: 10px; z-index: 2;
-  width: 30px; height: 30px; border-radius: 8px;
+  width: 30px; height: 30px; min-width: 32px; min-height: 32px; border-radius: 10px; /* E5 桌面图标按钮 ≥32×32 */
   border: 1px solid transparent; background: transparent;
   color: var(--warn); display: grid; place-items: center;
-  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: color 0.12s var(--ease), background 0.12s var(--ease), border-color 0.12s var(--ease), transform 0.12s var(--ease); /* B4 */
 }
 .fv-unstar svg { width: 15px; height: 15px; fill: currentColor; }
 .fv-unstar:hover { color: var(--muted); background: var(--hover-soft); border-color: var(--border); transform: scale(1.05); }
@@ -76,14 +84,14 @@
 }
 .fv-note {
   display: flex; align-items: center; gap: 12px;
-  padding: 13px 16px;
-  border: 1px solid var(--border); border-radius: 13px;
+  padding: 12px 16px;
+  border: 1px solid var(--border); border-radius: 14px;
   background: var(--card); color: var(--text);
   text-decoration: none;
   position: relative; overflow: hidden;
   animation: fvIn 0.45s ease both;
   animation-delay: calc(var(--i, 0) * 40ms);
-  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), transform 0.18s var(--ease); /* B4 */
 }
 .fv-note:hover {
   border-color: rgba(45, 212, 191, 0.4);
@@ -94,50 +102,83 @@
 .fv-note .fv-ic svg { width: 16px; height: 16px; }
 .fv-note-meta { flex: 1; min-width: 0; }
 .fv-note-meta b {
-  display: block; font-size: 13.5px; font-weight: 600;
+  display: block; font-size: 13px; font-weight: 600;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.fv-note-meta small { font-size: 11px; color: var(--faint); }
+.fv-note-meta small { font-size: 12px; color: var(--faint); }
 .fv-note .fv-go { margin: 0; }
 
-/* 色调（与工具卡一致） */
-.tone-teal { background: rgba(45, 212, 191, 0.14); color: #2dd4bf; }
-.tone-fuchsia { background: rgba(232, 121, 249, 0.14); color: #e879f9; }
-.tone-emerald { background: rgba(52, 211, 153, 0.14); color: #34d399; }
-.tone-amber { background: rgba(251, 191, 36, 0.16); color: #fbbf24; }
-.tone-cyan { background: rgba(34, 211, 238, 0.14); color: #22d3ee; }
-.tone-violet { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
-.tone-orange { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
-.tone-rose { background: rgba(244, 113, 116, 0.15); color: #f47174; }
-:root[data-theme="light"] .tone-teal { color: #0d9488; }
-:root[data-theme="light"] .tone-fuchsia { color: #a21caf; }
-:root[data-theme="light"] .tone-emerald { color: #059669; }
-:root[data-theme="light"] .tone-amber { color: #92400e; }
-:root[data-theme="light"] .tone-cyan { color: #0e7490; }
-:root[data-theme="light"] .tone-violet { color: #6d28d9; }
-:root[data-theme="light"] .tone-orange { color: #c2410c; }
-:root[data-theme="light"] .tone-rose { color: #be123c; }
+/* 色调：与全站 tone-* 5 色相同源（--ic 包络，暗/亮自动跟随；D3 收敛后仅 5 色相，最小间隔 30.3°） */
+.tone-teal   { background: rgba(141, 226, 215, 0.13); color: var(--ic-teal, #8de2d7); }
+.tone-green  { background: rgba(141, 226, 172, 0.13); color: var(--ic-green, #8de2ac); }
+.tone-amber  { background: rgba(226, 195, 141, 0.13); color: var(--ic-amber, #e2c38d); }
+.tone-rose   { background: rgba(226, 141, 155, 0.13); color: var(--ic-rose, #e28d9b); }
+.tone-violet { background: rgba(166, 141, 226, 0.13); color: var(--ic-violet, #a68de2); }
+:root[data-theme="light"] .tone-teal   { color: var(--ic-teal, #1f8477); }
+:root[data-theme="light"] .tone-green  { color: var(--ic-green, #1f8444); }
+:root[data-theme="light"] .tone-amber  { color: var(--ic-amber, #845f1f); }
+:root[data-theme="light"] .tone-rose   { color: var(--ic-rose, #841f30); }
+:root[data-theme="light"] .tone-violet { color: var(--ic-violet, #3d1f84); }
 
-/* ---------- 空状态 ---------- */
-.fv-empty {
-  margin-top: 16px; padding: 34px 20px;
-  border: 1px dashed var(--border-2); border-radius: 16px;
-  text-align: center; color: var(--muted);
-  background: var(--card);
+/* ---------- H4：数据加载骨架屏（请求期占位；灰条呼吸 1.2s linear——linear 为时长三档外登记例外，
+   仅用于加载呼吸循环；reduced-motion 下停用） ---------- */
+@keyframes fvSkel { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.fv-skel {
+  height: 118px; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--card); padding: 16px 16px 12px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-.fv-empty .mono { font-size: 11px; color: var(--faint); letter-spacing: 0.12em; margin-bottom: 8px; }
-.fv-empty b { display: block; font-size: 15px; color: var(--text-2); margin-bottom: 6px; }
-.fv-empty p { font-size: 12.5px; line-height: 1.8; max-width: 420px; margin: 0 auto; }
+.fv-skel i,
+.fv-skel-row {
+  display: block; border-radius: 6px; background: var(--card-2);
+  animation: fvSkel 1.2s linear infinite; /* H4：linear 例外登记 */
+}
+.fv-skel i:nth-child(1) { height: 34px; width: 34px; border-radius: 10px; } /* 图标位 */
+.fv-skel i:nth-child(2) { height: 12px; width: 72%; }
+.fv-skel i:nth-child(3) { height: 12px; width: 48%; }
+.fv-skel-row { height: 48px; border: 1px solid var(--border); } /* 笔记行骨架 */
+.fv-skel-row:nth-child(2) { width: 88%; }
+@media (prefers-reduced-motion: reduce) {
+  .fv-skel i, .fv-skel-row { animation: none; }
+}
+
+/* ---------- 空状态（H5：统一规格——图标 24px + 标题 16px/600 + 说明 13px + 可选操作按钮；
+   居中、padding 48px 24px；与 notes.css / tool.css 的 .empty-state 同款。
+   .fv-empty 为旧类名，fav.js 同时挂 fv-empty + empty-state，样式由此块统一提供） ---------- */
+.fv-empty,
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-2); text-align: center;
+  padding: var(--sp-7) var(--sp-5);
+  border: 1px dashed var(--border-2); border-radius: 14px;
+  background: var(--card); color: var(--muted);
+  grid-column: 1 / -1; /* H5：空态横跨收藏网格整行（原先只占一格，视觉局促） */
+}
+.fv-empty .empty-ic,
+.empty-state .empty-ic { width: 24px; height: 24px; color: var(--accent-bright); } /* H5：--ic 包络中性青 */
+.fv-empty .empty-ic svg,
+.empty-state .empty-ic svg { width: 24px; height: 24px; display: block; }
+.fv-empty .empty-eyebrow,
+.empty-state .empty-eyebrow { font-size: var(--fs-1); color: var(--faint); letter-spacing: 0.12em; margin: 0; }
+.fv-empty b,
+.empty-state b { font-size: var(--fs-4); font-weight: 600; color: var(--text-2); }
+.fv-empty .empty-desc,
+.empty-state .empty-desc { font-size: var(--fs-2); color: var(--muted); line-height: 1.8; max-width: 420px; margin: 0; }
+.fv-empty .empty-act,
+.empty-state .empty-act { margin-top: var(--sp-2); }
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 960px) {
   .fv-tool-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 560px) {
-  .fv-hero h1 { font-size: 26px; }
-  .fv-tool-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .fv-tool { padding: 14px 12px 12px; }
+  .fv-hero h1 { font-size: 28px; }
+  .fv-tool-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fv-tool { padding: 12px 12px 12px; }
   .fv-tool p { display: none; }
+
+  /* E5 触控目标：移动端可点元素 ≥44×44 */
+  .fv-unstar { min-width: 44px; min-height: 44px; }
 }
 @media (max-width: 400px) {
   .fv-tool-grid { grid-template-columns: 1fr; }

@@ -1,5 +1,5 @@
 /* =====================================================
- * Fuo Tools · 全站反馈挂件（web v0.9.2）
+ * Fuo Tools · 全站反馈挂件（web v0.9.5）
  *
  * 用法（页面只需一行，样式与 SDK 由本脚本按需注入）：
  *   <script src="…/drive/assets/js/feedback.js?v=1"></script>
@@ -32,7 +32,7 @@
     }
   } catch (e) { /* ignore */ }
 
-  var CSS_URL = SELF_BASE + '../css/feedback.css?v=1';
+  var CSS_URL = SELF_BASE + '../css/feedback.css?v=2';
   var SDK_URL = SELF_BASE + '../vendor/supabase.min.js';
   var MAXLEN = 1000;
   var COOLDOWN = 60; // 秒

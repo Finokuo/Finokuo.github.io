@@ -136,7 +136,7 @@
 
   /* ---------- 2. 颜色工具 ---------- */
   TOOLS.color = {
-    name: '颜色工具', tone: 'tone-fuchsia', desc: 'HEX / RGB / HSL 互转，点击任意值复制',
+    name: '颜色工具', tone: 'tone-violet', desc: 'HEX / RGB / HSL 互转，点击任意值复制',
     render: function (body) {
       var picker = document.createElement('input');
       picker.type = 'color';
@@ -209,7 +209,7 @@
 
   /* ---------- 3. 密码生成器 ---------- */
   TOOLS.password = {
-    name: '密码生成器', tone: 'tone-emerald', desc: '加密安全随机，生成后立即复制',
+    name: '密码生成器', tone: 'tone-green', desc: '加密安全随机，生成后立即复制',
     render: function (body) {
       var out = h('div', 'pw-out mono', '—');
       var bar = h('div', 'pw-bar');
@@ -341,7 +341,7 @@
 
   /* ---------- 5. 时间戳转换 ---------- */
   TOOLS.timestamp = {
-    name: '时间戳转换', tone: 'tone-cyan', desc: 'Unix 时间戳与日期双向转换，自动识别秒/毫秒',
+    name: '时间戳转换', tone: 'tone-teal', desc: 'Unix 时间戳与日期双向转换，自动识别秒/毫秒',
     render: function (body) {
       var nowBox = h('div', 'ts-now mono', '—');
       var timer = setInterval(function () {
@@ -438,7 +438,7 @@
 
   /* ---------- 7. UUID 生成 ---------- */
   TOOLS.uuid = {
-    name: 'UUID 生成器', tone: 'tone-orange', desc: 'UUID v4（加密随机），点击单条即可复制',
+    name: 'UUID 生成器', tone: 'tone-amber', desc: 'UUID v4（加密随机），点击单条即可复制',
     render: function (body) {
       var list = h('div', 'uuid-list mono');
 

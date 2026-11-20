@@ -121,10 +121,31 @@
     )
     aiBtn.style.height = '36px'
 
-    // 移动菜单按钮
+    // 移动菜单按钮(开合均有动画: 面板渐开 + 图标变叉, 见 css .mobile-menu / .menu-toggle)
+    const menu = W.h('div', { class: 'mobile-menu' })
+    const menuInner = W.h('div', { class: 'mobile-menu-inner' })
+    menu.appendChild(menuInner)
+
+    function closeMenu() {
+      menu.classList.remove('open')
+      menuBtn.classList.remove('open')
+      menuBtn.setAttribute('aria-label', '打开菜单')
+      menuBtn.setAttribute('aria-expanded', 'false')
+    }
     const menuBtn = W.h(
       'button',
-      { class: 'icon-btn menu-toggle', title: '菜单', 'aria-label': '打开菜单', onclick: function () { menu.classList.toggle('open') } },
+      {
+        class: 'icon-btn menu-toggle',
+        title: '菜单',
+        'aria-label': '打开菜单',
+        'aria-expanded': 'false',
+        onclick: function () {
+          const open = menu.classList.toggle('open')
+          menuBtn.classList.toggle('open', open)
+          menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单')
+          menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false')
+        },
+      },
       W.icon('menu', 20),
     )
 
@@ -140,7 +161,7 @@
         onkeydown: function (e) {
           if (e.key === 'Enter') {
             submitSearch(e.target.value)
-            menu.classList.remove('open')
+            closeMenu()
           }
         },
       }),
@@ -154,7 +175,7 @@
           {
             class: W.cls('mobile-nav-item', active && 'active'),
             onclick: function () {
-              menu.classList.remove('open')
+              closeMenu()
               navigate(item.hash)
             },
           },
@@ -169,14 +190,16 @@
       {
         class: 'mobile-exit',
         onclick: function () {
-          menu.classList.remove('open')
+          closeMenu()
           goFuotool()
         },
       },
       W.icon('external-link', 16),
       '返回 FuoTool',
     )
-    const menu = W.h('div', { class: 'mobile-menu' }, mSearch, mExit, mNav)
+    menuInner.appendChild(mSearch)
+    menuInner.appendChild(mExit)
+    menuInner.appendChild(mNav)
 
     const inner = W.h(
       'div',

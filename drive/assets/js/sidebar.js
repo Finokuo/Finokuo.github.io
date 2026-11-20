@@ -10,7 +10,10 @@
  * data-active：home | tools | favorites | settings |（空 = 无高亮，如公开主页）
  * data-guard="1"：承担子页面登录守卫（未登录 → 送回主页；被封禁 → 登出踢回）。
  *                 工作台原生侧栏（drive/index.html）不设该属性：守卫由 app.js 负责。
- * 折叠：侧栏底部「«」按钮 → 纯图标迷你列（68px），状态存 localStorage，全站同步。
+ * G2：侧栏「收藏」计数徽标（fuo-fav-count 本地缓存即时显示 + 服务端复核，0/未登录隐藏）。
+ * 折叠：侧栏底部「«」按钮 → 纯图标迷你列（72px），状态存 localStorage，全站同步。
+ * 抽屉：≤560px 顶栏汉堡按钮 → 侧栏变离屏抽屉 + 遮罩，Esc/遮罩关闭、焦点管理、锁滚动。
+ * G5：面包屑中文化 —— body[data-page/data-tool] → 中文层级映射（去英文路径段）。
  * 公告：登录后拉取最新一条 announcements（v5 表），未读则顶栏下方横幅展示，
  *       可关闭并记忆已读（localStorage fuo-read-ann）；表未建时静默跳过。
  * 附带：本脚本同时负责加载 palette.js（Ctrl+K 命令面板，同目录）与
@@ -21,7 +24,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS || {};
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.5：读全局记忆，整站漫游
   var sb = null;
   var MINI_KEY = 'fuo-sidebar-mini';
 
@@ -40,13 +43,13 @@
     if (!window.__FUO_PALETTE__) {
       window.__FUO_PALETTE__ = true;
       var s = document.createElement('script');
-      s.src = SELF_BASE + 'palette.js?v=5';
+      s.src = SELF_BASE + 'palette.js?v=6';
       document.head.appendChild(s);
     }
-    // v0.9.2：全站反馈挂件（feedback.js 自带去重，右下角悬浮按钮）
+    // v0.9.5：全站反馈挂件（feedback.js 自带去重，右下角悬浮按钮）
     if (!window.__FUO_FEEDBACK__ && !document.querySelector('script[data-fb-js]')) {
       var f = document.createElement('script');
-      f.src = SELF_BASE + 'feedback.js?v=1';
+      f.src = SELF_BASE + 'feedback.js?v=2';
       f.setAttribute('data-fb-js', '1');
       document.head.appendChild(f);
     }
@@ -55,12 +58,31 @@
       if ('serviceWorker' in navigator &&
           (location.protocol === 'https:' || location.hostname === 'localhost')) {
         var root = SELF_BASE.replace(/assets\/js\/$/, '');
-        navigator.serviceWorker.register(root + 'sw.js?v=2').catch(function () { /* ignore */ });
+        navigator.serviceWorker.register(root + 'sw.js?v=4').catch(function () { /* ignore */ });
       }
     } catch (e) { /* ignore */ }
   }
 
   /* ---------- 面包屑 ---------- */
+  /* G5：中文层级映射 —— 分区键 + 工具 slug / 办公子页；
+   * 映射缺失时保留原值（不强行汉化未知项）；分隔符仍用现有 .crumbs 的「/」mono 样式。 */
+  var PAGE_ZH = {
+    drive: '工作台', 'tool-cluster': '工具集', office: '办公集', favorites: '收藏',
+    settings: '设置', recycle: '回收站', admin: '管理台', wgzx: '温故知新',
+    u: '个人展示', n: '笔记分享',
+    notes: '云笔记', // notes：工具集内的云笔记工作区（页title即「云笔记」）
+  };
+  var TOOL_ZH = {
+    json: 'JSON 格式化', color: '颜色工具', password: '密码生成器',
+    textstats: '文本统计', timestamp: '时间戳转换', base64: 'Base64 编解码',
+    uuid: 'UUID 生成器', diff: '文本 Diff', regex: '正则测试器',
+    qrcode: '二维码生成器', hash: '哈希计算', url: 'URL 编解码',
+    imgcom: '图片压缩', jwt: 'JWT 解码器', radix: '进制转换',
+    lorem: 'Lorem 占位文本', terminal: 'Terminal',
+    // 办公集子页
+    todo: '待办清单', habit: '习惯打卡', pomodoro: '番茄钟',
+  };
+
   function crumbLink(label, href) {
     var a = document.createElement('a');
     a.className = 'crumb-link mono';
@@ -83,6 +105,9 @@
     return s;
   }
 
+  /* G5：面包屑层级补全 —— 英文路径段换中文；
+   * 工具页「工具集 / JSON 格式化」（去 drive 前缀，同方案示例），
+   * 分区页保留「工作台 / …」层级；未知页面维持现状（隐藏 crumbs）。 */
   function renderCrumb() {
     var el = document.getElementById('tc-crumb');
     if (!el) return;
@@ -94,40 +119,40 @@
     var cluster = PATHS.TOOL_CLUSTER || '../tool-cluster/';
     var office = PATHS.OFFICE || '../office/';
 
+    var zhTool = TOOL_ZH[slug] || slug; // 未知 slug 保留原文，不强行汉化
+
     var chain = [];
     if (slug && zone === 'office') {
-      // 办公集工具页：drive / office / <slug>
-      chain = [crumbLink('drive', drive), crumbSep(),
-               crumbLink('office', office), crumbSep(),
-               crumbCur(slug)];
+      // 办公集工具页：办公集 / 待办清单
+      chain = [crumbLink(PAGE_ZH.office, office), crumbSep(),
+               crumbCur(zhTool)];
     } else if (slug) {
-      // 工具独立页（body[data-tool]，无 data-page）
-      chain = [crumbLink('drive', drive), crumbSep(),
-               crumbLink('tool-cluster', cluster), crumbSep(),
-               crumbCur(slug)];
+      // 工具独立页（body[data-tool]，无 data-page）：工具集 / JSON 格式化
+      chain = [crumbLink(PAGE_ZH['tool-cluster'], cluster), crumbSep(),
+               crumbCur(zhTool)];
     } else if (page === 'cluster') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('tool-cluster')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH['tool-cluster'])];
     } else if (page === 'office') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('office')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.office)];
     } else if (page === 'notes') {
-      chain = [crumbLink('drive', drive), crumbSep(),
-               crumbLink('tool-cluster', cluster), crumbSep(),
-               crumbCur('notes')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(),
+               crumbLink(PAGE_ZH['tool-cluster'], cluster), crumbSep(),
+               crumbCur(PAGE_ZH.notes)];
     } else if (page === 'recycle') {
-      chain = [crumbLink('drive', drive), crumbSep(),
-               crumbLink('tool-cluster', cluster), crumbSep(),
-               crumbLink('notes', PATHS.NOTES || cluster + 'notes/'), crumbSep(),
-               crumbCur('recycle')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(),
+               crumbLink(PAGE_ZH['tool-cluster'], cluster), crumbSep(),
+               crumbLink(PAGE_ZH.notes, PATHS.NOTES || cluster + 'notes/'), crumbSep(),
+               crumbCur(PAGE_ZH.recycle)];
     } else if (page === 'favorites') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('favorites')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.favorites)];
     } else if (page === 'settings') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('settings')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.settings)];
     } else if (page === 'profile') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('u')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.u)];
     } else if (page === 'share') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('n')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.n)];
     } else if (page === 'admin') {
-      chain = [crumbLink('drive', drive), crumbSep(), crumbCur('admin')];
+      chain = [crumbLink(PAGE_ZH.drive, drive), crumbSep(), crumbCur(PAGE_ZH.admin)];
     } else {
       el.hidden = true;
       return;
@@ -137,10 +162,23 @@
   }
 
   /* ---------- 侧栏 ---------- */
+  /* G2：收藏计数本地缓存（fuo-fav-count）—— sidebar.js 与 app.js（drive 首页）共用同一键：
+   * 服务端查询成功后由双方回写；读取失败 / 无记录返回 0（徽标隐藏不占位）。 */
+  function favCacheCount() {
+    try {
+      var n = parseInt(localStorage.getItem('fuo-fav-count') || '', 10);
+      return isNaN(n) ? 0 : n;
+    } catch (e) { return 0; }
+  }
+  function favCacheSave(n) {
+    try { localStorage.setItem('fuo-fav-count', String(n)); } catch (e) { /* ignore */ }
+  }
+
   var IC = {
     grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="13" y="4" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="4" y="13" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="13" y="13" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>',
     wrench: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4.5 4.5 0 0 0-6.09 5.9L3 17.8V21h3.2l5.6-5.61a4.5 4.5 0 0 0 5.9-6.09l-2.8 2.8-2.11-.7-.7-2.11 2.61-2.99Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>',
     brief: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3.5 12.5h17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
+    book: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.6 5.1 8.6 4.5 6.1 4.5c-.9 0-1.6.7-1.6 1.6v11.3c0 .9.7 1.6 1.6 1.6 2.5 0 4.5.6 5.9 2 1.4-1.4 3.4-2 5.9-2 .9 0 1.6-.7 1.6-1.6V6.1c0-.9-.7-1.6-1.6-1.6-2.5 0-4.5.6-5.9 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M12 6.7v14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>',
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     out: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M10 12h10M17 9l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
@@ -160,6 +198,7 @@
     var office = PATHS.OFFICE || '../office/';
     var favorites = PATHS.FAVORITES || '../favorites/';
     var settings = PATHS.SETTINGS || '../settings/';
+    var wgzx = PATHS.WGZX || '../../wgzx/';
 
     aside.innerHTML =
       '<a class="brand" href="' + drive + '" title="返回工作台" aria-label="返回工作台">' +
@@ -172,7 +211,8 @@
         navItem('home', active, drive, IC.grid, '工作台', '') +
         navItem('tools', active, cluster, IC.wrench, '工具集', '<i class="mono">17 款</i>') +
         navItem('office', active, office, IC.brief, '办公集', '<i class="mono">4 款</i>') +
-        navItem('favorites', active, favorites, IC.star, '收藏', '<i class="mono" id="sb-fav-count" hidden></i>') +
+        navItem('wgzx', active, wgzx, IC.book, '温故知新', '') +
+        navItem('favorites', active, favorites, IC.star, '收藏', '<i class="mono" id="sb-fav-count" data-fav-count hidden></i>') +
         navItem('settings', active, settings, IC.gear, '设置', '') +
       '</nav>' +
       '<div class="side-user">' +
@@ -184,6 +224,15 @@
         '<button class="side-logout" id="sb-logout" type="button" title="退出登录" aria-label="退出登录">' + IC.out + '</button>' +
       '</div>';
     aside.hidden = false;
+    /* G2：收藏徽标先用本地缓存即时填充（登录态下上次已知数量）；
+     * 预览态 / 无缓存 / 0 保持 hidden 不占位，服务端复核在 loadFavCount。 */
+    if (!PREVIEW) {
+      var cached = favCacheCount();
+      if (cached > 0) {
+        var favBadge = document.getElementById('sb-fav-count');
+        if (favBadge) { favBadge.textContent = String(cached); favBadge.hidden = false; }
+      }
+    }
     initAvatarLink(aside);
   }
 
@@ -237,6 +286,137 @@
     aside.appendChild(btn);
   }
 
+  /* ---------- 移动端抽屉导航（E2/E3：≤560px 汉堡 + 离屏侧栏 + 遮罩） ----------
+   * 工作台原生侧栏与子页面空壳注入两种情况都走这里：只对 aside#sidebar 加状态类、
+   * 向 .topbar 注入汉堡与遮罩，抽屉显隐交由 CSS（≤560px 媒体查询）控制。 */
+  function initDrawer(aside) {
+    if (!aside || aside.getAttribute('data-drawer-bound') === '1') return;
+    aside.setAttribute('data-drawer-bound', '1');
+
+    var topbar = document.querySelector('.topbar');
+    if (!topbar) return; // 无顶栏的页面（如公开工具页）不注入抽屉入口
+
+    /* 汉堡按钮：≥44×44 触控目标，三横线与全站 stroke 图标同风格 */
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'drawer-btn';
+    btn.setAttribute('aria-label', '打开导航菜单');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'sidebar');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">' +
+      '<path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+    /* 全屏遮罩：点击关闭 */
+    var mask = document.createElement('div');
+    mask.className = 'drawer-mask';
+    mask.setAttribute('aria-hidden', 'true');
+
+    topbar.insertBefore(btn, topbar.firstChild); // 主题切换等既有 topbar 元素不动
+    document.body.appendChild(mask);
+
+    var mq = window.matchMedia('(max-width: 560px)');
+
+    function isOpen() { return document.body.classList.contains('is-drawer-open'); }
+    function focusables() {
+      return aside.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    }
+
+    function openDrawer() {
+      if (isOpen()) return;
+      document.body.classList.add('is-drawer-open'); // CSS：抽屉滑入 + 遮罩显现 + 锁页面滚动
+      btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-label', '关闭导航菜单');
+      document.addEventListener('keydown', onKeydown); // Esc 仅在打开时监听
+      // 焦点移入抽屉（rAF 等一帧，确保可见性已切换、可聚焦）
+      window.requestAnimationFrame(function () {
+        var f = focusables();
+        if (f.length) f[0].focus({ preventScroll: true });
+      });
+    }
+
+    function closeDrawer(refocus) {
+      if (!isOpen()) return;
+      document.body.classList.remove('is-drawer-open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', '打开导航菜单');
+      document.removeEventListener('keydown', onKeydown);
+      // 焦点还给汉堡按钮（导航链接点击关闭时不必归还，页面即将跳转）
+      if (refocus !== false && !btn.contains(document.activeElement)) {
+        btn.focus({ preventScroll: true });
+      }
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDrawer(true);
+        return;
+      }
+      if (e.key === 'Tab') {
+        // 轻量焦点圈定：Tab 循环留在抽屉内，不落到遮罩背后的页面内容
+        var f = focusables();
+        if (!f.length) return;
+        var first = f[0];
+        var last = f[f.length - 1];
+        if (e.shiftKey && (document.activeElement === first || !aside.contains(document.activeElement))) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && (document.activeElement === last || !aside.contains(document.activeElement))) {
+          e.preventDefault(); first.focus();
+        }
+      }
+    }
+
+    btn.addEventListener('click', function () {
+      if (isOpen()) closeDrawer(true); else openDrawer();
+    });
+    mask.addEventListener('click', function () { closeDrawer(true); });
+
+    // 点抽屉内导航项先收抽屉再跳转（对 href="#" 的项也能正确复位）
+    aside.addEventListener('click', function (e) {
+      if (!isOpen() || !e.target || !e.target.closest) return;
+      if (e.target.closest('.side-item')) closeDrawer(false);
+    });
+
+    // 跨过 560px 断点时强制复位，避免滚动锁 / 遮罩 / Esc 监听残留
+    function onMq(m) { if (!m.matches) closeDrawer(false); }
+    if (mq.addEventListener) mq.addEventListener('change', onMq);
+    else if (mq.addListener) mq.addListener(onMq); // 旧 Safari
+  }
+
+  /* ---------- 预览模式（v0.9.5：全站记忆，可自由漫游） ---------- */
+  /* 退出预览：清记忆 + 重载，恢复正常登录守卫。挂在状态小字上，可点/可键盘触发 */
+  function bindPreviewExit(el) {
+    if (!el || el.getAttribute('data-exit-bound') === '1') return;
+    el.setAttribute('data-exit-bound', '1');
+    el.textContent = '退出预览';
+    el.title = '退出预览：清除预览记忆并恢复正常登录守卫';
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.style.cursor = 'pointer';
+    el.style.textDecoration = 'underline dashed';
+    el.style.textUnderlineOffset = '2px';
+    function exit() {
+      try { localStorage.removeItem('fuo-preview'); } catch (e) { /* ignore */ }
+      var q = window.location.search;
+      if (q.indexOf('preview=1') !== -1) {
+        // 入口 URL 自带 preview=1：去掉参数再重载，避免重新写入
+        window.location.replace(
+          window.location.pathname +
+          q.replace(/([?&])preview=(0|1)(&|$)/, function (_m, a, _b, c) {
+            return (a === '?' && c === '') ? '' : a;
+          }) + window.location.hash);
+        return;
+      }
+      window.location.reload();
+    }
+    el.addEventListener('click', exit);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); exit(); }
+    });
+  }
+  /* 暴露给 app.js（drive 首页原生用户卡也用同一退出逻辑） */
+  window.FUO_PREVIEW_EXIT_BIND = bindPreviewExit;
+
   /* ---------- 会话：守卫 + 用户信息 ---------- */
   /* v0.9.1：登录后回到来源页的 next 值（交给主页 app.js 解析） */
   function nextKey() {
@@ -252,7 +432,7 @@
       var nameEl0 = document.getElementById('sb-name');
       var stateEl0 = document.getElementById('sb-state');
       if (nameEl0) nameEl0.textContent = '预览模式';
-      if (stateEl0) stateEl0.textContent = 'preview';
+      bindPreviewExit(stateEl0); // 状态小字 → 「退出预览」可点
       return;
     }
     if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return; // 无法校验：放行，由页面逻辑兜底
@@ -335,18 +515,20 @@
       });
   }
 
-  /* 收藏计数徽标：侧栏「收藏」项右上角数字 */
+  /* 收藏计数徽标：服务端复核并回写缓存（G2：查询失败静默降级为本地缓存值） */
   function loadFavCount(u) {
     var badge = document.getElementById('sb-fav-count');
     if (!badge || !sb) return;
     sb.from('favorites').select('id').eq('user_id', u.id)
       .then(function (_a) {
+        if (_a.error) return; // 查询失败：保留缓存 / 现状，不闪藏
         var rows = (_a.data && _a.data.length) || 0;
+        favCacheSave(rows);
         if (rows > 0) {
           badge.textContent = String(rows);
           badge.hidden = false;
         } else {
-          badge.hidden = true;
+          badge.hidden = true; // 真实 0：隐藏不占位
         }
       });
   }
@@ -416,6 +598,7 @@
     // 空壳才注入模板；工作台原生侧栏（已有子元素）只挂折叠按钮
     if (!aside.firstChild) buildSidebar(aside.getAttribute('data-active') || 'tools');
     initCollapse(aside);
+    initDrawer(aside);
     renderCrumb();
     loadSidecars();
     if (aside.getAttribute('data-guard') === '1') {
@@ -430,6 +613,11 @@
           if (_a.data && _a.data.session) {
             fillUser(_a.data.session.user); // 公开页也显示用户名（如 /u/ 主页）
             loadAnnouncement();
+            loadFavCount(_a.data.session.user); // G2：公开页注入侧栏的收藏徽标同样服务端复核
+          } else {
+            // G2：未登录不占位 —— 清掉可能的缓存预填，徽标回归隐藏
+            var favBadge = document.getElementById('sb-fav-count');
+            if (favBadge) favBadge.hidden = true;
           }
         });
       } catch (e) { /* ignore */ }

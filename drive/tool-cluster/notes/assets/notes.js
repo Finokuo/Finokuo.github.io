@@ -9,7 +9,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS;
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.4：读全局记忆，整站漫游
 
   /* 设置开关兜底读取（与 settings.js 同键，无依赖、顺序无关） */
   function settingOn(key, dflt) {
@@ -67,11 +67,12 @@
   var editorEl = document.querySelector('.nb-editor');
   var viewBox = $('nb-view');
 
-  function showToast(text) {
+  /* H2：toast 支持 duration 参数（默认 2400ms；复制类操作传 1600ms，全站复制反馈统一 1.6s） */
+  function showToast(text, duration) {
     toast.textContent = text;
     toast.hidden = false;
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(function () { toast.hidden = true; }, 2400);
+    showToast._t = setTimeout(function () { toast.hidden = true; }, duration || 2400);
   }
 
   function client() {
@@ -336,8 +337,9 @@
     if (!rows.length) {
       var empty = document.createElement('p');
       empty.className = 'nb-empty-list';
+      /* H5：文案结构统一——「没有找到 X」句式 + 一句指引 */
       empty.textContent = state.q
-        ? '没有匹配「' + state.q + '」的笔记'
+        ? '没有找到「' + state.q + '」相关的笔记，换个关键词试试。'
         : '这里还没有笔记。点上方「＋ 新建笔记」写一篇。';
       listEl.appendChild(empty);
       return;
@@ -709,6 +711,48 @@
     saveState.textContent = text;
   }
 
+  /* ---------- H4：首载骨架屏 ----------
+   * 笔记列表/编辑区在 loadAll 返回前为空白无感知期，用灰条呼吸占位
+   * （呼吸见 notes.css @keyframes nbSkel；仅首次加载，refresh 不重播）；
+   * 列表骨架由 renderList 的 innerHTML = '' 自动清除，编辑区骨架由 removeSkeleton 显式移除 */
+  function showSkeleton() {
+    var i, el;
+    listEl.innerHTML = '';
+    for (i = 0; i < 3; i++) {
+      el = document.createElement('div');
+      el.className = 'nb-skel-row';
+      el.setAttribute('aria-hidden', 'true');
+      listEl.appendChild(el);
+    }
+    var nbBody = document.querySelector('.nb-body');
+    if (nbBody && !document.getElementById('nb-skel-body')) {
+      el = document.createElement('div');
+      el.className = 'nb-skel-body';
+      el.id = 'nb-skel-body';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<i></i><i></i><i></i>';
+      nbBody.appendChild(el);
+    }
+  }
+  function removeSkeleton() {
+    var skel = document.getElementById('nb-skel-body');
+    if (skel && skel.parentNode) skel.parentNode.removeChild(skel);
+  }
+
+  /* ---------- H5：编辑器空态对齐统一规格 ----------
+   * index.html 壳不可动：由 JS 给 #nb-empty 补挂 .empty-state 类并注入 24px 图标
+   * （标题/说明结构不变，视觉规格与收藏页/工具集对齐，见 notes.css） */
+  function decorateEditorEmpty() {
+    if (!emptyEl || emptyEl.getAttribute('data-empty-deco') === '1') return;
+    emptyEl.setAttribute('data-empty-deco', '1');
+    emptyEl.classList.add('empty-state');
+    var ic = document.createElement('i');
+    ic.className = 'empty-ic';
+    ic.setAttribute('aria-hidden', 'true');
+    ic.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M6 4h9l4 4v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5.5A1.5 1.5 0 0 1 6.5 4H6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    emptyEl.insertBefore(ic, emptyEl.firstChild);
+  }
+
   /* ---------- 选择 ---------- */
   function select(id) {
     flushPendingSave();
@@ -919,8 +963,9 @@
         renderEditor(); renderList();
         if (next) {
           copyText(shareUrl(n.id), function (good) {
+            /* H2：复制反馈统一 1.6s 自动消失（成功/失败同步） */
             showToast(good ? '链接已复制：任何人可读这篇笔记，再点可关闭公开'
-                           : '已公开，但复制失败：请手动复制地址栏');
+                           : '已公开，但复制失败：请手动复制地址栏', 1600);
           });
         } else {
           showToast('已关闭公开，原链接立即失效');
@@ -1675,7 +1720,9 @@
   function boot() {
     var c = client();
     if (!c || !user) return;
+    showSkeleton(); /* H4：首载骨架，返回后由渲染覆盖 */
     loadAll(function () {
+      removeSkeleton(); /* H4：数据就绪，移除编辑区骨架（列表骨架随 renderList 清空） */
       renderFolders(); renderList();
       // 深链：?note=new → 直接新建；?note=<id> → 直达该笔记
       var m = window.location.search.match(/[?&]note=([\w-]+)/);
@@ -1703,6 +1750,7 @@
 
   bind();            // 事件只绑一次（preview / 正式模式共用）
   setView(viewMode); // 初始化视图模式（编辑 / 分屏 / 预览）
+  decorateEditorEmpty(); /* H5：编辑器空态对齐统一规格（图标 + 类名，一次性） */
   if (PREVIEW) bootPreview();
   else guard();      // 正式模式：先过登录守卫 → boot()
 })();

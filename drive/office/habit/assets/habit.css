@@ -5,29 +5,29 @@
 
 .of-content { max-width: 760px; }
 
-.hb-list { display: flex; flex-direction: column; gap: 18px; }
+.hb-list { display: flex; flex-direction: column; gap: 16px; }
 
 /* ---------- 习惯卡 ---------- */
 .hb-card {
-  border: 1px solid var(--border); border-radius: 12px;
+  border: 1px solid var(--border); border-radius: 14px;
   background: var(--card-2);
-  padding: 15px 16px;
+  padding: 16px 16px;
 }
 .hb-head {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
   flex-wrap: wrap;
 }
 .hb-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
-.hb-name { font-size: 14.5px; font-weight: 600; word-break: break-all; }
+.hb-name { font-size: 14px; font-weight: 600; word-break: break-all; }
 
 .hb-check {
   margin-left: auto;
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 6px 14px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
   border: 1px solid var(--border-2); border-radius: 999px;
   background: transparent; color: var(--muted);
-  font-size: 12.5px; cursor: pointer;
-  transition: all 0.15s;
+  font-size: 12px; cursor: pointer;
+  transition: all 0.12s var(--ease); /* B4 */
 }
 .hb-check:hover { border-color: var(--accent); color: var(--text); }
 .hb-check.is-done {
@@ -37,28 +37,28 @@
 }
 .hb-check svg { width: 13px; height: 13px; }
 
-.hb-meta { margin-left: 10px; font-size: 11px; color: var(--faint); }
+.hb-meta { margin-left: 8px; font-size: 12px; color: var(--faint); }
 .hb-meta b { color: var(--accent-bright); font-weight: 600; }
 
 .hb-del {
   border: none; background: transparent; color: var(--faint);
-  cursor: pointer; padding: 4px; border-radius: 6px;
-  transition: all 0.15s;
+  cursor: pointer; padding: 4px; min-width: 32px; min-height: 32px; border-radius: 6px; /* E5 桌面图标按钮 ≥32×32 */
+  transition: all 0.12s var(--ease); /* B4 */
 }
 .hb-del:hover { color: var(--danger); background: rgba(244, 113, 116, 0.1); }
 .hb-del svg { width: 14px; height: 14px; display: block; }
 
 /* ---------- 热力图（GitHub 式） ---------- */
 .hb-heat {
-  margin-top: 13px;
+  margin-top: 12px;
   display: flex; align-items: flex-start; gap: 4px;
   overflow-x: auto;
   padding-bottom: 4px;
 }
-.hb-heat-cols { display: flex; gap: 3px; }
-.hb-heat-col { display: flex; flex-direction: column; gap: 3px; }
+.hb-heat-cols { display: flex; gap: 4px; }
+.hb-heat-col { display: flex; flex-direction: column; gap: 4px; }
 .hb-cell {
-  width: 11px; height: 11px; border-radius: 2.5px;
+  width: 11px; height: 11px; border-radius: 3px; /* B3 例外：11px 热力格微圆角，6px 会变圆点（台账登记） */
   background: var(--card);
   border: 1px solid var(--border);
   flex: none;
@@ -70,8 +70,8 @@
 .hb-cell.is-future { opacity: 0.25; }
 
 .hb-months {
-  display: flex; gap: 3px; margin-top: 5px;
-  font-size: 9px; color: var(--faint);
+  display: flex; gap: 4px; margin-top: 4px;
+  font-size: 12px; color: var(--faint);
   min-width: 100%;
 }
 .hb-months span { flex: none; }
@@ -85,11 +85,15 @@
 }
 
 .hb-legend {
-  display: flex; align-items: center; gap: 5px;
-  margin-top: 8px; font-size: 10px; color: var(--faint);
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 8px; font-size: 12px; color: var(--faint);
 }
 .hb-legend .hb-cell { width: 10px; height: 10px; }
 
 @media (max-width: 560px) {
   .hb-heat { margin-left: -4px; margin-right: -4px; }
+
+  /* E5 触控目标：移动端可点元素 ≥44×44 */
+  .hb-check { min-height: 44px; }
+  .hb-del { min-width: 44px; min-height: 44px; }
 }

@@ -9,7 +9,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS;
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.4：读全局记忆，整站漫游
 
   /* 设置开关兜底读取（与 settings.js 同键，无依赖、顺序无关） */
   function settingOn(key, dflt) {
@@ -57,8 +57,40 @@
     toastEl.textContent = text;
     toastEl.hidden = false;
     clearTimeout(miniToast._t);
-    miniToast._t = setTimeout(function () { toastEl.hidden = true; }, 1800);
+    miniToast._t = setTimeout(function () { toastEl.hidden = true; }, 1600); /* H2：全站复制反馈统一 1.6s 自动消失 */
   }
+
+  /* ---------- H3：主操作快捷键（⌘/Ctrl+Enter）与提示标签 ----------
+   * 主操作解析优先级：[data-main-action]（无实色主按钮的工具在 render 内标记）
+   *   → .tbtn.is-primary（makeBtn(text, true) 生成）；两者皆无（实时换算类工具）则自然跳过。
+   * 冲突规避：仅工具页生效（body[data-tool] + #tool-body 存在，Terminal 页无此结构）；
+   *   命令面板占 Ctrl+K、侧栏占 Esc，互不重叠；Alt/Shift 修饰组合不响应。 */
+  var IS_MAC = /Mac|iPhone|iPad/i.test(navigator.platform || '');
+  function kbdHintLabel() { return IS_MAC ? '\u2318\u21A9' : 'Ctrl+\u21A9'; } /* Mac：⌘↩ / 其他：Ctrl+↩ */
+
+  function addKbdHint(btn) {
+    if (!btn || btn.querySelector('.kbd-hint')) return; // 幂等：不重复添加
+    var s = h('span', 'kbd-hint mono', kbdHintLabel());
+    s.setAttribute('aria-hidden', 'true'); /* 纯视觉次要提示，读屏不重复播报 */
+    btn.appendChild(s);
+  }
+
+  function resolveMainAction() {
+    var bodyEl = document.getElementById('tool-body');
+    if (!bodyEl) return null;
+    return bodyEl.querySelector('[data-main-action]') || bodyEl.querySelector('.tbtn.is-primary');
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    if (!document.body.getAttribute('data-tool')) return; /* 仅工具页（目录页/终端页不响应） */
+    var pal = document.querySelector('.pal'); /* 命令面板开着时不抢 Enter（palette.js 同页共存） */
+    if (pal && !pal.hidden) return;
+    var btn = resolveMainAction();
+    if (!btn) return;
+    e.preventDefault(); /* 阻止焦点元素默认回车行为（如按钮双触发） */
+    btn.click();
+  });
 
   /* ---------- 基础控件构造 ---------- */
   function fieldRow(labelText, inputEl) {
@@ -171,7 +203,7 @@
 
   /* ---------- 2. 颜色工具 ---------- */
   TOOLS.color = {
-    name: '颜色工具', tone: 'tone-fuchsia', desc: 'HEX / RGB / HSL 互转，点击任意值复制',
+    name: '颜色工具', tone: 'tone-violet', desc: 'HEX / RGB / HSL 互转，点击任意值复制',
     render: function (body) {
       var picker = document.createElement('input');
       picker.type = 'color';
@@ -199,7 +231,7 @@
         row.appendChild(key); row.appendChild(val);
         row.addEventListener('click', function () {
           copyText(val.textContent, function (good) {
-            miniToast(good ? '已复制 ' + k : '复制失败');
+            miniToast(good ? '已复制 ' + k : '复制失败，请手动选择'); /* H2：失败文案统一 */
           });
         });
         rows[k] = val;
@@ -234,6 +266,7 @@
       }
 
       var bRand = makeBtn('随机一个');
+      bRand.setAttribute('data-main-action', ''); /* H3：颜色工具无实色主按钮，指定「随机一个」为主操作（⌘/Ctrl+Enter 可触发） */
       bRand.addEventListener('click', function () {
         var c = [0, 0, 0].map(function () { return Math.floor(Math.random() * 256); });
         picker.value = '#' + c.map(toHex).join('');
@@ -265,7 +298,7 @@
 
   /* ---------- 3. 密码生成器 ---------- */
   TOOLS.password = {
-    name: '密码生成器', tone: 'tone-emerald', desc: '加密安全随机，生成后立即复制',
+    name: '密码生成器', tone: 'tone-green', desc: '加密安全随机，生成后立即复制',
     render: function (body) {
       var out = h('div', 'pw-out mono', '—');
       var bar = h('div', 'pw-bar');
@@ -421,16 +454,16 @@
         document.getElementById('ts-read').textContent = words ? (mins + ' 分钟') : '0';
       }
       ta.addEventListener('input', update);
-      update();
 
       body.appendChild(ta);
       body.appendChild(grid);
+      update(); // v7：网格挂载后再首次统计 —— 原代码在挂载前调用，getElementById('ts-*') 为 null 直接抛错，工具区整页空白（原有缺陷，非本次重构引入）
     },
   };
 
   /* ---------- 5. 时间戳转换 ---------- */
   TOOLS.timestamp = {
-    name: '时间戳转换', tone: 'tone-cyan', desc: 'Unix 时间戳与日期双向转换，自动识别秒/毫秒',
+    name: '时间戳转换', tone: 'tone-teal', desc: 'Unix 时间戳与日期双向转换，自动识别秒/毫秒',
     render: function (body) {
       var nowBox = h('div', 'ts-now mono', '—');
       var timer = setInterval(function () {
@@ -527,7 +560,7 @@
 
   /* ---------- 7. UUID 生成 ---------- */
   TOOLS.uuid = {
-    name: 'UUID 生成器', tone: 'tone-orange', desc: 'UUID v4（加密随机），点击单条即可复制',
+    name: 'UUID 生成器', tone: 'tone-amber', desc: 'UUID v4（加密随机），点击单条即可复制',
     render: function (body) {
       var list = h('div', 'uuid-list mono');
 
@@ -554,7 +587,7 @@
           item.type = 'button';
           item.addEventListener('click', function () {
             copyText(this.textContent, function (good) {
-              miniToast(good ? '已复制' : '复制失败');
+              miniToast(good ? '已复制 UUID' : '复制失败，请手动选择'); /* H2：成功带名称/失败文案统一 */
             });
           });
           list.appendChild(item);
@@ -776,7 +809,7 @@
 
   /* ---------- 10. 二维码生成 ---------- */
   TOOLS.qrcode = {
-    name: '二维码生成', tone: 'tone-cyan', desc: '本地生成可下载 PNG · 支持中文与长文本',
+    name: '二维码生成', tone: 'tone-teal', desc: '本地生成可下载 PNG · 支持中文与长文本',
     render: function (body) {
       if (!window.qrcodegen) {
         body.appendChild(h('p', 'tf-msg is-err', '二维码库未加载：assets/vendor/qrcodegen.js 缺失。'));
@@ -875,7 +908,7 @@
 
   /* ---------- 11. 哈希计算 ---------- */
   TOOLS.hash = {
-    name: '哈希计算', tone: 'tone-emerald', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件 · 本地计算',
+    name: '哈希计算', tone: 'tone-green', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件 · 本地计算',
     render: function (body) {
       if (!(window.crypto && window.crypto.subtle && window.TextEncoder)) {
         body.appendChild(h('p', 'tf-msg is-err', '当前环境不支持安全哈希（需要 HTTPS 或 localhost）。'));
@@ -1052,7 +1085,7 @@
 
   /* ---------- 13. 图片压缩 ---------- */
   TOOLS.imgcom = {
-    name: '图片压缩', tone: 'tone-orange', desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
+    name: '图片压缩', tone: 'tone-amber', desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
     render: function (body) {
       var fileIn = document.createElement('input');
       fileIn.type = 'file'; fileIn.accept = 'image/*'; fileIn.hidden = true;
@@ -1169,6 +1202,7 @@
           '<span>' + w + '×' + hh + '</span>';
 
         var bDown = makeBtn('下载压缩图', true);
+        addKbdHint(bDown); /* H3：压缩完成后出现的主操作按钮同样带快捷键提示 */
         bDown.addEventListener('click', function () {
           var a = document.createElement('a');
           a.href = lastUrl;
@@ -1299,7 +1333,7 @@
 
   /* ---------- 15. 进制转换（v0.8，BigInt 大数） ---------- */
   TOOLS.radix = {
-    name: '进制转换', tone: 'tone-cyan', desc: '2-36 进制互转 · BigInt 超大数 · 实时换算',
+    name: '进制转换', tone: 'tone-teal', desc: '2-36 进制互转 · BigInt 超大数 · 实时换算',
     render: function (body) {
       var input = document.createElement('input');
       input.type = 'text';
@@ -1368,7 +1402,7 @@
           row.appendChild(k);
           row.appendChild(v);
           row.addEventListener('click', function () {
-            copyText(v.textContent, function (good) { miniToast(good ? '已复制 ' + (RADIX_NAMES[b] || b) : '复制失败'); });
+            copyText(v.textContent, function (good) { miniToast(good ? '已复制 ' + (RADIX_NAMES[b] || b) : '复制失败，请手动选择'); }); /* H2：失败文案统一 */
           });
           wrap.appendChild(row);
         });
@@ -1498,6 +1532,182 @@
       run();
     },
   };
+
+  /* =====================================================
+   * v7 · 工具页画布重构（C1/C2/C3/C4/C5/C6）
+   * 只做 DOM 包装 / 标记 / 搬移，不改任何工具的计算与校验逻辑：
+   *  · C3+C4：为文本输出工具统一注入「输出区标题栏 + 独立复制按钮 + 状态行」
+   *  · C5  ：给各工具主输入/输出区打 .tc-fill 标记（tool.css 让其 flex:1 撑满）
+   *  · C2  ：JSON / Diff 标记 .is-io-split（≥961px 左右分栏）
+   *  · C6  ：密码 / 图片压缩两页模块顺序微调（操作栏提前、说明区置底）
+   * ===================================================== */
+
+  /* 输出区注入规格：out=输出元素选择器；badge=标题栏状态徽标；
+     foot=底部状态行；copy(out, body)=复制内容；split=C2 分栏 */
+  var OUT_SPECS = {
+    json: {
+      out: 'pre.tf-out',
+      badge: 'p.tf-msg:not(.is-err)',
+      foot: 'p.tf-msg.is-err',
+      copy: function (out) { return out.textContent; },
+      split: true,
+    },
+    base64: {
+      out: 'pre.tf-out',
+      foot: 'p.tf-msg.is-err',
+      copy: function (out) { return out.textContent; },
+    },
+    hash: {
+      out: 'code.tf-out',
+      foot: 'p.tf-msg',
+      copy: function (out) { return out.textContent; },
+    },
+    uuid: {
+      out: '.uuid-list',
+      copy: function (out) { return (out._all || []).join('\n'); },
+    },
+    password: {
+      out: '.pw-out',
+      copy: function (out) { return out.textContent; },
+    },
+    diff: {
+      out: 'pre.tf-out',
+      foot: 'p.tf-msg',
+      copy: function (out) { return out.textContent; },
+      split: true,
+    },
+    url: {
+      out: 'pre.tf-out',
+      foot: 'p.tf-msg.is-err',
+      copy: function (out) { return out.textContent; },
+    },
+  };
+
+  /* C5：主区填充标记（匹配元素加 .tc-fill；若其父级是 .tf 字段行则一并标记） */
+  var FILL_SPECS = {
+    json: ['.tf-area.grow'],
+    base64: ['.tf-area'],
+    hash: ['.tf-area.grow'],
+    url: ['.tf-area'],
+    jwt: ['.tf-area.grow'],
+    regex: ['.tf-area.grow'],
+    textstats: ['.tf-area.grow'],
+    lorem: ['.tf-area.grow'],
+    password: ['.pw-out'],
+    uuid: ['.uuid-list'],
+    color: ['.color-top'],
+    qrcode: ['.qr-box'],
+    radix: ['.radix-rows'],
+    imgcom: ['.ic-drop'],
+  };
+
+  /* C6：模块顺序微调（目标顺序：标题区→输入/结果区→操作栏→参数区→说明区） */
+  var ORDER_FIX = {
+    /* 密码生成器：操作栏原沉在参数区之后 → 移到结果/强度之后、参数区之前 */
+    password: function (body) {
+      var row = body.querySelector('.tbtn-row');
+      var params = body.querySelector('.pw-len');
+      if (row && params) body.insertBefore(row, params);
+    },
+    /* 图片压缩：说明区原在结果区之前 → 说明置底，错误提示紧随结果 */
+    imgcom: function (body) {
+      var result = body.querySelector('.ic-result');
+      var msgs = body.querySelectorAll('p.tf-msg');
+      if (!result || msgs.length < 2) return;
+      body.appendChild(msgs[0]);                                   // 说明 → 最后
+      if (result.parentNode) {
+        result.parentNode.insertBefore(msgs[1], result.nextSibling); // 错误提示紧随结果
+      }
+    },
+  };
+
+  function enhanceToolPage(slug, body) {
+    /* ---- C3+C4：输出区统一结构 ---- */
+    var spec = OUT_SPECS[slug];
+    var ioEl = null;
+    if (spec) {
+      var outEl = body.querySelector(spec.out);
+      if (outEl) {
+        /* 输入工具栏里的旧「复制」按钮移除：复制入口统一到输出区标题栏 */
+        Array.prototype.forEach.call(body.querySelectorAll('.tbtn-row .tbtn'), function (b) {
+          if (b.textContent === '复制' && b.parentNode) b.parentNode.removeChild(b);
+        });
+
+        ioEl = h('section', 'tc-io');
+        ioEl.setAttribute('aria-label', '输出区');
+
+        var head = h('header', 'tc-io-head');
+        head.appendChild(h('span', 'tc-io-title mono', '输出'));
+        if (spec.badge) {
+          var badge = body.querySelector(spec.badge);
+          if (badge) { badge.classList.add('tc-io-badge'); head.appendChild(badge); }
+        }
+        var cpy = makeBtn('复制');
+        cpy.classList.add('tc-io-copy');
+        cpy.addEventListener('click', function () {
+          copyText(spec.copy(outEl, body), function (good) {
+            miniToast(good ? '已复制到剪贴板' : '复制失败，请手动选择');
+          });
+        });
+        head.appendChild(cpy);
+
+        var ioBody = h('div', 'tc-io-body');
+        if (outEl.parentNode) outEl.parentNode.insertBefore(ioEl, outEl);
+        ioBody.appendChild(outEl);
+        ioEl.appendChild(head);
+        ioEl.appendChild(ioBody);
+
+        if (spec.foot) {
+          var foot = body.querySelector(spec.foot);
+          if (foot) { foot.classList.add('tc-io-status'); ioEl.appendChild(foot); }
+        }
+      }
+    }
+
+    /* ---- C2：左右分栏（仅 JSON / Diff） ---- */
+    if (spec && spec.split && ioEl) body.classList.add('is-io-split');
+
+    /* ---- C5：主区填充标记 ---- */
+    var fills = FILL_SPECS[slug];
+    if (fills) {
+      fills.forEach(function (sel) {
+        Array.prototype.forEach.call(body.querySelectorAll(sel), function (el) {
+          el.classList.add('tc-fill');
+          if (el.parentNode && el.parentNode.classList.contains('tf')) {
+            el.parentNode.classList.add('tc-fill');
+          }
+        });
+      });
+    }
+
+    /* ---- C6：模块顺序微调 ---- */
+    var fix = ORDER_FIX[slug];
+    if (fix) fix(body);
+
+    /* ---- H3：主操作按钮加快捷键提示（⌘/Ctrl+Enter；≤560px 由 CSS 隐藏） ---- */
+    var mainBtn = resolveMainAction();
+    if (mainBtn) addKbdHint(mainBtn);
+  }
+
+  /* ---------- H1：目录卡片微光跟随 ----------
+   * fx.js 的 pointermove 清单不含 .tc-card（其 ::after 光斑一直停在默认位），此处补齐：
+   * 与 fx.js 同规则——尊重设置 fxSpot、触屏 (hover: none) 跳过；
+   * .tc-tool-card 同时带 .card 类，已由 fx.js 覆盖，不重复挂载 */
+  function spotEnabled() {
+    if (!settingOn('fxSpot', true)) return false;
+    return !(window.matchMedia && window.matchMedia('(hover: none)').matches);
+  }
+  function bindSpot(card) {
+    card.addEventListener('pointermove', function (e) {
+      var r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+  }
+  function initCardSpotlight() {
+    if (!spotEnabled()) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.tc-card'), bindSpot);
+  }
 
   function record(id) {
     if (!settingOn('toolHistory', true)) return; // 设置里关闭了使用记录
@@ -1774,7 +1984,9 @@
         c.from('profiles').select('username').eq('id', s.user.id).maybeSingle()
           .then(function (_b) {
             if (_b.data && _b.data.username === 'System') {
-              grid.appendChild(adminCard(grid.children.length));
+              var card = adminCard(grid.children.length);
+              grid.appendChild(card);
+              if (spotEnabled()) bindSpot(card); /* H1：System 卡为异步渲染，单独补挂微光跟随 */
             }
           });
       });
@@ -1841,6 +2053,7 @@
     if (bodyEl) {
       bodyEl.innerHTML = '';
       t.render(bodyEl);
+      enhanceToolPage(slug, bodyEl); // v7：输出区规范 / 分栏 / 竖向填充 / 模块顺序
     }
 
     record(slug);
@@ -1862,6 +2075,7 @@
       renderCluster();
       maybeAdminCard();
       loadFavs();
+      initCardSpotlight(); /* H1：目录卡片微光跟随 */
     } else {
       renderToolPage();
     }

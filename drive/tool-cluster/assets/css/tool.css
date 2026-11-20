@@ -1,6 +1,7 @@
 /* =====================================================
    Fuo Tools · 工具集页样式（tool-cluster 目录页 + 工具独立页）
    前置：drive/assets/css/style.css（同一套设计变量与组件）
+   v6：工具页画布重构（C1 画布 / C2 分栏 / C3+C4 输出区 / C5 竖向填充 / C6 模块顺序）
    ===================================================== */
 
 /* ---------- 顶栏 ---------- */
@@ -11,11 +12,11 @@
   border-bottom: 1px solid var(--border);
 }
 .tc-top-inner {
-  max-width: 1080px; margin: 0 auto; padding: 11px 26px;
-  display: flex; align-items: center; gap: 14px;
+  max-width: 1080px; margin: 0 auto; padding: 12px 24px;
+  display: flex; align-items: center; gap: 12px;
 }
 .tc-crumb {
-  font-size: 11.5px; color: var(--faint); letter-spacing: 0.04em;
+  font-size: 12px; color: var(--faint); letter-spacing: 0.04em;
   flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -23,23 +24,23 @@
 /* ---------- 主体 ---------- */
 .tc-main {
   max-width: 1080px; margin: 0 auto;
-  padding: 42px 26px 72px;
+  padding: 48px 24px 64px;
   position: relative; z-index: 1;
 }
 .tc-eyebrow {
-  font-size: 11px; letter-spacing: 0.14em;
-  color: var(--accent-bright); margin-bottom: 10px;
+  font-size: 12px; letter-spacing: 0.14em;
+  color: var(--accent-bright); margin-bottom: 8px;
 }
-.tc-hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.tc-hero h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
 .tc-hero p {
-  margin-top: 10px; color: var(--text-dim);
+  margin-top: 8px; color: var(--text-dim);
   font-size: 14px; max-width: 580px; line-height: 1.75;
 }
 
 /* ---------- 目录卡片 ---------- */
 .tc-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 12px; margin-top: 30px;
+  gap: 12px; margin-top: 32px;
 }
 @keyframes tcIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -47,22 +48,23 @@
 }
 .tc-card {
   display: flex; flex-direction: column; gap: 12px;
-  padding: 18px 16px 14px;
-  border-radius: 16px; border: 1px solid var(--border);
+  padding: 16px 16px 12px;
+  border-radius: 14px; border: 1px solid var(--border);
   background: var(--card);
   position: relative; overflow: hidden;
   text-decoration: none; color: var(--text);
   animation: tcIn 0.45s ease both;
   animation-delay: calc(var(--i, 0) * 45ms);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease), box-shadow 0.18s var(--ease); /* B4 */
 }
 @media (prefers-reduced-motion: reduce) {
   .tc-card { animation: none; }
 }
 .tc-card::after {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(420px 150px at var(--mx, 50%) -20%, var(--accent-glow), transparent 70%);
-  opacity: 0; transition: opacity 0.2s ease;
+  /* H1：光斑颜色统一归 --spot-color 令牌（alpha≤0.06）；--mx 由 tool-page.js 补注（跟随鼠标横向移动） */
+  background: radial-gradient(420px 150px at var(--mx, 50%) -20%, var(--spot-color), transparent 70%);
+  opacity: 0; transition: opacity 0.18s var(--ease); /* B4 */
   pointer-events: none;
 }
 .tc-card:hover {
@@ -75,7 +77,7 @@
 /* System 专属入口卡（仅 System 登录后由 JS 渲染） */
 .tc-card-admin { border-color: rgba(244, 113, 116, 0.34); }
 .tc-card-admin::after {
-  background: radial-gradient(420px 150px at var(--mx, 50%) -20%, rgba(244, 113, 116, 0.12), transparent 70%);
+  background: radial-gradient(420px 150px at var(--mx, 50%) -20%, rgba(244, 113, 116, 0.06), transparent 70%); /* H1：跟随令牌化光斑同步极弱化 */
 }
 .tc-card-admin:hover { border-color: rgba(244, 113, 116, 0.55); }
 :root[data-theme="light"] .tc-card-admin { border-color: rgba(225, 29, 72, 0.28); }
@@ -84,38 +86,119 @@
 .tc-card-ic svg { width: 18px; height: 18px; }
 .tc-card-txt { position: relative; z-index: 1; }
 .tc-card-txt b {
-  display: block; font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em;
+  display: block; font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
 }
 .tc-card-txt p {
   margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.65;
 }
 .tc-go {
-  margin-top: auto; font-size: 11px; color: var(--accent-bright);
-  opacity: 0.75; transition: opacity 0.18s ease, transform 0.18s ease;
+  margin-top: auto; font-size: 12px; color: var(--accent-bright);
+  opacity: 0.75; transition: opacity 0.18s var(--ease), transform 0.18s var(--ease); /* B4 */
   position: relative; z-index: 1;
 }
 .tc-card:hover .tc-go { opacity: 1; transform: translateX(3px); }
 
 /* ---------- 工具独立页 ---------- */
 a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
-.tc-tool-wrap { max-width: 780px; }
+/* v6 C1：画布占满内容列 —— max-width 与 .content 的 1080px 对齐，水平居中
+   （.content 自带 26px 内边距，wrap 始终充满可用宽度） */
+.tc-tool-wrap { max-width: 1080px; margin: 0 auto; }
 .tc-tool-head {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
 }
-.tc-tool-ic { width: 44px; height: 44px; border-radius: 13px; }
+.tc-tool-ic { width: 44px; height: 44px; border-radius: 14px; }
 .tc-tool-ic svg { width: 20px; height: 20px; }
-.tc-tool-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin: 0; }
+.tc-tool-head h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 0; }
 .tc-tool-head p {
-  margin-top: 3px; font-size: 11.5px; color: var(--faint); letter-spacing: 0.03em;
+  margin-top: 4px; font-size: 12px; color: var(--faint); letter-spacing: 0.03em;
 }
-.tc-tool-card { padding: 18px; }
+.tc-tool-card { padding: 16px; }
 .tc-tool-card .tool-body { margin-top: 0; }
 
-.tc-foot { margin-top: 22px; font-size: 11px; color: var(--faint); letter-spacing: 0.04em; }
+/* =====================================================
+ * v6 · 工具页画布重构
+ * ===================================================== */
+
+/* ---------- C3+C4：输出区统一结构 ----------
+   结构：标题栏（「输出」+ 状态徽标 + 独立复制按钮）
+        → 等宽内容区（原 .tf-out / .uuid-list / .pw-out 等）
+        → 底部状态行（成功/错误消息，由 tool-page.js 注入迁移） */
+.tc-io { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tc-io-head {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.tc-io-title {
+  flex: none; font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--faint);
+}
+.tc-io-badge {
+  flex: none; max-width: 55%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 8px; border-radius: 999px;
+  border: 1px solid var(--border-2); background: var(--hover-soft);
+  color: var(--success);
+}
+.tc-io-copy {
+  flex: none; margin-left: auto;
+  height: 28px; min-height: 32px; padding: 0 12px; font-size: 12px; /* E5 桌面图标按钮 ≥32×32 */
+}
+.tc-io-body { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.tc-io-body > .tf-out { min-height: 60px; }
+.tc-io-status { font-size: 12px; }
+.tc-io-status:empty { display: none; }
+
+/* ---------- C5：竖向填充 ----------
+   工具卡撑满首屏（顶栏/面包屑/标题区留白 = 210px），
+   卡内主区（.tc-fill，由 tool-page.js 标记）flex:1 撑满，消除底部死区。
+   ≤560px 不设 min-height（自然退化 auto）。 */
+@media (min-width: 561px) {
+  .tc-tool-card {
+    min-height: calc(100vh - 210px);
+    min-height: calc(100dvh - 210px);
+  }
+  .tc-tool-card .tool-body { flex: 1; }
+  .tc-tool-card .tool-body > .tc-fill { flex: 1 1 auto; min-height: 140px; }
+  .tc-tool-card .tool-body .tf > .tc-fill { flex: 1 1 auto; min-height: 140px; }
+  .tc-tool-card .tc-io-body > .tc-fill { flex: 1 1 auto; min-height: 140px; }
+  .tc-tool-card .tool-body > .tc-fill.uuid-list,
+  .tc-tool-card .tool-body .tf > .tc-fill.uuid-list,
+  .tc-tool-card .tc-io-body > .tc-fill.uuid-list { min-height: 120px; max-height: none; }
+  .tc-tool-card .tool-body > .tc-fill.ic-drop { justify-content: center; }
+  .tc-tool-card .tc-io-body > .tc-fill.pw-out { display: flex; align-items: center; }
+  /* 输出即主区的工具（密码 / UUID）：输出区吸收剩余高度，消除底部死区 */
+  [data-tool="password"] .tc-tool-card .tc-io,
+  [data-tool="uuid"] .tc-tool-card .tc-io { flex: 1 1 auto; }
+}
+
+/* ---------- C2：输入→输出左右分栏（仅 JSON / Diff 双区工具） ----------
+   ≥961px：输入区/输出区左右各 50%，24px 间隔带 1px var(--border) 分隔线；
+   ≤960px：不上分栏规则，tool-body 维持纵向堆叠。 */
+@media (min-width: 961px) {
+  .tool-body.is-io-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    column-gap: 12px; row-gap: 12px;
+  }
+  .tool-body.is-io-split > .tf:first-of-type,
+  .tool-body.is-io-split > .diff-inputs {
+    grid-column: 1; grid-row: 1; min-height: 0;
+  }
+  .tool-body.is-io-split > .tbtn-row { grid-column: 1; grid-row: 2; }
+  .tool-body.is-io-split > .tc-io {
+    grid-column: 2; grid-row: 1 / 3;
+    padding-left: 12px;
+    border-left: 1px solid var(--border); /* 分隔线位于 12+12=24px 间隔带正中 */
+  }
+  .tool-body.is-io-split .tc-io-body > .tf-out { flex: 1 1 auto; max-height: none; }
+}
+
+.tc-foot { margin-top: 24px; font-size: 12px; color: var(--faint); letter-spacing: 0.04em; }
 .tc-foot a {
   color: var(--text-2); text-decoration: none;
   border-bottom: 1px solid var(--border-2);
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.12s var(--ease), border-color 0.12s var(--ease); /* B4 */
 }
 .tc-foot a:hover { color: var(--accent-bright); border-color: rgba(45, 212, 191, 0.45); }
 
@@ -124,13 +207,18 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
   .tc-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 560px) {
-  .tc-top-inner { padding: 10px 14px; }
-  .tc-main { padding: 28px 16px 56px; }
-  .tc-hero h1 { font-size: 26px; }
-  .tc-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
-  .tc-card { padding: 14px 12px 12px; }
+  .tc-top-inner { padding: 8px 12px; }
+  .tc-main { padding: 24px 16px 48px; }
+  .tc-hero h1 { font-size: 28px; }
+  .tc-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+  .tc-card { padding: 12px 12px 12px; }
   .tc-card-txt p { display: none; } /* 窄屏只留名称，卡片更紧凑 */
-  .tc-tool-head h1 { font-size: 19px; }
+  .tc-tool-head h1 { font-size: 20px; }
+
+  /* E5 触控目标：移动端可点元素 ≥44×44 */
+  .tc-star { min-width: 44px; min-height: 44px; }
+  .tc-io-copy { min-height: 44px; }
+  .hash-algo { min-height: 44px; }
 }
 @media (max-width: 400px) {
   .tc-grid { grid-template-columns: 1fr; }
@@ -147,10 +235,10 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 /* ---------- 收藏星标（目录卡片右上角） ---------- */
 .tc-star {
   position: absolute; top: 10px; right: 10px; z-index: 2;
-  width: 30px; height: 30px; border-radius: 8px;
+  width: 30px; height: 30px; min-width: 32px; min-height: 32px; border-radius: 10px; /* E5 桌面图标按钮 ≥32×32 */
   border: 1px solid transparent; background: transparent;
   color: var(--faint); display: grid; place-items: center;
-  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: color 0.12s var(--ease), background 0.12s var(--ease), border-color 0.12s var(--ease), transform 0.12s var(--ease); /* B4 */
 }
 .tc-star svg { width: 15px; height: 15px; fill: none; }
 .tc-star:hover { color: var(--warn); background: var(--hover-soft); border-color: var(--border); transform: scale(1.08); }
@@ -167,32 +255,32 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
  * ===================================================== */
 
 /* ---------- 正则测试器 ---------- */
-.rx-flags { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; }
+.rx-flags { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px; }
 .rx-hl {
   white-space: pre-wrap; word-break: break-all;
-  min-height: 76px; padding: 12px 14px;
+  min-height: 76px; padding: 12px 12px;
   border: 1px solid var(--border); border-radius: 10px;
   background: var(--field-bg);
-  font-size: 12.5px; line-height: 1.9; color: var(--text-2);
+  font-size: 12px; line-height: 1.9; color: var(--text-2);
 }
 .rx-hl .rx-dim { color: var(--faint); }
 .rx-hl .rx-hit {
   background: rgba(45, 212, 191, 0.18);
   color: var(--accent-bright);
-  border-radius: 4px; padding: 1px 3px;
+  border-radius: 6px; padding: 1px 4px; /* 1px 微调保留（方案 B2 例外） */
   box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.35);
 }
 :root[data-theme="light"] .rx-hl .rx-hit {
   background: rgba(13, 148, 136, 0.12);
   color: #0f766e;
 }
-.rx-groups { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-.rx-g-head { font-size: 10.5px; letter-spacing: 0.1em; color: var(--faint); font-weight: 600; }
-.rx-g-row { display: flex; align-items: center; gap: 10px; }
+.rx-groups { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.rx-g-head { font-size: 12px; letter-spacing: 0.1em; color: var(--faint); font-weight: 600; }
+.rx-g-row { display: flex; align-items: center; gap: 8px; }
 .rx-g-idx {
-  flex: none; width: 34px; font-size: 11px; color: var(--accent-deep);
+  flex: none; width: 34px; font-size: 12px; color: var(--accent-deep);
   border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 6px;
-  text-align: center; padding: 1px 0;
+  text-align: center; padding: 0;
 }
 .rx-g-val {
   flex: 1; min-width: 0; font-size: 12px; color: var(--text-2);
@@ -203,24 +291,24 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 
 /* ---------- 二维码 ---------- */
 .qr-box {
-  display: grid; place-items: center; padding: 20px;
-  border: 1px dashed var(--border-2); border-radius: 12px;
+  display: grid; place-items: center; padding: 16px;
+  border: 1px dashed var(--border-2); border-radius: 14px;
   background: var(--field-bg);
 }
 .qr-canvas {
   max-width: 100%; height: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
 /* ---------- 哈希 ---------- */
-.hash-algos { display: flex; gap: 6px; flex-wrap: wrap; }
+.hash-algos { display: flex; gap: 8px; flex-wrap: wrap; }
 .hash-algo {
   border: 1px solid var(--border); border-radius: 999px;
   background: var(--field-bg); color: var(--muted);
-  font: inherit; font-size: 11.5px; letter-spacing: 0.03em;
-  padding: 6px 14px; cursor: pointer;
-  transition: color 0.14s, border-color 0.14s, background 0.14s;
+  font: inherit; font-size: 12px; letter-spacing: 0.03em;
+  padding: 8px 12px; cursor: pointer;
+  transition: color 0.12s var(--ease), border-color 0.12s var(--ease), background 0.12s var(--ease); /* B4 */
 }
 .hash-algo:hover { color: var(--text); border-color: var(--border-2); }
 .hash-algo.is-on {
@@ -229,32 +317,32 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
   background: rgba(45, 212, 191, 0.08);
 }
 .hash-out { word-break: break-all; }
-.tf-area.is-drop { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12); }
+.tf-area.is-drop { border-color: var(--field-focus); box-shadow: 0 0 0 3px var(--accent-glow-strong); }
 
 /* ---------- URL 解析 ---------- */
 .url-parse { display: flex; flex-direction: column; gap: 8px; }
-.url-rows { display: flex; flex-direction: column; gap: 6px; }
+.url-rows { display: flex; flex-direction: column; gap: 8px; }
 .url-row {
-  display: flex; align-items: baseline; gap: 10px;
-  border: 1px solid var(--border); border-radius: 8px;
-  background: var(--field-bg); padding: 7px 11px;
+  display: flex; align-items: baseline; gap: 8px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--field-bg); padding: 8px 12px;
 }
 .url-key {
-  flex: none; width: 52px; font-size: 10.5px; color: var(--faint);
+  flex: none; width: 52px; font-size: 12px; color: var(--faint);
   letter-spacing: 0.06em;
 }
 .url-val {
-  flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-2);
+  flex: 1; min-width: 0; font-size: 12px; color: var(--text-2);
   word-break: break-all;
 }
 
 /* ---------- 图片压缩 ---------- */
 .ic-drop {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 34px 18px; text-align: center;
-  border: 1.5px dashed var(--border-2); border-radius: 12px;
+  padding: 32px 16px; text-align: center;
+  border: 1.5px dashed var(--border-2); border-radius: 14px;
   color: var(--muted); cursor: pointer;
-  transition: border-color 0.16s, background 0.16s, color 0.16s;
+  transition: border-color 0.12s var(--ease), background 0.12s var(--ease), color 0.12s var(--ease); /* B4 */
 }
 .ic-drop:hover, .ic-drop.is-over {
   border-color: rgba(45, 212, 191, 0.5);
@@ -264,18 +352,18 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 .ic-drop svg { width: 34px; height: 34px; color: var(--faint); }
 .ic-drop:hover svg, .ic-drop.is-over svg { color: var(--accent-bright); }
 .ic-drop b { font-size: 14px; color: var(--text); }
-.ic-drop p { font-size: 10.5px; color: var(--faint); margin: 0; letter-spacing: 0.04em; }
-.ic-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ic-drop p { font-size: 12px; color: var(--faint); margin: 0; letter-spacing: 0.04em; }
+.ic-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ic-result {
   display: flex; flex-direction: column; gap: 12px; align-items: center;
-  padding: 16px; border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; border: 1px solid var(--border); border-radius: 14px;
   background: var(--field-bg);
 }
 .ic-result img {
-  max-width: 100%; max-height: 340px; border-radius: 8px;
+  max-width: 100%; max-height: 340px; border-radius: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
 }
-.ic-stats { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 11.5px; color: var(--muted); }
+.ic-stats { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--muted); }
 .ic-stats b { color: var(--text); }
 .ic-stats .is-good { color: var(--accent-bright); font-weight: 700; }
 @media (max-width: 560px) {
@@ -292,15 +380,15 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 /* 进制转换结果行 */
 .radix-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .radix-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 10px 14px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px;
   border: 1px solid var(--border); border-radius: 10px;
   background: var(--card-2);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.12s var(--ease), background 0.12s var(--ease); /* B4 */
 }
 .radix-row:hover { border-color: var(--accent-glow-strong); background: var(--card-hover); }
-.radix-key { flex: none; width: 96px; font-size: 11.5px; color: var(--faint); letter-spacing: 0.04em; }
+.radix-key { flex: none; width: 96px; font-size: 12px; color: var(--faint); letter-spacing: 0.04em; }
 .radix-val {
   flex: 1; min-width: 0; font-size: 13px; color: var(--accent-bright);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -310,18 +398,18 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 /* 目录页「常用」置顶条（本机热度，仅显示用过 ≥2 次的工具） */
 .tc-hot { margin: 0 0 16px; }
 .tc-hot-label {
-  font-size: 11px; letter-spacing: 0.14em;
+  font-size: 12px; letter-spacing: 0.14em;
   color: var(--faint); margin-bottom: 8px;
 }
-.tc-hot-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.tc-hot-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .tc-hot-chip {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 14px 7px 10px;
+  padding: 8px 12px 8px 8px;
   border: 1px solid var(--border); border-radius: 999px;
   background: var(--card);
   color: var(--text-2); text-decoration: none;
-  font-size: 12.5px;
-  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  font-size: 12px;
+  transition: border-color 0.12s var(--ease), background 0.12s var(--ease), transform 0.12s var(--ease); /* B4 */
 }
 .tc-hot-chip:hover {
   border-color: var(--accent-glow-strong);
@@ -330,7 +418,7 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 }
 .tc-hot-chip .t-ic { width: 26px; height: 26px; }
 .tc-hot-chip b { font-weight: 600; }
-.tc-hot-chip span { font-size: 10.5px; color: var(--faint); }
+.tc-hot-chip span { font-size: 12px; color: var(--faint); }
 
 @media (max-width: 560px) {
   .radix-key { width: 74px; }
@@ -340,11 +428,45 @@ a.tool { text-decoration: none; } /* 工作台跳转入口复用 .tool */
 .trial-bar {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; flex-wrap: wrap;
-  margin-bottom: 18px; padding: 12px 16px;
+  margin-bottom: 16px; padding: 12px 16px;
   border: 1px solid var(--border-2); border-left: 3px solid var(--accent);
-  border-radius: 12px; background: var(--hover-soft);
+  border-radius: 14px; background: var(--hover-soft);
   font-size: 13px; color: var(--muted);
 }
 .trial-bar b { color: var(--text); font-weight: 650; }
 .trial-bar a { color: var(--accent-bright); font-weight: 600; white-space: nowrap; }
 .trial-bar a:hover { text-decoration: underline; }
+
+/* =====================================================
+ * Wave 5（H3 / H5）增量
+ * ===================================================== */
+
+/* H3：主操作按钮快捷键提示（⌘/Ctrl+Enter 执行主操作）。
+   次要标签：12px（--fs-1）、--faint 色、按钮内右侧、pointer-events:none 不拦 hover；
+   ≤560px 隐藏（移动端无键盘） */
+.kbd-hint {
+  margin-left: var(--sp-2); font-size: var(--fs-1); font-weight: 500;
+  color: var(--faint); letter-spacing: 0.02em;
+  pointer-events: none; user-select: none;
+}
+.tbtn.is-primary .kbd-hint { color: inherit; opacity: 0.62; } /* 实色主按钮上跟随前景色，保证可读 */
+@media (max-width: 560px) {
+  .kbd-hint { display: none; }
+}
+
+/* H5：统一空态规格（与 fav.css / notes.css 的 .empty-state 同款）：
+   图标 24px（--ic 包络中性色）+ 标题 16px(--fs-4)/600 + 说明 13px(--fs-2)/muted + 可选操作按钮；
+   居中、padding 48px 24px（--sp-7/--sp-5 档内）。
+   注：工具集目录页为静态渲染、无筛选，当前无「无匹配」消费点——本规格供后续搜索/过滤接入复用 */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-2); text-align: center;
+  padding: var(--sp-7) var(--sp-5);
+  border: 1px dashed var(--border-2); border-radius: var(--r-3);
+  background: var(--card); color: var(--muted);
+}
+.empty-state .empty-ic { width: 24px; height: 24px; color: var(--accent-bright); }
+.empty-state .empty-ic svg { width: 24px; height: 24px; display: block; }
+.empty-state .empty-eyebrow { font-size: var(--fs-1); color: var(--faint); letter-spacing: 0.12em; margin: 0; }
+.empty-state b { font-size: var(--fs-4); font-weight: 600; color: var(--text-2); }
+.empty-state .empty-desc { font-size: var(--fs-2); color: var(--muted); line-height: 1.8; max-width: 420px; margin: 0; }

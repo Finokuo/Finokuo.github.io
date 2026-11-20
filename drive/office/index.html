@@ -10,10 +10,10 @@
   <meta name="theme-color" content="#101014" />
   <link rel="manifest" href="../manifest.json" />
   <!-- 主题：在首帧渲染前同步应用，避免闪色 -->
-  <script src="../assets/js/theme.js?v=4"></script>
-  <link rel="stylesheet" href="../assets/css/style.css?v=5" />
+  <script src="../assets/js/theme.js?v=5"></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=9" />
   <link rel="stylesheet" href="../assets/css/accent.css?v=1" />
-  <link rel="stylesheet" href="assets/office.css?v=1" />
+  <link rel="stylesheet" href="assets/office.css?v=3" />
   <style>
     /* 目录页卡片（与 tool-cluster 目录同风格） */
     .of-grid {
@@ -64,8 +64,7 @@
     }
     .of-ai-card .t-ic {
       width: 46px; height: 46px; flex: none;
-      color: #e8c57a; border-color: rgba(232, 197, 122, 0.35);
-      background: rgba(232, 197, 122, 0.1);
+      /* D3/D4：图标色归入全站 tone-amber（--ic 包络，暗/亮自动跟随，亮色对白底 5.77:1）；卡片描边金色保留为品牌强调例外 */
     }
     .of-ai-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .of-ai-body b { font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -112,7 +111,7 @@
         <div class="of-grid" id="of-grid" aria-label="办公工具列表">
           <!-- AI 管理大师 · 桌面版引导（v0.9：网页端入口，完整功能在 exe） -->
           <a class="of-tool-card of-ai-card" id="of-ai-link" href="../../../fuotool/" aria-label="了解 AI 管理大师桌面版">
-            <i class="t-ic" aria-hidden="true">
+            <i class="t-ic tone-amber" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M12 3.5 4 7.5v5c0 4.4 3.2 7.4 8 9 4.8-1.6 8-4.6 8-9v-5l-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="m8.8 12.2 2.3 2.3 4.3-4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
             </i>
             <span class="of-ai-body">
@@ -138,9 +137,9 @@
 
   <!-- Supabase SDK：本地打包（登录守卫用），不依赖任何 CDN -->
   <script src="../assets/vendor/supabase.min.js"></script>
-  <script src="../assets/js/config.js?v=5"></script>
+  <script src="../assets/js/config.js?v=6"></script>
   <script src="../assets/js/fx.js?v=2"></script>
-  <script src="../assets/js/sidebar.js?v=5"></script>
+  <script src="../assets/js/sidebar.js?v=9"></script>
   <script>
   (function () {
     'use strict';

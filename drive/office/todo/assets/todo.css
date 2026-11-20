@@ -9,16 +9,16 @@
 .td-filters {
   display: flex; align-items: center; gap: 4px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-size: 12px;
 }
 .td-filter {
-  padding: 5px 12px; border: none; border-radius: 999px;
+  padding: 4px 12px; border: none; border-radius: 999px;
   background: transparent; color: var(--muted);
   cursor: pointer; font-size: 12px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.12s var(--ease), color 0.12s var(--ease); /* B4 */
 }
-.td-filter span { opacity: 0.55; margin-left: 3px; }
+.td-filter span { opacity: 0.55; margin-left: 4px; }
 .td-filter:hover { color: var(--text); background: var(--hover-soft); }
 .td-filter.is-on {
   color: var(--accent-bright);
@@ -26,21 +26,21 @@
 }
 .td-clear {
   margin-left: auto;
-  padding: 5px 12px; border: none; border-radius: 999px;
+  padding: 4px 12px; border: none; border-radius: 999px;
   background: transparent; color: var(--faint);
-  cursor: pointer; font-size: 11.5px;
+  cursor: pointer; font-size: 12px;
 }
 .td-clear:hover { color: var(--danger); background: rgba(244, 113, 116, 0.08); }
 
 /* ---------- 列表 ---------- */
-.td-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.td-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
 .td-item {
   display: flex; align-items: center; gap: 12px;
-  padding: 11px 13px;
-  border: 1px solid var(--border); border-radius: 11px;
+  padding: 12px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
   background: var(--card-2);
-  transition: border-color 0.15s, opacity 0.2s;
+  transition: border-color 0.12s var(--ease), opacity 0.18s var(--ease); /* B4 */
 }
 .td-item:hover { border-color: var(--border-2); }
 .td-item.is-done { opacity: 0.55; }
@@ -53,7 +53,7 @@
   background: transparent; cursor: pointer; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   color: transparent;
-  transition: all 0.15s;
+  transition: all 0.12s var(--ease); /* B4 */
 }
 .td-check:hover { border-color: var(--accent); }
 .td-item.is-done .td-check {
@@ -64,10 +64,10 @@
 
 /* 优先级色块（点按循环：低→中→高→无） */
 .td-pri {
-  flex: none; width: 13px; height: 13px; border-radius: 4px;
+  flex: none; width: 13px; height: 13px; border-radius: 6px;
   border: 1px solid var(--border-2); background: var(--card);
   cursor: pointer; padding: 0;
-  transition: transform 0.15s;
+  transition: transform 0.12s var(--ease); /* B4 */
 }
 .td-pri:hover { transform: scale(1.2); }
 .td-pri.p2 { background: var(--warn); border-color: var(--warn); }
@@ -76,35 +76,35 @@
 
 .td-text {
   flex: 1; min-width: 0;
-  font-size: 13.5px; line-height: 1.5;
+  font-size: 13px; line-height: 1.5;
   cursor: text;
   word-break: break-word;
 }
 .td-text-edit {
   flex: 1; min-width: 0;
-  font-size: 13.5px;
+  font-size: 13px;
   background: transparent; border: none; outline: none; color: var(--text);
   border-bottom: 1px dashed var(--border-2);
 }
 
 /* 截止日 */
 .td-due {
-  flex: none; font-size: 10.5px; color: var(--faint);
+  flex: none; font-size: 12px; color: var(--faint);
   display: inline-flex; align-items: center; gap: 4px;
 }
 .td-due.is-overdue { color: var(--danger); }
 .td-due.is-today { color: var(--warn); }
 .td-due input {
   border: none; background: transparent; color: inherit;
-  font-size: 10.5px; outline: none; cursor: pointer;
+  font-size: 12px; outline: none; cursor: pointer;
   font-family: inherit;
 }
 
 .td-del {
   flex: none; border: none; background: transparent;
-  color: var(--faint); cursor: pointer; padding: 3px;
-  border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
+  color: var(--faint); cursor: pointer; padding: 4px;
+  min-width: 32px; min-height: 32px; border-radius: 6px; /* E5 桌面图标按钮 ≥32×32 */
+  transition: color 0.12s var(--ease), background 0.12s var(--ease); /* B4 */
 }
 .td-del:hover { color: var(--danger); background: rgba(244, 113, 116, 0.1); }
 .td-del svg { width: 14px; height: 14px; display: block; }
@@ -113,4 +113,13 @@
   .td-item { flex-wrap: wrap; }
   .td-text { order: 4; width: 100%; flex-basis: 100%; }
   .td-due { order: 3; margin-left: auto; }
+
+  /* E5 触控目标：移动端可点元素 ≥44×44 */
+  .td-filter, .td-clear { min-height: 44px; }
+  .td-check { min-width: 44px; min-height: 44px; }
+  .td-del { min-width: 44px; min-height: 44px; }
+  .td-due { min-height: 44px; }
+  /* 优先级色块：保留小尺寸视觉，用 ::after 扩大点击热区至 ≥44px */
+  .td-pri { position: relative; min-width: 32px; min-height: 32px; }
+  .td-pri::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
 }

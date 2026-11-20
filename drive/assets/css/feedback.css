@@ -7,14 +7,14 @@
 /* ---------- 右下角悬浮按钮 ---------- */
 .fb-fab{position:fixed;right:18px;bottom:18px;z-index:9600;
   display:flex;align-items:center;gap:8px;
-  padding:11px 16px;border-radius:999px;cursor:pointer;
+  padding:12px 16px;border-radius:999px;cursor:pointer;
   font:600 13px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
   letter-spacing:.02em;color:#e8eaf0;
   background:rgba(22,25,30,.92);
   border:1px solid rgba(255,255,255,.16);
   box-shadow:0 6px 24px rgba(0,0,0,.38);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-  transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;}
+  transition:transform .18s cubic-bezier(.22,.61,.36,1),border-color .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s cubic-bezier(.22,.61,.36,1);}/* B4: 独立挂件不引 drive 令牌，缓动用字面量；.22s→180ms 档 */
 .fb-fab:hover{transform:translateY(-2px);border-color:rgba(45,212,191,.55);
   box-shadow:0 10px 28px rgba(0,0,0,.42);}
 .fb-fab:active{transform:translateY(0);}
@@ -23,13 +23,13 @@
 
 /* ---------- 弹层 ---------- */
 .fb-modal{position:fixed;inset:0;z-index:9700;
-  display:flex;align-items:center;justify-content:center;padding:18px;}
+  display:flex;align-items:center;justify-content:center;padding:16px;}
 .fb-modal[hidden]{display:none;}
 .fb-mask{position:absolute;inset:0;background:rgba(4,5,8,.62);
   -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);}
 .fb-card{position:relative;width:min(480px,100%);max-height:min(92vh,640px);
   overflow-y:auto;overscroll-behavior:contain;
-  border-radius:18px;padding:24px 24px 20px;
+  border-radius:20px;padding:24px 24px 16px;
   background:#171a21;color:#eceef2;
   border:1px solid rgba(255,255,255,.13);
   box-shadow:0 24px 70px rgba(0,0,0,.5);
@@ -38,64 +38,64 @@
 @keyframes fb-in{from{opacity:0;transform:translateY(14px) scale(.98);}
   to{opacity:1;transform:none;}}
 
-.fb-head{display:flex;align-items:flex-start;gap:10px;}
-.fb-title{font-size:17px;font-weight:700;letter-spacing:.01em;margin:0;}
-.fb-sub{font-size:12px;color:#9aa0ad;margin:6px 0 0;line-height:1.6;}
-.fb-close{margin-left:auto;flex:none;width:30px;height:30px;border-radius:9px;
+.fb-head{display:flex;align-items:flex-start;gap:8px;}
+.fb-title{font-size:16px;font-weight:700;letter-spacing:.01em;margin:0;}
+.fb-sub{font-size:12px;color:#9aa0ad;margin:8px 0 0;line-height:1.6;}
+.fb-close{margin-left:auto;flex:none;width:30px;height:30px;min-width:32px;min-height:32px;border-radius:10px;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   background:transparent;border:1px solid rgba(255,255,255,.14);color:#b6bac4;
-  transition:background .2s ease,color .2s ease;}
+  transition:background .18s cubic-bezier(.22,.61,.36,1),color .18s cubic-bezier(.22,.61,.36,1);}/* B4 */
 .fb-close:hover{background:rgba(255,255,255,.08);color:#fff;}
 .fb-close:focus-visible{outline:2px solid rgba(45,212,191,.8);outline-offset:2px;}
 
 /* ---------- 类型 chips ---------- */
-.fb-kinds{display:flex;gap:8px;margin:18px 0 0;flex-wrap:wrap;}
-.fb-kind{cursor:pointer;padding:8px 14px;border-radius:999px;
-  font:600 12.5px/1 inherit;letter-spacing:.02em;
+.fb-kinds{display:flex;gap:8px;margin:16px 0 0;flex-wrap:wrap;}
+.fb-kind{cursor:pointer;padding:8px 12px;border-radius:999px;
+  font:600 12px/1 inherit;letter-spacing:.02em;
   color:#b6bac4;background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.13);
-  transition:all .2s ease;}
+  transition:all .18s cubic-bezier(.22,.61,.36,1);}/* B4 */
 .fb-kind:hover{border-color:rgba(45,212,191,.5);color:#eceef2;}
 .fb-kind.is-on{color:#052a24;background:#3fd6c0;border-color:transparent;}
 .fb-kind:focus-visible{outline:2px solid rgba(45,212,191,.8);outline-offset:2px;}
 
 /* ---------- 输入区 ---------- */
-.fb-field{margin-top:14px;}
+.fb-field{margin-top:12px;}
 .fb-label{display:block;font-size:12px;font-weight:600;color:#9aa0ad;
-  letter-spacing:.04em;margin-bottom:7px;}
+  letter-spacing:.04em;margin-bottom:8px;}
 .fb-label em{font-style:normal;color:#6d7280;}
 .fb-area,.fb-input{width:100%;box-sizing:border-box;
   font:14px/1.6 inherit;color:#eceef2;
   background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
-  border-radius:12px;padding:11px 13px;outline:none;
-  transition:border-color .2s ease,background .2s ease;}
+  border-radius:14px;padding:12px 12px;outline:none;
+  transition:border-color .18s cubic-bezier(.22,.61,.36,1),background .18s cubic-bezier(.22,.61,.36,1);}/* B4 */
 .fb-area{min-height:120px;resize:vertical;}
 .fb-input{height:42px;}
 .fb-area:focus,.fb-input:focus{border-color:rgba(45,212,191,.65);background:rgba(45,212,191,.06);}
 .fb-area::placeholder,.fb-input::placeholder{color:#6d7280;}
-.fb-count{display:block;text-align:right;font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  color:#6d7280;margin-top:6px;}
+.fb-count{display:block;text-align:right;font:500 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:#6d7280;margin-top:8px;}
 .fb-count.is-max{color:#f0a35e;}
 
 /* ---------- 底部 ---------- */
-.fb-foot{display:flex;align-items:center;gap:10px;margin-top:18px;}
-.fb-note{font-size:11.5px;color:#6d7280;line-height:1.55;margin:0;flex:1;}
-.fb-send{flex:none;cursor:pointer;height:40px;padding:0 20px;border-radius:11px;
-  font:600 13.5px/1 inherit;letter-spacing:.03em;color:#052a24;
+.fb-foot{display:flex;align-items:center;gap:8px;margin-top:16px;}
+.fb-note{font-size:12px;color:#6d7280;line-height:1.55;margin:0;flex:1;}
+.fb-send{flex:none;cursor:pointer;height:40px;padding:0 16px;border-radius:10px;
+  font:600 13px/1 inherit;letter-spacing:.03em;color:#052a24;
   background:linear-gradient(135deg,#43d9c3,#2fbfa9);border:none;
-  transition:filter .2s ease,transform .2s ease;}
+  transition:filter .18s cubic-bezier(.22,.61,.36,1),transform .18s cubic-bezier(.22,.61,.36,1);}/* B4 */
 .fb-send:hover{filter:brightness(1.06);transform:translateY(-1px);}
 .fb-send:disabled{opacity:.5;cursor:wait;transform:none;}
 .fb-send:focus-visible{outline:2px solid rgba(45,212,191,.8);outline-offset:2px;}
 
 /* ---------- 挂件自带 toast ---------- */
 .fb-toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(6px);
-  z-index:9800;max-width:min(86vw,420px);padding:11px 16px;border-radius:12px;
+  z-index:9800;max-width:min(86vw,420px);padding:12px 16px;border-radius:14px;
   font:500 13px/1.5 inherit;color:#eceef2;text-align:center;
   background:rgba(24,27,34,.95);border:1px solid rgba(255,255,255,.16);
   box-shadow:0 10px 30px rgba(0,0,0,.45);
   opacity:0;pointer-events:none;
-  transition:opacity .25s ease,transform .25s ease;}
+  transition:opacity .26s cubic-bezier(.22,.61,.36,1),transform .26s cubic-bezier(.22,.61,.36,1);}/* B4 */
 .fb-toast.is-in{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ---------- 亮色主题（跟随全站 data-theme） ---------- */
@@ -126,7 +126,9 @@ html[data-theme="light"] .fb-toast{color:#1e222b;background:rgba(255,255,255,.97
 
 /* ---------- 小屏 ---------- */
 @media (max-width:560px){
-  .fb-fab{right:14px;bottom:14px;padding:11px;}
+  .fb-fab{right:14px;bottom:14px;padding:12px;min-height:44px;} /* E5 触控目标 */
   .fb-fab .fb-fab-t{display:none;}
-  .fb-card{padding:20px 16px 16px;}
+  .fb-card{padding:16px 16px 16px;}
+  .fb-close{min-width:44px;min-height:44px;} /* E5 触控目标 */
+  .fb-kind{min-height:44px;} /* E5 触控目标 */
 }

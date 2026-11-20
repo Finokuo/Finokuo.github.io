@@ -28,6 +28,8 @@ window.FUO_PATHS = {
   SETTINGS: window.FUO_BASE + '/drive/settings' + window.FUO_SUFFIX,
   // v0.8：办公集 / 回收站 / 公开笔记页 / 公开主页
   OFFICE: window.FUO_BASE + '/drive/office' + window.FUO_SUFFIX,
+  // v0.9.4：温故知新（初中全科复习平台，独立子目录 SPA，用户自建）
+  WGZX: window.FUO_BASE + '/wgzx' + window.FUO_SUFFIX,
   RECYCLE: window.FUO_BASE + '/drive/recycle' + window.FUO_SUFFIX,
   N: window.FUO_BASE + '/drive/n' + window.FUO_SUFFIX,
   U: window.FUO_BASE + '/drive/u' + window.FUO_SUFFIX,
@@ -54,3 +56,26 @@ window.FUO_OFFICE_URL = function (slug) {
  * 结果仅保存在本机（tool-page.js / sidebar.js 守卫放行 + 试用横幅）。
  */
 window.FUO_TRIAL_TOOLS = { json: 1, base64: 1 };
+
+/**
+ * v0.9.4 预览模式（全站自由访问）：
+ *  · 入口：任意页 URL 带 ?preview=1 → 记忆到 localStorage(fuo-preview)，
+ *    此后整站免登录漫游，不再被守卫送回主页（旧版只认当前 URL，故只能进两页）；
+ *  · 退出：URL 带 ?preview=0，或点侧栏用户卡上的「退出预览」→ 清除并恢复登录守卫；
+ *  · 各页守卫统一读 window.FUO_PREVIEW（含 URL 与记忆两种来源）。
+ *  本脚本先于各页守卫脚本加载，保证 FUO_PREVIEW 就绪。
+ */
+window.FUO_PREVIEW = (function () {
+  try {
+    var q = window.location.search;
+    if (q.indexOf('preview=0') !== -1) {
+      localStorage.removeItem('fuo-preview');
+      return false;
+    }
+    if (q.indexOf('preview=1') !== -1) {
+      localStorage.setItem('fuo-preview', '1');
+      return true;
+    }
+    return localStorage.getItem('fuo-preview') === '1';
+  } catch (e) { return false; }
+})();

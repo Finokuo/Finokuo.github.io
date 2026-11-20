@@ -107,6 +107,8 @@
   }
 
   function loadAccount() {
+    /* v0.9.4：预览模式免登录漫游——跳过账户加载，保留占位文案 */
+    if (window.FUO_PREVIEW) return;
     var c = client();
     if (!c) return;
     c.auth.getSession().then(function (_a) {

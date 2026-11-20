@@ -22,33 +22,44 @@
   var META = {
     json:      { name: 'JSON 格式化',   tone: 'tone-teal',     desc: '格式化 · 压缩 · 校验，本地运行不上传',
       svg: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
-    color:     { name: '颜色工具',      tone: 'tone-fuchsia',  desc: 'HEX / RGB / HSL 互转，点击任意值复制',
+    color:     { name: '颜色工具',      tone: 'tone-violet',  desc: 'HEX / RGB / HSL 互转，点击任意值复制',
       svg: '<path d="M12 3.5S6 10.2 6 14.2a6 6 0 0 0 12 0C18 10.2 12 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>' },
-    password:  { name: '密码生成器',    tone: 'tone-emerald',  desc: '加密安全随机，生成后立即复制',
+    password:  { name: '密码生成器',    tone: 'tone-green',  desc: '加密安全随机，生成后立即复制',
       svg: '<circle cx="8" cy="12" r="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M11.5 12H21M18 12v3.2M15 12v2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
     textstats: { name: '文本统计',      tone: 'tone-amber',    desc: '字数 · 行数 · 频率，一贴即出',
       svg: '<path d="M4.5 6h15M4.5 12h10M4.5 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
-    timestamp: { name: '时间戳转换',    tone: 'tone-cyan',     desc: 'Unix 时间戳 ⇄ 日期，双向即时换算',
+    timestamp: { name: '时间戳转换',    tone: 'tone-teal',     desc: 'Unix 时间戳 ⇄ 日期，双向即时换算',
       svg: '<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
     base64:    { name: 'Base64 编解码', tone: 'tone-violet',   desc: '编码 / 解码，支持 Unicode 中文',
       svg: '<path d="M5 9h14M5 15h14M9.5 4l-2 16M16.5 4l-2 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
-    uuid:      { name: 'UUID 生成器',   tone: 'tone-orange',   desc: 'v4 随机 UUID，批量生成一键复制',
+    uuid:      { name: 'UUID 生成器',   tone: 'tone-amber',   desc: 'v4 随机 UUID，批量生成一键复制',
       svg: '<rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M13 10h4.5M13 14h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
     diff:      { name: '文本 Diff',     tone: 'tone-rose',     desc: '两段文本逐行对比，增删一目了然',
       svg: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 4.5v15M7 12h2.5M15 12h2.5M16.2 9.8v4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
     regex:     { name: '正则测试器',    tone: 'tone-rose',    desc: '实时匹配高亮 · 捕获组 · 替换预览',
       svg: '<path d="M8.5 4.5 4.5 19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M15 7.5v9M11.3 9.7l7.4 4.6M18.7 9.7l-7.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20.2" cy="19" r="1.3" fill="currentColor"/>' },
-    qrcode:    { name: '二维码生成',    tone: 'tone-cyan',    desc: '本地生成可下载 PNG · 支持中文与长文本',
+    qrcode:    { name: '二维码生成',    tone: 'tone-teal',    desc: '本地生成可下载 PNG · 支持中文与长文本',
       svg: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M14 14h2.6M19.2 14h1.3M14 17.6v2.4M17.6 17.6h2.9M14 21h1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
-    hash:      { name: '哈希计算',      tone: 'tone-emerald', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件',
+    hash:      { name: '哈希计算',      tone: 'tone-green', desc: 'SHA-1 / 256 / 384 / 512 · 文本与文件',
       svg: '<path d="M9.5 4 8 20M16.5 4 15 20M4.5 9h15M3.8 15h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>' },
     url:       { name: 'URL 编解码',    tone: 'tone-amber',   desc: '编码 / 解码 / 链接解析（参数表）',
       svg: '<path d="M10.2 13.8a4.2 4.2 0 0 0 6 0l3-3a4.24 4.24 0 0 0-6-6l-1.2 1.2M13.8 10.2a4.2 4.2 0 0 0-6 0l-3 3a4.24 4.24 0 0 0 6 6l1.2-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
-    imgcom:    { name: '图片压缩',      tone: 'tone-orange',  desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
+    imgcom:    { name: '图片压缩',      tone: 'tone-amber',  desc: '质量 / 尺寸 / 格式可控 · 纯本地不上传',
       svg: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="9.5" r="1.7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4.5 17.5 9 13l3 2.5 3.5-4 4 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
   };
 
   var NOTE_SVG = '<path d="M6 4h9l4 4v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5.5A1.5 1.5 0 0 1 6.5 4H6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M14.5 4v4.5H19M8.5 13h7M8.5 16.5h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>';
+
+  /* H1：设置开关兑底读取（与 settings.js / fx.js 同键）；收藏卡微光跟随尊重 fxSpot 开关 */
+  function settingOn(key, dflt) {
+    try {
+      var raw = localStorage.getItem('fuo-settings');
+      if (!raw) return dflt;
+      var o = JSON.parse(raw);
+      if (o && o[key] !== undefined) return !!o[key];
+      return dflt;
+    } catch (e) { return dflt; }
+  }
 
   function showToast(text) {
     toast.textContent = text;
@@ -71,6 +82,8 @@
 
   /* ---------- 守卫 ---------- */
   function guard() {
+    /* v0.9.4：预览模式免登录漫游——放行并走空数据渲染，不送回主页 */
+    if (window.FUO_PREVIEW) { user = { id: 'preview' }; load(); return; }
     if (!window.supabase || !CFG || !CFG.SUPABASE_URL) return;
     var c = client();
     if (!c) return;
@@ -97,9 +110,47 @@
     });
   }
 
+  /* ---------- H1：收藏卡微光跟随 ----------
+   * fx.js 的 pointermove 清单不含 .fv-tool，此处补齐（与 fx.js 同规则：
+   * 尊重设置 fxSpot、触屏 (hover: none) 跳过）；--mx/--my 供 fav.css .fv-tool::after 消费 */
+  function initCardSpotlight() {
+    if (!settingOn('fxSpot', true)) return;
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.fv-tool'), function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  }
+
   /* ---------- 数据 ---------- */
+  /* H4：数据加载骨架屏 —— 收藏请求返回前 grids 为空白无感知期，
+   * 用「3 张卡 + 2 行」灰条呼吸占位（呼吸见 fav.css @keyframes fvSkel）；
+   * 渲染/空态路径均先 innerHTML = ''，骨架随之自动移除 */
+  function showSkeleton() {
+    var i, el;
+    toolGrid.innerHTML = '';
+    for (i = 0; i < 3; i++) {
+      el = document.createElement('div');
+      el.className = 'fv-skel';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<i></i><i></i><i></i>';
+      toolGrid.appendChild(el);
+    }
+    noteList.innerHTML = '';
+    for (i = 0; i < 2; i++) {
+      el = document.createElement('div');
+      el.className = 'fv-skel-row';
+      el.setAttribute('aria-hidden', 'true');
+      noteList.appendChild(el);
+    }
+  }
+
   function load() {
     var c = client();
+    showSkeleton(); // H4：请求期骨架占位，返回后由 renderTools/renderNotes/renderEmpty 覆盖
     c.from('favorites')
       .select('id,kind,ref,title,created_at')
       .eq('user_id', user.id)
@@ -120,11 +171,14 @@
     toolCount.textContent = '0';
     noteCount.textContent = '0';
     var box = document.createElement('div');
-    box.className = 'fv-empty';
-    box.innerHTML = '<p class="mono">// NOTHING YET</p>' +
-      '<b>收藏夹还是空的</b>' +
-      '<p>去「工具集」给常用工具点 ★，或在「云笔记」里收藏重要笔记，' +
-      '它们都会集中在这里，方便一键直达。</p>';
+    /* H5：统一空态规格（24px 图标 + 标题「还没有 X」 + 一句说明 + 指引动作按钮，见 fav.css） */
+    box.className = 'fv-empty empty-state';
+    box.innerHTML =
+      '<i class="empty-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M12 4.5 14.3 9.3 19.5 10 15.7 13.6 16.6 19 12 16.4 7.4 19 8.3 13.6 4.5 10 9.7 9.3 12 4.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></i>' +
+      '<p class="mono empty-eyebrow">// NOTHING YET</p>' +
+      '<b>还没有收藏内容</b>' +
+      '<p class="empty-desc">在「工具集」给常用工具点 ★，或在「云笔记」里收藏重要笔记，它们都会集中在这里，方便一键直达。</p>' +
+      '<a class="tbtn is-primary empty-act" href="' + ((PATHS && PATHS.TOOL_CLUSTER) || '../tool-cluster/') + '">去工具集逛逛 →</a>';
     toolGrid.appendChild(box);
   }
 
@@ -173,6 +227,7 @@
       a.appendChild(ic); a.appendChild(txt); a.appendChild(go); a.appendChild(unstar);
       toolGrid.appendChild(a);
     });
+    initCardSpotlight(); // H1：渲染完成后给收藏卡挂微光跟随（卡片是动态节点）
   }
 
   /* ---------- 笔记收藏 ---------- */

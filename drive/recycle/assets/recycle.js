@@ -9,7 +9,7 @@
 
   var CFG = window.FUO_CONFIG;
   var PATHS = window.FUO_PATHS || {};
-  var PREVIEW = window.location.search.indexOf('preview=1') !== -1;
+  var PREVIEW = !!(window.FUO_PREVIEW || window.location.search.indexOf('preview=1') !== -1); // v0.9.4：读全局记忆，整站漫游
 
   var sb = null;
   var user = null;

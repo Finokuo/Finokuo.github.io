@@ -11,7 +11,7 @@
 (function () {
   'use strict';
 
-  var CACHE = 'fuo-shell-v10';
+  var CACHE = 'fuo-shell-v11';
   var SHELL = [
     '/drive/',
     '/drive/index.html',

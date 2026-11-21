@@ -1,5 +1,5 @@
 /* =====================================================
- * Fuo Tools · 全站反馈挂件（web v0.9.5）
+ * Fuo Tools · 全站反馈挂件（web v0.9.6）
  *
  * 用法（页面只需一行，样式与 SDK 由本脚本按需注入）：
  *   <script src="…/drive/assets/js/feedback.js?v=1"></script>
@@ -9,7 +9,10 @@
  *   · 右下角「反馈」悬浮按钮 → 弹层提交（类型 / 正文 / 可选联系方式）
  *   · 已登录：自动附带 user_id + username；游客：匿名提交
  *   · 数据表：public.feedback（建表脚本 supabase-feedback.sql）
- *     RLS：人人可插入；仅 System 可查看 / 删除（管理台「反馈」面板）
+ *     RLS：人人可插入（限流经 security definer 函数 can_submit_feedback()
+ *     执行）；仅 System 可查看 / 删除（管理台「反馈」面板）
+ *   · 42P17「infinite recursion」＝服务器 SQL 是旧版（策略自引用），
+ *     在 Supabase 重跑最新版 supabase-feedback.sql 即可
  *   · 前端节流：60 秒一条（登录用户另有数据库层防刷）
  *   · 表未创建：给出明确提示（执行 supabase-feedback.sql）
  * ===================================================== */
@@ -310,6 +313,8 @@
           if (_r.error) {
             if (isMissingTable(_r.error)) {
               toast('反馈表尚未创建：请先在 Supabase 执行 supabase-feedback.sql');
+            } else if (_r.error.code === '42P17' || /infinite recursion/i.test(_r.error.message || '')) {
+              toast('服务器 SQL 是旧版（策略无限递归）：请在 Supabase 重新执行最新版 supabase-feedback.sql');
             } else if (_r.error.code === '42501') {
               toast('提交被安全策略拦截：登录用户 60 秒内限发一条，稍后再试');
             } else {

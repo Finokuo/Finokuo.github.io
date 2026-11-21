@@ -94,7 +94,7 @@ git push -u origin main
 3. 下次访问根域名 → 已登录，直接进 `/drive/`；未登录 → 进 `/main/`
 4. 工作台「快捷笔记」支持**自动云同步**（防抖 900ms 保存到 Supabase）
 
-## 七、功能总览（v0.9.5）
+## 七、功能总览（v0.9.6）
 
 - **16 款本地工具**：JSON / 颜色 / 密码 / 文本统计 / 时间戳 / Base64 / UUID / Diff / 正则测试器 / 二维码 / 哈希 / URL / 图片压缩 / **JWT 解码器 / 进制转换（BigInt）/ Lorem 占位文本**
 - **办公集（新工作区）**：**待办清单**（优先级/截止日/今日视图）· **习惯打卡**（GitHub 式热力图/连续天数）· **番茄钟**（专注统计/桌面通知）；本地优先 + office_data 云同步
@@ -111,6 +111,13 @@ git push -u origin main
 - **温故知新 `/wgzx/`（v0.9.4 新增独立子站）**：初中 7~9 年级九学科复习平台（243 章节 / 1414 知识点 / 73 篇必背），闪卡 SRS / 出题练习 / 错题本 / 背诵打卡 / 学习统计 / AI 答疑（可选），进度存本机 localStorage；工作台侧栏新增「温故知新」入口
 
 > v0.8.0 修复：进入工作台侧栏先显示邮箱再切用户名的闪烁（现在直接展示用户名）
+>
+> **v0.9.6 修复（反馈 SQL 无限递归）：**
+>
+> - **`supabase-feedback.sql` 关键修复**：旧版插入策略把 60 秒限流写成「在 feedback 自己的 WITH CHECK 里 `not exists` 查 feedback 本表」——PostgreSQL 行级安全不允许策略引用所在表自身，所有登录用户提交反馈都会报 `infinite recursion detected in policy for relation "feedback"`（42P17）
+> - **修法（Supabase 官方同表检查模式）**：新增 `security definer` 辅助函数 `is_system()`（System 判断，同时断开对 profiles RLS 的求值链依赖）与 `can_submit_feedback()`（60 秒限流，以表所有者身份绕过 feedback 自身 RLS）；三条策略全部改为调用函数，并用 `(select fn())` 写法单次求值（RLS 性能规范）
+> - **幂等保数据**：表 / 约束 / 索引不动，旧库整段重跑即修复（策略 drop 重建），已有反馈不受影响；游客与管理台读删路径本就正常，无需任何前端配合改动
+> - **前端提示**：feedback.js 错误映射 42P17（明确提示重跑最新 SQL）；feedback.js 引用参数统一 v3、SW 缓存 fuo-shell-v11、注册参数 v5
 >
 > **v0.9.5 更新（《界面与布局优化方案》20 条执行项全量落地）：**
 >

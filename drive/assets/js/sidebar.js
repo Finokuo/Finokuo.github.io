@@ -49,7 +49,7 @@
     // v0.9.5：全站反馈挂件（feedback.js 自带去重，右下角悬浮按钮）
     if (!window.__FUO_FEEDBACK__ && !document.querySelector('script[data-fb-js]')) {
       var f = document.createElement('script');
-      f.src = SELF_BASE + 'feedback.js?v=2';
+      f.src = SELF_BASE + 'feedback.js?v=3';
       f.setAttribute('data-fb-js', '1');
       document.head.appendChild(f);
     }
@@ -58,7 +58,7 @@
       if ('serviceWorker' in navigator &&
           (location.protocol === 'https:' || location.hostname === 'localhost')) {
         var root = SELF_BASE.replace(/assets\/js\/$/, '');
-        navigator.serviceWorker.register(root + 'sw.js?v=4').catch(function () { /* ignore */ });
+        navigator.serviceWorker.register(root + 'sw.js?v=5').catch(function () { /* ignore */ });
       }
     } catch (e) { /* ignore */ }
   }
